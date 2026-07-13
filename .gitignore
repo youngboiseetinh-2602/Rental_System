@@ -1,0 +1,14 @@
+target/
+*.log
+
+.env
+.idea/
+.vscode/
+*.iml
+
+.mvn/wrapper/apache-maven-*/
+.mvn/wrapper/*.zip
+
+### OS files
+Thumbs.db
+.DS_Store
