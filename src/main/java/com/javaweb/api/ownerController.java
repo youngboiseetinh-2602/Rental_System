@@ -5,6 +5,7 @@ import com.javaweb.model.request.CreateRoom;
 import com.javaweb.model.request.CreateRoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRentalProperty;
+import com.javaweb.model.response.Rental;
 import com.javaweb.service.OwnerService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,15 +28,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/owners")
 @RequiredArgsConstructor
 public class ownerController {
-
     private final OwnerService ownerService;
+
+    // Lấy danh sách nha tro của owner.
+    @GetMapping("/{ownerId}/rentals")
+    public ResponseEntity<List<Rental>> getMyRentals(@PathVariable Long ownerId) {
+        return ResponseEntity.ok(ownerService.myRental(ownerId));
+    }
 
     // Tao nha tro moi cho owner.
     @PostMapping("/{ownerId}/rentals")
     public ResponseEntity<String> createRentalProperty(
             @PathVariable Long ownerId,
-            @Valid @RequestBody CreateRentalProperty request
-    ) {
+            @Valid @RequestBody CreateRentalProperty request) {
         return ResponseEntity.ok(ownerService.createRentalProperty(ownerId, request));
     }
 
@@ -42,8 +48,7 @@ public class ownerController {
     @PutMapping("/rentals/{rentalPropertyId}")
     public ResponseEntity<String> updateRentalProperty(
             @PathVariable Long rentalPropertyId,
-            @Valid @RequestBody UpdateRentalProperty request
-    ) {
+            @Valid @RequestBody UpdateRentalProperty request) {
         return ResponseEntity.ok(ownerService.updateRentalProperty(rentalPropertyId, request));
     }
 
@@ -57,9 +62,7 @@ public class ownerController {
     @PostMapping("/rentals/{rentalPropertyId}/images")
     public ResponseEntity<String> addRentalPropertyImages(
             @PathVariable Long rentalPropertyId,
-            @Valid @RequestBody List<@NotBlank(message = "Image url is required")
-                    @Size(max = 255, message = "Image url must not exceed 255 characters") String> imageUrls
-    ) {
+            @Valid @RequestBody List<@NotBlank(message = "Image url is required") @Size(max = 255, message = "Image url must not exceed 255 characters") String> imageUrls) {
         return ResponseEntity.ok(ownerService.addRentalPropertyImages(rentalPropertyId, imageUrls));
     }
 
@@ -67,8 +70,7 @@ public class ownerController {
     @PostMapping("/rentals/{rentalPropertyId}/room-types")
     public ResponseEntity<String> addRoomType(
             @PathVariable Long rentalPropertyId,
-            @Valid @RequestBody CreateRoomType request
-    ) {
+            @Valid @RequestBody CreateRoomType request) {
         return ResponseEntity.ok(ownerService.addRoomType(rentalPropertyId, request));
     }
 
@@ -82,8 +84,7 @@ public class ownerController {
     @PostMapping("/room-types/{roomTypeId}/facilities")
     public ResponseEntity<String> addFacility(
             @PathVariable Long roomTypeId,
-            @Valid @RequestBody FacilityInfo request
-    ) {
+            @Valid @RequestBody FacilityInfo request) {
         return ResponseEntity.ok(ownerService.addFacility(roomTypeId, request));
     }
 
@@ -91,8 +92,7 @@ public class ownerController {
     @PutMapping("/facilities/{facilityId}")
     public ResponseEntity<String> updateFacility(
             @PathVariable Long facilityId,
-            @Valid @RequestBody FacilityInfo request
-    ) {
+            @Valid @RequestBody FacilityInfo request) {
         return ResponseEntity.ok(ownerService.updateFacility(facilityId, request));
     }
 
@@ -106,8 +106,7 @@ public class ownerController {
     @PostMapping("/room-types/{roomTypeId}/rooms")
     public ResponseEntity<String> addRoom(
             @PathVariable Long roomTypeId,
-            @Valid @RequestBody CreateRoom request
-    ) {
+            @Valid @RequestBody CreateRoom request) {
         return ResponseEntity.ok(ownerService.addRoom(roomTypeId, request));
     }
 

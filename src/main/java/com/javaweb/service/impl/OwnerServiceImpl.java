@@ -1,5 +1,6 @@
 package com.javaweb.service.impl;
 
+import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.ImageEntity;
@@ -22,6 +23,7 @@ import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.RoomTypeRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.OwnerService;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -39,6 +41,22 @@ public class OwnerServiceImpl implements OwnerService {
     private final FacilityRepository facilityRepository;
     private final RoomRepository roomRepository;
     private final ModelMapper modelMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Rental> myRental(Long id) {
+        List<RentalPropertyEntity> rentals = rentalPropertyRepository.findByOwnerId(id);
+        List<Rental> responses = new ArrayList<>();
+
+        for (RentalPropertyEntity rental : rentals) {
+            responses.add(toRental(rental));
+        }
+
+        if (responses.isEmpty()) {
+            throw new DataNotFoundException("khong tim thay du lieu");
+        }
+        return responses;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -168,7 +186,17 @@ public class OwnerServiceImpl implements OwnerService {
     @Transactional
     public String addRoom(Long roomTypeId, CreateRoom request) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
+        String normalizedRoomName = request.getName().trim();
+        Long rentalPropertyId = roomType.getRentalProperty().getId();
+
+        if (roomRepository.existsByRoomType_RentalProperty_IdAndNameIgnoreCase(
+                rentalPropertyId,
+                normalizedRoomName)) {
+            throw new ConflictException("Room name already exists in this rental property");
+        }
+
         RoomEntity room = modelMapper.map(request, RoomEntity.class);
+        room.setName(normalizedRoomName);
         room.setRoomType(roomType);
 
         roomRepository.save(room);
@@ -180,8 +208,8 @@ public class OwnerServiceImpl implements OwnerService {
     public String deleteRoom(Long roomId) {
         RoomEntity room = getRoomById(roomId);
 
-        if (!room.getContracts().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete room because it still has contracts");
+        if (room.getCurrentTenant() != null) {
+            throw new IllegalArgumentException("Cannot delete room because it is currently rented");
         }
 
         roomRepository.delete(room);
@@ -229,19 +257,18 @@ public class OwnerServiceImpl implements OwnerService {
 
     private void setRentalExtraInfo(RentalPropertyEntity rentalProperty, Rental rental) {
         UserEntity owner = rentalProperty.getOwner();
-        rental.setOwnerId(owner.getId());
         rental.setOwnerName(owner.getFullName());
         rental.setOwnerPhoneNumber(owner.getPhoneNumber());
         rental.setOwnerAvatarUrl(owner.getAvatarUrl());
 
         RentalTypeEntity rentalType = rentalProperty.getRentalType();
-        rental.setRentalTypeId(rentalType.getId());
         rental.setRentalTypeName(rentalType.getName());
         rental.setRentalTypeDescription(rentalType.getDescription());
+        rental.setDescription(rentalProperty.getDescription());
     }
 
     private RentalTypeEntity getOrCreateRentalType(String rentalTypeName) {
-        String normalizedName = rentalTypeName.trim();
+        String normalizedName = rentalTypeName.trim().toLowerCase(java.util.Locale.ROOT);
         return rentalTypeRepository.findFirstByNameIgnoreCase(normalizedName)
                 .orElseGet(() -> {
                     RentalTypeEntity rentalType = new RentalTypeEntity();
@@ -253,8 +280,7 @@ public class OwnerServiceImpl implements OwnerService {
     private RentalPropertyEntity buildRentalProperty(
             CreateRentalProperty request,
             UserEntity owner,
-            RentalTypeEntity rentalType
-    ) {
+            RentalTypeEntity rentalType) {
         RentalPropertyEntity rentalProperty = modelMapper.map(request, RentalPropertyEntity.class);
         rentalProperty.setOwner(owner);
         rentalProperty.setRentalType(rentalType);
@@ -264,6 +290,10 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     private List<ImageEntity> toImages(List<String> imageUrls, RentalPropertyEntity rentalProperty) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return List.of();
+        }
+
         return imageUrls.stream()
                 .map(imageUrl -> {
                     ImageEntity image = new ImageEntity();
@@ -276,8 +306,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     private List<RoomTypeEntity> toRoomTypes(
             List<CreateRoomType> requests,
-            RentalPropertyEntity rentalProperty
-    ) {
+            RentalPropertyEntity rentalProperty) {
         return requests.stream()
                 .map(request -> toRoomType(request, rentalProperty))
                 .toList();
@@ -285,6 +314,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     private RoomTypeEntity toRoomType(CreateRoomType request, RentalPropertyEntity rentalProperty) {
         RoomTypeEntity roomType = modelMapper.map(request, RoomTypeEntity.class);
+        roomType.setName(request.getName().trim().toLowerCase(java.util.Locale.ROOT));
         roomType.setRentalProperty(rentalProperty);
         roomType.setFacilities(toFacilities(request.getFacilities(), roomType));
         roomType.setRooms(toRooms(request.getRooms(), roomType));

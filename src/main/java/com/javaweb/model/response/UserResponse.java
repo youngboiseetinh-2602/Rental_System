@@ -20,7 +20,7 @@ public class UserResponse {
 
     private String phoneNumber;
 
-    private String citizenId;
+    private String citizenCode;
 
     private String avatarUrl;
 

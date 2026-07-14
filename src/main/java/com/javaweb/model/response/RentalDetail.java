@@ -21,7 +21,6 @@ public class RentalDetail extends Rental {
     @Getter
     @Setter
     @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Image {
 
         private Long id;

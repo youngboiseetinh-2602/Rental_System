@@ -31,8 +31,9 @@ public class Register {
     @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
     private String password;
 
-    @Pattern(regexp = "^\\d{12}$", message = "Citizen id must be exactly 12 digits")
-    private String citizenId;
+    @NotBlank(message = "Citizen code is required")
+    @Pattern(regexp = "^\\d{12}$", message = "Citizen code must be exactly 12 digits")
+    private String citizenCode;
 
     private UserGender gender;
 

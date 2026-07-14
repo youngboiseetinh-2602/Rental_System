@@ -15,6 +15,9 @@ public class RentalPropertyInfo {
     @Size(max = 150, message = "Rental property name must not exceed 150 characters")
     private String name;
 
+    @Size(max = 2000, message = "Description must not exceed 2000 characters")
+    private String description;
+
     @NotBlank(message = "Rental type name is required")
     @Size(max = 100, message = "Rental type name must not exceed 100 characters")
     private String rentalTypeName;

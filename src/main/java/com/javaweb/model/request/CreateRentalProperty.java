@@ -14,7 +14,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CreateRentalProperty extends RentalPropertyInfo {
 
-    @NotEmpty(message = "Image urls are required")
     private List<@NotBlank(message = "Image url is required")
             @Size(max = 255, message = "Image url must not exceed 255 characters") String> imageUrls;
 

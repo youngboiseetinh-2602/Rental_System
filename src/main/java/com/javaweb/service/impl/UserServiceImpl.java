@@ -34,12 +34,21 @@ public class UserServiceImpl implements UserService {
             throw new ConflictException("Username already exists");
         }
 
-        if (StringUtils.hasText(request.getCitizenId())
-                && userRepository.existsByCitizenId(request.getCitizenId())) {
+        if (!StringUtils.hasText(request.getCitizenCode())) {
+            throw new IllegalArgumentException("Citizen code is required");
+        }
+
+        if (userRepository.existsByCitizenCode(request.getCitizenCode())) {
             throw new ConflictException("Citizen id already exists");
         }
 
+        if (StringUtils.hasText(request.getPhoneNumber())
+                && userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new ConflictException("Phone number already exists");
+        }
+
         UserEntity user = modelMapper.map(request, UserEntity.class);
+        user.setCitizenCode(request.getCitizenCode());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
 
@@ -58,10 +67,18 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public String updateUserInfo(Long userId, UpdateUserInfo request) {
         UserEntity user = getUserById(userId);
+
+        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
+            throw new ConflictException("Username already exists");
+        }
+
+        if (userRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), userId)) {
+            throw new ConflictException("Phone number already exists");
+        }
+
+        user.setUsername(request.getUsername());
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setAvatarUrl(request.getAvatarUrl());
-        user.setGender(request.getGender());
 
         userRepository.save(user);
         return "cap nhat thong tin thanh cong";
@@ -96,8 +113,8 @@ public class UserServiceImpl implements UserService {
 
     private UserResponse toUserResponse(UserEntity user) {
         UserResponse userResponse = modelMapper.map(user, UserResponse.class);
-        // TODO: Show citizenId only when allowed by SecurityContext.
-        userResponse.setCitizenId(null);
+        // TODO: Show citizenCode only when allowed by SecurityContext.
+        userResponse.setCitizenCode(null);
         return userResponse;
     }
 }

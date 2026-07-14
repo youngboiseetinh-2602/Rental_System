@@ -43,8 +43,8 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(unique = true, length = 12)
-    private String citizenId;
+    @Column(name = "citizenId", unique = true, length = 12)
+    private String citizenCode;
 
     private String avatarUrl;
 

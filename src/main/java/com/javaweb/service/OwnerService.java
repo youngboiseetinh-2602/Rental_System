@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface OwnerService {
 
+    List<Rental> myRental(Long id);
+
     List<Rental> getRentalProperties();
 
     RentalDetail getRentalPropertyDetail(Long rentalPropertyId);

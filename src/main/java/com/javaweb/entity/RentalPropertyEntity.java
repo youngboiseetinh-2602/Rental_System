@@ -41,6 +41,9 @@ public class RentalPropertyEntity {
     @Column(nullable = false, length = 150)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(length = 100)
     private String city;
 
