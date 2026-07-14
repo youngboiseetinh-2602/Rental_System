@@ -2,9 +2,11 @@ package com.javaweb.service.impl;
 
 import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
+import com.javaweb.converter.UserConverter;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.UserStatus;
 import com.javaweb.model.request.ChangePassword;
+import com.javaweb.model.request.UserLogin;
 import com.javaweb.model.request.Register;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
@@ -14,6 +16,8 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,19 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
+    private final UserConverter userConverter;
+    private final AuthenticationManager authenticationManager;
+
+    @Override
+    public String login(UserLogin request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
+        return "dang nhap thanh cong";
+    }
 
     @Override
     @Transactional
@@ -60,7 +77,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserResponse getUserInfo(Long userId) {
         UserEntity user = getUserById(userId);
-        return toUserResponse(user);
+        return userConverter.toUserResponse(user);
     }
 
     @Override
@@ -111,10 +128,4 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new DataNotFoundException("User not found with id: " + userId));
     }
 
-    private UserResponse toUserResponse(UserEntity user) {
-        UserResponse userResponse = modelMapper.map(user, UserResponse.class);
-        // TODO: Show citizenCode only when allowed by SecurityContext.
-        userResponse.setCitizenCode(null);
-        return userResponse;
-    }
 }
