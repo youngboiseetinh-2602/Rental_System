@@ -9,14 +9,15 @@ import com.javaweb.entity.RentalTypeEntity;
 import com.javaweb.entity.RoomEntity;
 import com.javaweb.entity.RoomTypeEntity;
 import com.javaweb.entity.UserEntity;
-import com.javaweb.model.request.CreateRentalProperty;
-import com.javaweb.model.request.CreateRoom;
-import com.javaweb.model.request.CreateRoomType;
+import com.javaweb.model.request.RentalProperty;
+import com.javaweb.model.request.Room;
+import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
-import com.javaweb.model.request.UpdateRentalProperty;
+import com.javaweb.model.request.RentalPropertyInfo;
 import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import com.javaweb.repository.RentalPropertyRepository;
+import com.javaweb.repository.ImageRepository;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.RentalPropertyService;
@@ -34,6 +35,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final UserRepository userRepository;
     private final RentalTypeRepository rentalTypeRepository;
     private final RentalPropertyRepository rentalPropertyRepository;
+    private final ImageRepository imageRepository;
     private final ModelMapper modelMapper;
     private final RentalConverter rentalConverter;
 
@@ -51,9 +53,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         for (RentalPropertyEntity rentalProperty : rentalProperties) {
             responses.add(rentalConverter.toRental(rentalProperty));
         }
-        if(responses.isEmpty()){
-            throw new DataNotFoundException("Khong tim thay du lieu");
-        }
+        
         return responses;
     }
 
@@ -66,7 +66,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
 
     @Override
     @Transactional
-    public String createRentalProperty(Long ownerId, CreateRentalProperty request) {
+    public String createRentalProperty(Long ownerId, RentalProperty request) {
         UserEntity owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new DataNotFoundException("Owner not found with id: " + ownerId));
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
@@ -78,7 +78,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
 
     @Override
     @Transactional
-    public String updateRentalProperty(Long rentalPropertyId, UpdateRentalProperty request) {
+    public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
 
@@ -102,10 +102,6 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
             throw new IllegalArgumentException("Cannot delete rental property because it has reviews");
         }
 
-        if (!rentalProperty.getNotificationDetails().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete rental property because it has notification details");
-        }
-
         rentalPropertyRepository.delete(rentalProperty);
         return "xoa nha tro thanh cong";
     }
@@ -120,10 +116,21 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         return "them anh nha tro thanh cong";
     }
 
+    @Override
+    @Transactional
+    public String deleteRentalPropertyImage(Long imageId) {
+        ImageEntity image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Image not found with id: " + imageId));
+
+        imageRepository.delete(image);
+        return "xoa anh nha tro thanh cong";
+    }
+
     private RentalPropertyEntity getRentalPropertyById(Long rentalPropertyId) {
         return rentalPropertyRepository.findById(rentalPropertyId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Rental property not found with id: " + rentalPropertyId));
+                        "Rental property not found"));
     }
 
     private boolean hasRoomsWithContracts(RentalPropertyEntity rentalProperty) {
@@ -143,7 +150,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     private RentalPropertyEntity buildRentalProperty(
-            CreateRentalProperty request,
+            RentalProperty request,
             UserEntity owner,
             RentalTypeEntity rentalType) {
         RentalPropertyEntity rentalProperty = modelMapper.map(request, RentalPropertyEntity.class);
@@ -170,14 +177,14 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     private List<RoomTypeEntity> toRoomTypes(
-            List<CreateRoomType> requests,
+            List<RoomType> requests,
             RentalPropertyEntity rentalProperty) {
         return requests.stream()
                 .map(request -> toRoomType(request, rentalProperty))
                 .toList();
     }
 
-    private RoomTypeEntity toRoomType(CreateRoomType request, RentalPropertyEntity rentalProperty) {
+    private RoomTypeEntity toRoomType(RoomType request, RentalPropertyEntity rentalProperty) {
         RoomTypeEntity roomType = modelMapper.map(request, RoomTypeEntity.class);
         roomType.setName(request.getName().trim().toLowerCase(java.util.Locale.ROOT));
         roomType.setRentalProperty(rentalProperty);
@@ -196,7 +203,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
                 .toList();
     }
 
-    private List<RoomEntity> toRooms(List<CreateRoom> requests, RoomTypeEntity roomType) {
+    private List<RoomEntity> toRooms(List<Room> requests, RoomTypeEntity roomType) {
         return requests.stream()
                 .map(request -> {
                     RoomEntity room = modelMapper.map(request, RoomEntity.class);

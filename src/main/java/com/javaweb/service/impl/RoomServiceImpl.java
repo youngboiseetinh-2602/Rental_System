@@ -6,8 +6,8 @@ import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.entity.RoomEntity;
 import com.javaweb.entity.RoomTypeEntity;
-import com.javaweb.model.request.CreateRoom;
-import com.javaweb.model.request.CreateRoomType;
+import com.javaweb.model.request.Room;
+import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRoomType;
 import com.javaweb.repository.FacilityRepository;
@@ -33,7 +33,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    public String addRoomType(Long rentalPropertyId, CreateRoomType request) {
+    public String addRoomType(Long rentalPropertyId, RoomType request) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
         RoomTypeEntity roomType = toRoomType(request, rentalProperty);
 
@@ -107,7 +107,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    public String addRoom(Long roomTypeId, CreateRoom request) {
+    public String addRoom(Long roomTypeId, Room request) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
         String normalizedRoomName = request.getName().trim();
         Long rentalPropertyId = roomType.getRentalProperty().getId();
@@ -160,7 +160,7 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new DataNotFoundException("Room not found with id: " + roomId));
     }
 
-    private RoomTypeEntity toRoomType(CreateRoomType request, RentalPropertyEntity rentalProperty) {
+    private RoomTypeEntity toRoomType(RoomType request, RentalPropertyEntity rentalProperty) {
         RoomTypeEntity roomType = modelMapper.map(request, RoomTypeEntity.class);
         roomType.setName(request.getName().trim().toLowerCase(java.util.Locale.ROOT));
         roomType.setRentalProperty(rentalProperty);
@@ -179,7 +179,7 @@ public class RoomServiceImpl implements RoomService {
                 .toList();
     }
 
-    private List<RoomEntity> toRooms(List<CreateRoom> requests, RoomTypeEntity roomType) {
+    private List<RoomEntity> toRooms(List<Room> requests, RoomTypeEntity roomType) {
         return requests.stream()
                 .map(request -> {
                     RoomEntity room = modelMapper.map(request, RoomEntity.class);

@@ -1,13 +1,13 @@
 package com.javaweb.service;
 
-import com.javaweb.model.request.CreateRoom;
-import com.javaweb.model.request.CreateRoomType;
+import com.javaweb.model.request.Room;
+import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRoomType;
 
 public interface RoomService {
 
-    String addRoomType(Long rentalPropertyId, CreateRoomType request);
+    String addRoomType(Long rentalPropertyId, RoomType request);
 
     String updateRoomType(Long roomTypeId, UpdateRoomType request);
 
@@ -19,7 +19,7 @@ public interface RoomService {
 
     String deleteFacility(Long facilityId);
 
-    String addRoom(Long roomTypeId, CreateRoom request);
+    String addRoom(Long roomTypeId, Room request);
 
     String deleteRoom(Long roomId);
 }

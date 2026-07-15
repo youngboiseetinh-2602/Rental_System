@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CreateRoom {
+public class Room {
 
     @NotBlank(message = "Room name is required")
     @Size(max = 100, message = "Room name must not exceed 100 characters")

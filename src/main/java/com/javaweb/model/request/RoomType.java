@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CreateRoomType {
+public class RoomType {
 
     @NotBlank(message = "Room type name is required")
     @Size(max = 100, message = "Room type name must not exceed 100 characters")
@@ -38,5 +38,5 @@ public class CreateRoomType {
 
     @Valid
     @NotEmpty(message = "Rooms are required")
-    private List<CreateRoom> rooms;
+    private List<Room> rooms;
 }

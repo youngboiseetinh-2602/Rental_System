@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class publicController {
 
@@ -29,31 +29,31 @@ public class publicController {
     private final ReviewService reviewService;
 
     // Dang nhap.
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<String> login(@Valid @RequestBody UserLogin request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
     // Dang ky tai khoan moi.
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<String> register(@Valid @RequestBody Register request) {
         return ResponseEntity.ok(userService.register(request));
     }
 
     // Xem danh sach nha tro dang tom tat.
-    @GetMapping("/rentals")
+    @GetMapping("/rental-properties")
     public ResponseEntity<List<Rental>> getRentalProperties() {
         return ResponseEntity.ok(rentalPropertyService.getRentalProperties());
     }
 
     // Xem chi tiet mot nha tro.
-    @GetMapping("/rentals/{rentalPropertyId}")
+    @GetMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<RentalDetail> getRentalPropertyDetail(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(rentalPropertyService.getRentalPropertyDetail(rentalPropertyId));
     }
 
     // Xem danh sach review cua mot nha tro.
-    @GetMapping("/rentals/{rentalPropertyId}/reviews")
+    @GetMapping("/rental-properties/{rentalPropertyId}/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviews(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(reviewService.reviewList(rentalPropertyId));
     }

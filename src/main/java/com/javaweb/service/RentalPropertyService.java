@@ -1,7 +1,7 @@
 package com.javaweb.service;
 
-import com.javaweb.model.request.CreateRentalProperty;
-import com.javaweb.model.request.UpdateRentalProperty;
+import com.javaweb.model.request.RentalProperty;
+import com.javaweb.model.request.RentalPropertyInfo;
 import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import java.util.List;
@@ -12,12 +12,13 @@ public interface RentalPropertyService {
 
     RentalDetail getRentalPropertyDetail(Long rentalPropertyId);
 
-    String createRentalProperty(Long ownerId, CreateRentalProperty request);
+    String createRentalProperty(Long ownerId, RentalProperty request);
 
-    String updateRentalProperty(Long rentalPropertyId, UpdateRentalProperty request);
+    String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request);
 
     String deleteRentalProperty(Long rentalPropertyId);
 
     String addRentalPropertyImages(Long rentalPropertyId, List<String> imageUrls);
 
+    String deleteRentalPropertyImage(Long imageId);
 }

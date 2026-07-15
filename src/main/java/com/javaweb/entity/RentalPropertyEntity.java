@@ -73,7 +73,4 @@ public class RentalPropertyEntity {
     @BatchSize(size = 50)
     private List<RoomTypeEntity> roomTypes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "rentalProperty")
-    @BatchSize(size = 50)
-    private List<NotificationDetailEntity> notificationDetails = new ArrayList<>();
 }
