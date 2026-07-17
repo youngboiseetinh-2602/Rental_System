@@ -59,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notificationRepository.findAllByReceiver_Id(userId);
 
         if (notifications.isEmpty()) {
-            throw new DataNotFoundException("No notifications found for user: " + userId);
+            throw new DataNotFoundException("No notifications found " );
         }
 
         List<NotificationResponse> responses = new ArrayList<>();

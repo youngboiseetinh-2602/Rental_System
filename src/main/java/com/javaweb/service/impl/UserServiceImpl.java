@@ -35,12 +35,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String login(UserLogin request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+        } catch (BadCredentialsException ex) {
+            throw new BadCredentialsException("Sai mật khẩu hoặc tài khoản");
+        }
 
         return "dang nhap thanh cong";
     }
@@ -86,17 +90,48 @@ public class UserServiceImpl implements UserService {
     public String updateUserInfo(Long userId, UpdateUserInfo request) {
         UserEntity user = getUserById(userId);
 
-        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
-            throw new ConflictException("Username already exists");
+        if (request.getUsername() != null) {
+            String username = request.getUsername().trim();
+            if (username.isEmpty()) {
+                throw new IllegalArgumentException("Username must not be blank");
+            }
+            if (!username.equals(user.getUsername())) {
+                userRepository.findByUsername(username)
+                        .filter(existingUser -> !existingUser.getId().equals(userId))
+                        .ifPresent(existingUser -> {
+                            throw new ConflictException("Username already exists");
+                        });
+                user.setUsername(username);
+            }
         }
 
-        if (userRepository.existsByPhoneNumberAndIdNot(request.getPhoneNumber(), userId)) {
-            throw new ConflictException("Phone number already exists");
+        if (request.getFullName() != null) {
+            String fullName = request.getFullName().trim();
+            if (fullName.isEmpty()) {
+                throw new IllegalArgumentException("Full name must not be blank");
+            }
+            user.setFullName(fullName);
         }
 
-        user.setUsername(request.getUsername());
-        user.setFullName(request.getFullName());
-        user.setPhoneNumber(request.getPhoneNumber());
+        if (request.getPhoneNumber() != null) {
+            String phoneNumber = request.getPhoneNumber().trim();
+            if (phoneNumber.isEmpty()) {
+                user.setPhoneNumber(null);
+            } else {
+                if (userRepository.existsByPhoneNumberAndIdNot(phoneNumber, userId)) {
+                    throw new ConflictException("Phone number already exists");
+                }
+                user.setPhoneNumber(phoneNumber);
+            }
+        }
+
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl().trim());
+        }
+
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
 
         userRepository.save(user);
         return "cap nhat thong tin thanh cong";

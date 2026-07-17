@@ -1,7 +1,7 @@
 package com.javaweb.converter;
 
 import com.javaweb.entity.ContractEntity;
-import com.javaweb.model.response.RentalRequestResponse;
+import com.javaweb.model.response.ContractResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -12,9 +12,9 @@ public class ContractConverter {
 
     private final ModelMapper modelMapper;
 
-    public RentalRequestResponse toRentalRequestResponse(ContractEntity contract) {
-        RentalRequestResponse response = modelMapper.map(
-                contract, RentalRequestResponse.class);
+    public ContractResponse toContractResponse(ContractEntity contract) {
+        ContractResponse response = modelMapper.map(
+                contract, ContractResponse.class);
         response.setRoomId(contract.getRoom().getId());
         response.setRoomName(contract.getRoom().getName());
         response.setTenantId(contract.getTenant().getId());

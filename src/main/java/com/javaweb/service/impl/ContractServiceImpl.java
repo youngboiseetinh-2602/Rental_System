@@ -12,7 +12,7 @@ import com.javaweb.enums.RoomStatus;
 import com.javaweb.enums.UserRole;
 import com.javaweb.model.request.RentalRequest;
 import com.javaweb.model.request.NotificationRequest;
-import com.javaweb.model.response.RentalRequestResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.UserRepository;
@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ public class ContractServiceImpl implements ContractService {
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
     private final ContractConverter contractConverter;
+    private final ModelMapper modelMapper;
 
     @Override
     @Transactional
@@ -83,7 +85,7 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentalRequestResponse> getUserRentalRequests(Long userId) {
+    public List<ContractResponse> getUserRentalRequests(Long userId) {
         getCustomer(userId);
         List<ContractEntity> requests =
                 contractRepository.findAllByTenant_Id(userId);
@@ -92,9 +94,9 @@ public class ContractServiceImpl implements ContractService {
             throw new DataNotFoundException("khong tim thay yeu cau thue nao");
         }
 
-        List<RentalRequestResponse> responses = new ArrayList<>();
+        List<ContractResponse> responses = new ArrayList<>();
         for (ContractEntity request : requests) {
-            responses.add(contractConverter.toRentalRequestResponse(request));
+            responses.add(contractConverter.toContractResponse(request));
         }
         return responses;
     }
@@ -106,6 +108,26 @@ public class ContractServiceImpl implements ContractService {
         LocalDate expiryDate = LocalDate.now(VIETNAM_ZONE).plusWeeks(1);
         contractRepository.findAllByStatusAndEndDate(ContractStatus.APPROVED, expiryDate)
                 .forEach(this::sendContractExpiryNotification);
+    }
+
+    @Override
+    @Transactional
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Ho_Chi_Minh")
+    public void expireContracts() {
+        LocalDate today = LocalDate.now(VIETNAM_ZONE);
+        List<ContractEntity> expiredContracts =
+                contractRepository.findAllByStatusAndEndDateBefore(
+                        ContractStatus.APPROVED, today);
+
+        for (ContractEntity contract : expiredContracts) {
+            RoomEntity room = contract.getRoom();
+            contract.setStatus(ContractStatus.EXPIRED);
+            room.setStatus(RoomStatus.AVAILABLE);
+            room.setCurrentTenant(null);
+
+            contractRepository.save(contract);
+            roomRepository.save(room);
+        }
     }
 
     private UserEntity getCustomer(Long userId) {
@@ -136,11 +158,9 @@ public class ContractServiceImpl implements ContractService {
 
     private ContractEntity toPendingContract(
             UserEntity customer, RoomEntity room, RentalRequest request) {
-        ContractEntity contract = new ContractEntity();
+        ContractEntity contract = modelMapper.map(request, ContractEntity.class);
         contract.setTenant(customer);
         contract.setRoom(room);
-        contract.setStartDate(request.getStartDate());
-        contract.setEndDate(request.getEndDate());
         contract.setStatus(ContractStatus.PENDING);
         return contract;
     }

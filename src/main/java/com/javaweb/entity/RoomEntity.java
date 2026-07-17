@@ -2,6 +2,7 @@ package com.javaweb.entity;
 
 import com.javaweb.enums.RoomStatus;
 import jakarta.persistence.Column;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -47,7 +48,7 @@ public class RoomEntity {
     @Column(nullable = false, columnDefinition = "ENUM('AVAILABLE','RENTED')")
     private RoomStatus status = RoomStatus.AVAILABLE;
 
-    @OneToMany(mappedBy = "room")
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     @BatchSize(size = 50)
     private List<ContractEntity> contracts = new ArrayList<>();
 }

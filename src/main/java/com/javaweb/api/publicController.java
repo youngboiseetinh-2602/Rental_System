@@ -29,24 +29,28 @@ public class publicController {
     private final ReviewService reviewService;
 
     // Dang nhap.
+    // test login thành công //
     @PostMapping("/auth/login")
     public ResponseEntity<String> login(@Valid @RequestBody UserLogin request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
     // Dang ky tai khoan moi.
+    // test thành công //
     @PostMapping("/auth/register")
     public ResponseEntity<String> register(@Valid @RequestBody Register request) {
         return ResponseEntity.ok(userService.register(request));
     }
 
     // Xem danh sach nha tro dang tom tat.
+    // test lấy tất cả nhà trọ thành công //
     @GetMapping("/rental-properties")
     public ResponseEntity<List<Rental>> getRentalProperties() {
         return ResponseEntity.ok(rentalPropertyService.getRentalProperties());
     }
 
     // Xem chi tiet mot nha tro.
+    // test lấy chi tiết nhà trọ thành công //
     @GetMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<RentalDetail> getRentalPropertyDetail(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(rentalPropertyService.getRentalPropertyDetail(rentalPropertyId));

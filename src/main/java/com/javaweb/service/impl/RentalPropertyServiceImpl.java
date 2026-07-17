@@ -1,5 +1,6 @@
 package com.javaweb.service.impl;
 
+import com.javaweb.builder.RentalSearchBuilder;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.converter.RentalConverter;
 import com.javaweb.entity.FacilityEntity;
@@ -21,6 +22,7 @@ import com.javaweb.repository.ImageRepository;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.RentalPropertyService;
+import com.javaweb.specification.RentalPropertySpecification;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,29 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
             responses.add(rentalConverter.toRental(rentalProperty));
         }
         
+        return responses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Rental> searchRentalProperties(RentalSearchBuilder searchBuilder) {
+        List<RentalPropertyEntity> rentalProperties;
+
+        if (searchBuilder == null || searchBuilder.isEmpty()) {
+            rentalProperties = rentalPropertyRepository.findAll();
+        } else {
+            rentalProperties = rentalPropertyRepository.findAll(
+                    RentalPropertySpecification.search(searchBuilder));
+        }
+
+        if (rentalProperties.isEmpty()) {
+            throw new DataNotFoundException("khong tim thay nha tro phu hop");
+        }
+
+        List<Rental> responses = new ArrayList<>();
+        for (RentalPropertyEntity rentalProperty : rentalProperties) {
+            responses.add(rentalConverter.toRental(rentalProperty));
+        }
         return responses;
     }
 
@@ -94,12 +119,9 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     public String deleteRentalProperty(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
 
-        if (hasRoomsWithContracts(rentalProperty)) {
-            throw new IllegalArgumentException("Cannot delete rental property because it has rooms with contracts");
-        }
-
-        if (!rentalProperty.getReviews().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete rental property because it has reviews");
+        if (hasOccupiedRooms(rentalProperty)) {
+            throw new IllegalArgumentException(
+                    "Cannot delete rental property because one or more rooms are occupied");
         }
 
         rentalPropertyRepository.delete(rentalProperty);
@@ -133,10 +155,10 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
                         "Rental property not found"));
     }
 
-    private boolean hasRoomsWithContracts(RentalPropertyEntity rentalProperty) {
+    private boolean hasOccupiedRooms(RentalPropertyEntity rentalProperty) {
         return rentalProperty.getRoomTypes().stream()
                 .flatMap(roomType -> roomType.getRooms().stream())
-                .anyMatch(room -> !room.getContracts().isEmpty());
+                .anyMatch(room -> room.getCurrentTenant() != null);
     }
 
     private RentalTypeEntity getOrCreateRentalType(String rentalTypeName) {

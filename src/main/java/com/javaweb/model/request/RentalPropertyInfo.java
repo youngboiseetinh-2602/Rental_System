@@ -1,4 +1,4 @@
-package com.javaweb.model.request;
+ package com.javaweb.model.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

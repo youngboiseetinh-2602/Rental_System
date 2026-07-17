@@ -65,7 +65,7 @@ public class RentalPropertyEntity {
     @BatchSize(size = 50)
     private List<ImageEntity> images = new ArrayList<>();
 
-    @OneToMany(mappedBy = "rentalProperty")
+    @OneToMany(mappedBy = "rentalProperty", cascade = CascadeType.ALL)
     @BatchSize(size = 50)
     private List<ReviewEntity> reviews = new ArrayList<>();
 

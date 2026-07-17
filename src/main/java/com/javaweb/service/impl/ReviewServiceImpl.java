@@ -31,6 +31,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ModelMapper modelMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewResponse> reviewList(Long id) {
         RentalPropertyEntity rental = rentalPropertyRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("khong tim thay nha tro"));
@@ -78,7 +79,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ForbiddenException("You are not allowed to update this review");
         }
 
-        review.setComment(request.getComment());
+        modelMapper.map(request, review);
         reviewRepository.save(review);
         return "cap nhat danh gia thanh cong";
     }

@@ -6,7 +6,7 @@ import com.javaweb.converter.ContractConverter;
 import com.javaweb.entity.ContractEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.model.response.Rental;
-import com.javaweb.model.response.RentalRequestResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.service.OwnerService;
@@ -45,7 +45,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentalRequestResponse> getOwnerRentalRequests(Long ownerId) {
+    public List<ContractResponse> getOwnerRentalRequests(Long ownerId) {
         List<ContractEntity> requests =
                 contractRepository.findAllByRoom_RoomType_RentalProperty_Owner_Id(
                         ownerId);
@@ -54,9 +54,9 @@ public class OwnerServiceImpl implements OwnerService {
             throw new DataNotFoundException("khong tim thay yeu cau thue nao");
         }
 
-        List<RentalRequestResponse> responses = new ArrayList<>();
+        List<ContractResponse> responses = new ArrayList<>();
         for (ContractEntity request : requests) {
-            responses.add(contractConverter.toRentalRequestResponse(request));
+            responses.add(contractConverter.toContractResponse(request));
         }
         return responses;
     }

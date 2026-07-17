@@ -4,6 +4,7 @@ import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRoomType;
+import java.util.List;
 
 public interface RoomService {
 
@@ -19,7 +20,7 @@ public interface RoomService {
 
     String deleteFacility(Long facilityId);
 
-    String addRoom(Long roomTypeId, Room request);
+    String addRooms(Long roomTypeId, List<Room> requests);
 
     String deleteRoom(Long roomId);
 }

@@ -15,7 +15,10 @@ import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.RoomTypeRepository;
 import com.javaweb.service.RoomService;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -67,8 +70,11 @@ public class RoomServiceImpl implements RoomService {
     public String deleteRoomType(Long roomTypeId) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
 
-        if (!roomType.getRooms().isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete room type because it still has rooms");
+        boolean hasCurrentTenant = roomType.getRooms().stream()
+                .anyMatch(room -> room.getCurrentTenant() != null);
+        if (hasCurrentTenant) {
+            throw new IllegalArgumentException(
+                    "Cannot delete room type because one or more rooms are occupied");
         }
 
         roomTypeRepository.delete(roomType);
@@ -107,23 +113,32 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    public String addRoom(Long roomTypeId, Room request) {
+    public String addRooms(Long roomTypeId, List<Room> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
-        String normalizedRoomName = request.getName().trim();
         Long rentalPropertyId = roomType.getRentalProperty().getId();
+        Set<String> roomNames = new HashSet<>();
+        List<RoomEntity> rooms = requests.stream()
+                .map(request -> {
+                    String normalizedRoomName = request.getName().trim();
+                    String comparisonName = normalizedRoomName.toLowerCase(Locale.ROOT);
 
-        if (roomRepository.existsByRoomType_RentalProperty_IdAndNameIgnoreCase(
-                rentalPropertyId,
-                normalizedRoomName)) {
-            throw new ConflictException("Room name already exists in this rental property");
-        }
+                    if (!roomNames.add(comparisonName)
+                            || roomRepository.existsByRoomType_RentalProperty_IdAndNameIgnoreCase(
+                                    rentalPropertyId,
+                                    normalizedRoomName)) {
+                        throw new ConflictException(
+                                "Room name already exists in this rental property: " + normalizedRoomName);
+                    }
 
-        RoomEntity room = modelMapper.map(request, RoomEntity.class);
-        room.setName(normalizedRoomName);
-        room.setRoomType(roomType);
+                    RoomEntity room = modelMapper.map(request, RoomEntity.class);
+                    room.setName(normalizedRoomName);
+                    room.setRoomType(roomType);
+                    return room;
+                })
+                .toList();
 
-        roomRepository.save(room);
-        return "them phong thanh cong";
+        roomRepository.saveAll(rooms);
+        return "them danh sach phong thanh cong";
     }
 
     @Override

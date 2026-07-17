@@ -22,4 +22,8 @@ public interface ContractRepository extends JpaRepository<ContractEntity, Long> 
         List<ContractEntity> findAllByStatusAndEndDate(
                         ContractStatus status,
                         LocalDate endDate);
+
+        List<ContractEntity> findAllByStatusAndEndDateBefore(
+                        ContractStatus status,
+                        LocalDate endDate);
 }

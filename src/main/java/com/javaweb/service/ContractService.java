@@ -2,7 +2,7 @@ package com.javaweb.service;
 
 import com.javaweb.model.request.RentalRequest;
 import com.javaweb.enums.ContractStatus;
-import com.javaweb.model.response.RentalRequestResponse;
+import com.javaweb.model.response.ContractResponse;
 import java.util.List;
 
 public interface ContractService {
@@ -13,7 +13,9 @@ public interface ContractService {
 
     String cancelRentalRequest(Long userId, Long contractId);
 
-    List<RentalRequestResponse> getUserRentalRequests(Long userId);
+    List<ContractResponse> getUserRentalRequests(Long userId);
 
     void notifyContractsExpiringInOneWeek();
+
+    void expireContracts();
 }

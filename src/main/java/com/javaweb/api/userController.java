@@ -6,7 +6,7 @@ import com.javaweb.model.request.Review;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
 import com.javaweb.model.response.NotificationResponse;
-import com.javaweb.model.response.RentalRequestResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.service.UserService;
 import com.javaweb.service.ReviewService;
 import com.javaweb.service.ContractService;
@@ -28,13 +28,15 @@ public class userController {
     private final NotificationService notificationService;
 
     // Lay cac yeu cau thue cua user.
+    // test customer lấy yêu cầu thuê thành công //
     @GetMapping("/users/{userId}/rental-requests")
-    public ResponseEntity<List<RentalRequestResponse>> getRentalRequests(
+    public ResponseEntity<List<ContractResponse>> getRentalRequests(
             @PathVariable Long userId) {
         return ResponseEntity.ok(contractService.getUserRentalRequests(userId));
     }
 
     // Lay danh sach thong bao cua user.
+    // test lấy thông báo thành công //
     @GetMapping("/users/{userId}/notifications")
     public ResponseEntity<List<NotificationResponse>> getNotifications(
             @PathVariable Long userId) {
@@ -68,6 +70,7 @@ public class userController {
     }
 
     // Viet danh gia cho nha tro.
+    // test viết review thành công //
     @PostMapping("/users/{userId}/rental-properties/{rentalPropertyId}/reviews")
     public ResponseEntity<String> createReview(
             @PathVariable Long userId,
@@ -86,6 +89,7 @@ public class userController {
     }
 
     // Xoa danh gia cua user.
+    // test xóa review thành công //
     @DeleteMapping("/users/{userId}/reviews/{reviewId}")
     public ResponseEntity<String> deleteReview(
             @PathVariable Long userId,
@@ -108,6 +112,7 @@ public class userController {
     }
 
     // Doi mat khau nguoi dung.
+    // test đổi mật khẩu thành công //
     @PatchMapping("/users/{userId}/password")
     public ResponseEntity<String> changePassword(
             @PathVariable Long userId,
