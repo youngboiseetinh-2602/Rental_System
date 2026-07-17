@@ -1,17 +1,17 @@
 package com.javaweb.service;
 
-import com.javaweb.builder.RentalSearchBuilder;
 import com.javaweb.model.request.RentalProperty;
 import com.javaweb.model.request.RentalPropertyInfo;
 import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import java.util.List;
+import java.util.Map;
 
 public interface RentalPropertyService {
 
     List<Rental> getRentalProperties();
 
-    List<Rental> searchRentalProperties(RentalSearchBuilder searchBuilder);
+    List<Rental> searchRentalProperties(Map<String, Object> params);
 
     RentalDetail getRentalPropertyDetail(Long rentalPropertyId);
 

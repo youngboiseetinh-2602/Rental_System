@@ -9,9 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class RentalSearchBuilderConverter {
 
-    public RentalSearchBuilder toRentalSearchBuilder(Map<String, ?> params) {
+    public RentalSearchBuilder toRentalSearchBuilder(Map<String, Object> params) {
         return RentalSearchBuilder.builder()
                 .rentalType(MapUtil.getObject(params, "rentalType", String.class))
+                .description(MapUtil.getObject(params, "description", String.class))
                 .city(MapUtil.getObject(params, "city", String.class))
                 .ward(MapUtil.getObject(params, "ward", String.class))
                 .street(MapUtil.getObject(params, "street", String.class))

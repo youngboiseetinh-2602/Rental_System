@@ -7,6 +7,7 @@ import lombok.Getter;
 public class RentalSearchBuilder {
 
     private final String rentalType;
+    private final String description;
     private final String city;
     private final String ward;
     private final String street;
@@ -15,6 +16,7 @@ public class RentalSearchBuilder {
 
     private RentalSearchBuilder(Builder builder) {
         this.rentalType = builder.rentalType;
+        this.description = builder.description;
         this.city = builder.city;
         this.ward = builder.ward;
         this.street = builder.street;
@@ -28,6 +30,7 @@ public class RentalSearchBuilder {
 
     public boolean isEmpty() {
         return !hasText(rentalType)
+                && !hasText(description)
                 && !hasText(city)
                 && !hasText(ward)
                 && !hasText(street)
@@ -42,6 +45,7 @@ public class RentalSearchBuilder {
     public static class Builder {
 
         private String rentalType;
+        private String description;
         private String city;
         private String ward;
         private String street;
@@ -50,6 +54,11 @@ public class RentalSearchBuilder {
 
         public Builder rentalType(String rentalType) {
             this.rentalType = rentalType;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
             return this;
         }
 

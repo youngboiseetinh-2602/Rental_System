@@ -83,13 +83,18 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    public String addFacility(Long roomTypeId, FacilityInfo request) {
+    public String addFacilities(Long roomTypeId, List<FacilityInfo> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
-        FacilityEntity facility = modelMapper.map(request, FacilityEntity.class);
-        facility.setRoomType(roomType);
+        List<FacilityEntity> facilities = requests.stream()
+                .map(request -> {
+                    FacilityEntity facility = modelMapper.map(request, FacilityEntity.class);
+                    facility.setRoomType(roomType);
+                    return facility;
+                })
+                .toList();
 
-        facilityRepository.save(facility);
-        return "them co so vat chat thanh cong";
+        facilityRepository.saveAll(facilities);
+        return "them danh sach co so vat chat thanh cong";
     }
 
     @Override

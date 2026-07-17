@@ -23,7 +23,7 @@ public class Register {
     @Size(max = 100, message = "Full name must not exceed 100 characters")
     private String fullName;
 
-    @Size(max = 20, message = "Phone number must not exceed 20 characters")
+    @Size(max = 20, message = "Phone number must not exceed 11 characters")
     @Pattern(regexp = "^(\\+?[0-9]{8,15})?$", message = "Phone number is invalid")
     private String phoneNumber;
 

@@ -132,13 +132,15 @@ public class ownerController {
 
     // Them co so vat chat cho loai phong.
     @PostMapping("/room-types/{roomTypeId}/facilities")
-    public ResponseEntity<String> addFacility(
+    public ResponseEntity<String> addFacilities(
             @PathVariable Long roomTypeId,
-            @Valid @RequestBody FacilityInfo request) {
-        return ResponseEntity.ok(roomService.addFacility(roomTypeId, request));
+            @NotEmpty(message = "Facility list must not be empty")
+            @RequestBody List<@Valid FacilityInfo> requests) {
+        return ResponseEntity.ok(roomService.addFacilities(roomTypeId, requests));
     }
 
     // Cap nhat co so vat chat.
+    // test sửa cơ sở vật chất thành công //
     @PutMapping("/facilities/{facilityId}")
     public ResponseEntity<String> updateFacility(
             @PathVariable Long facilityId,

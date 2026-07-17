@@ -29,6 +29,7 @@ public final class RentalPropertySpecification {
                         criteriaBuilder.lower(root.get("rentalType").get("name")),
                         contains(searchBuilder.getRentalType())));
             }
+            addLike(predicates, criteriaBuilder, root.get("description"), searchBuilder.getDescription());
             addLike(predicates, criteriaBuilder, root.get("city"), searchBuilder.getCity());
             addLike(predicates, criteriaBuilder, root.get("ward"), searchBuilder.getWard());
             addLike(predicates, criteriaBuilder, root.get("street"), searchBuilder.getStreet());

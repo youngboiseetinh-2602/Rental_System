@@ -3,6 +3,7 @@ package com.javaweb.service.impl;
 import com.javaweb.builder.RentalSearchBuilder;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.converter.RentalConverter;
+import com.javaweb.converter.RentalSearchBuilderConverter;
 import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.ImageEntity;
 import com.javaweb.entity.RentalPropertyEntity;
@@ -25,6 +26,7 @@ import com.javaweb.service.RentalPropertyService;
 import com.javaweb.specification.RentalPropertySpecification;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final ImageRepository imageRepository;
     private final ModelMapper modelMapper;
     private final RentalConverter rentalConverter;
+    private final RentalSearchBuilderConverter rentalSearchBuilderConverter;
 
     @Override
     @Transactional(readOnly = true)
@@ -61,7 +64,10 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Rental> searchRentalProperties(RentalSearchBuilder searchBuilder) {
+    public List<Rental> searchRentalProperties(Map<String, Object> params) {
+        RentalSearchBuilder searchBuilder =
+                rentalSearchBuilderConverter.toRentalSearchBuilder(params);
+
         List<RentalPropertyEntity> rentalProperties;
 
         if (searchBuilder == null || searchBuilder.isEmpty()) {

@@ -14,7 +14,7 @@ public interface RoomService {
 
     String deleteRoomType(Long roomTypeId);
 
-    String addFacility(Long roomTypeId, FacilityInfo request);
+    String addFacilities(Long roomTypeId, List<FacilityInfo> requests);
 
     String updateFacility(Long facilityId, FacilityInfo request);
 
