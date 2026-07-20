@@ -12,6 +12,7 @@ import com.javaweb.model.response.ReviewResponse;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.ReviewRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -29,6 +30,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ModelMapper modelMapper;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,7 +53,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public String createReview(Long userId, Long rentalPropertyId, Review request) {
+    public String createReview(Long rentalPropertyId, Review request) {
+        Long userId = getCurrentUserId();
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found with id: " + userId));
         RentalPropertyEntity rentalProperty = rentalPropertyRepository.findById(rentalPropertyId)
@@ -71,7 +74,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public String updateReview(Long userId, Long reviewId, Review request) {
+    public String updateReview(Long reviewId, Review request) {
+        Long userId = getCurrentUserId();
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new DataNotFoundException("Review not found with id: " + reviewId));
 
@@ -86,7 +90,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public String deleteReview(Long userId, Long reviewId) {
+    public String deleteReview(Long reviewId) {
+        Long userId = getCurrentUserId();
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new DataNotFoundException("Review not found with id: " + reviewId));
 
@@ -96,5 +101,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         reviewRepository.delete(review);
         return "xoa danh gia thanh cong";
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 }

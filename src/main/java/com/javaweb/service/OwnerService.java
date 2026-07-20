@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface OwnerService {
 
-    List<Rental> getOwnerRentals(Long ownerId);
+    List<Rental> getOwnerRentals();
 
-    List<ContractResponse> getOwnerRentalRequests(Long ownerId);
+    List<ContractResponse> getOwnerRentalRequests();
 }

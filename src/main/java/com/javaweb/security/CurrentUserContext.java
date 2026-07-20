@@ -10,11 +10,7 @@ import org.springframework.stereotype.Component;
 public class CurrentUserContext {
 
     public Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AuthenticationCredentialsNotFoundException("User is not authenticated");
-        }
+        Authentication authentication = getAuthentication();
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof OAuth2AuthenticatedPrincipal oauth2Principal) {
@@ -28,5 +24,20 @@ public class CurrentUserContext {
         }
 
         throw new AuthenticationCredentialsNotFoundException("Authenticated user id is unavailable");
+    }
+
+    public boolean hasAuthority(String authority) {
+        return getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
+    }
+
+    private Authentication getAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthenticationCredentialsNotFoundException("User is not authenticated");
+        }
+
+        return authentication;
     }
 }

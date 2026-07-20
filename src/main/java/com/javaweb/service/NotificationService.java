@@ -10,7 +10,7 @@ public interface NotificationService {
 
     boolean notificationExists(Long receiverId, String title, String content);
 
-    List<NotificationResponse> getNotifications(Long userId);
+    List<NotificationResponse> getNotifications();
 
-    String readNotification(Long userId, Long notificationId);
+    String readNotification(Long notificationId);
 }

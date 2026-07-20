@@ -10,6 +10,7 @@ import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.repository.NotificationRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.NotificationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationConverter notificationConverter;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional
@@ -53,7 +55,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(Long userId) {
+    public List<NotificationResponse> getNotifications() {
+        Long userId = getCurrentUserId();
         getUser(userId, "User");
         List<NotificationEntity> notifications =
                 notificationRepository.findAllByReceiver_Id(userId);
@@ -73,7 +76,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public String readNotification(Long userId, Long notificationId) {
+    public String readNotification(Long notificationId) {
+        Long userId = getCurrentUserId();
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Notification not found: " + notificationId));
@@ -96,5 +100,9 @@ public class NotificationServiceImpl implements NotificationService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException(
                         type + " not found: " + userId));
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 }

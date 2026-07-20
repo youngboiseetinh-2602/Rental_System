@@ -15,7 +15,7 @@ public interface RentalPropertyService {
 
     RentalDetail getRentalPropertyDetail(Long rentalPropertyId);
 
-    String createRentalProperty(Long ownerId, RentalProperty request);
+    String createRentalProperty(RentalProperty request);
 
     String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request);
 

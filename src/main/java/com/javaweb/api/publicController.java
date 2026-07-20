@@ -1,7 +1,6 @@
 package com.javaweb.api;
 
 import com.javaweb.model.request.Register;
-import com.javaweb.model.request.UserLogin;
 import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import com.javaweb.model.response.ReviewResponse;
@@ -30,36 +29,26 @@ public class publicController {
     private final RentalPropertyService rentalPropertyService;
     private final ReviewService reviewService;
 
-    // Dang nhap.
-    // test login thành công //
-    @PostMapping("/auth/login")
-    public ResponseEntity<String> login(@Valid @RequestBody UserLogin request) {
-        return ResponseEntity.ok(userService.login(request));
-    }
-
-    // Dang ky tai khoan moi.
-    // test thành công //
+    // Dang ky tai khoan moi va ma hoa mat khau truoc khi luu.
     @PostMapping("/auth/register")
     public ResponseEntity<String> register(@Valid @RequestBody Register request) {
         return ResponseEntity.ok(userService.register(request));
     }
 
-    // tìm kiếm nhà trọ theo các tiêu chí.
-    // test lấy tất cả nhà trọ thành công //
+    // Tim kiem nha tro theo cac tieu chi; khong co tieu chi thi lay tat ca.
     @GetMapping("/rental-properties")
     public ResponseEntity<List<Rental>> searchRentalProperties(
             @RequestParam Map<String, Object> params) {
         return ResponseEntity.ok(rentalPropertyService.searchRentalProperties(params));
     }
 
-    // Xem chi tiet mot nha tro.
-    // test lấy chi tiết nhà trọ thành công //
+    // Lay thong tin chi tiet cua mot nha tro.
     @GetMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<RentalDetail> getRentalPropertyDetail(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(rentalPropertyService.getRentalPropertyDetail(rentalPropertyId));
     }
 
-    // Xem danh sach review cua mot nha tro.
+    // Lay danh sach danh gia cua mot nha tro.
     @GetMapping("/rental-properties/{rentalPropertyId}/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviews(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(reviewService.reviewList(rentalPropertyId));

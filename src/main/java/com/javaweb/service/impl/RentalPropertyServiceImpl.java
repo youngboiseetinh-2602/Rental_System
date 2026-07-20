@@ -2,6 +2,7 @@ package com.javaweb.service.impl;
 
 import com.javaweb.builder.RentalSearchBuilder;
 import com.javaweb.customException.DataNotFoundException;
+import com.javaweb.customException.ForbiddenException;
 import com.javaweb.converter.RentalConverter;
 import com.javaweb.converter.RentalSearchBuilderConverter;
 import com.javaweb.entity.FacilityEntity;
@@ -22,6 +23,7 @@ import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.ImageRepository;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.specification.RentalPropertySpecification;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final ModelMapper modelMapper;
     private final RentalConverter rentalConverter;
     private final RentalSearchBuilderConverter rentalSearchBuilderConverter;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,7 +100,8 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
 
     @Override
     @Transactional
-    public String createRentalProperty(Long ownerId, RentalProperty request) {
+    public String createRentalProperty(RentalProperty request) {
+        Long ownerId = getCurrentUserId();
         UserEntity owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new DataNotFoundException("Owner not found with id: " + ownerId));
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
@@ -110,7 +114,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @Override
     @Transactional
     public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request) {
-        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
 
         modelMapper.map(request, rentalProperty);
@@ -123,7 +127,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @Override
     @Transactional
     public String deleteRentalProperty(Long rentalPropertyId) {
-        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
 
         if (hasOccupiedRooms(rentalProperty)) {
             throw new IllegalArgumentException(
@@ -137,7 +141,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @Override
     @Transactional
     public String addRentalPropertyImages(Long rentalPropertyId, List<String> imageUrls) {
-        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
         rentalProperty.getImages().addAll(toImages(imageUrls, rentalProperty));
 
         rentalPropertyRepository.save(rentalProperty);
@@ -150,6 +154,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         ImageEntity image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Image not found with id: " + imageId));
+        checkManageAccess(image.getRentalProperty());
 
         imageRepository.delete(image);
         return "xoa anh nha tro thanh cong";
@@ -159,6 +164,23 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         return rentalPropertyRepository.findById(rentalPropertyId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Rental property not found"));
+    }
+
+    private RentalPropertyEntity getManageableRentalPropertyById(Long rentalPropertyId) {
+        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        checkManageAccess(rentalProperty);
+        return rentalProperty;
+    }
+
+    private void checkManageAccess(RentalPropertyEntity rentalProperty) {
+        if (!rentalProperty.getOwner().getId().equals(getCurrentUserId())
+                && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
+            throw new ForbiddenException("You are not allowed to manage this rental property");
+        }
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 
     private boolean hasOccupiedRooms(RentalPropertyEntity rentalProperty) {

@@ -9,6 +9,7 @@ import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RentalPropertyRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.OwnerService;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +25,12 @@ public class OwnerServiceImpl implements OwnerService {
     private final ContractRepository contractRepository;
     private final RentalConverter rentalConverter;
     private final ContractConverter contractConverter;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Rental> getOwnerRentals(Long ownerId) {
+    public List<Rental> getOwnerRentals() {
+        Long ownerId = getCurrentUserId();
         List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findByOwnerId(ownerId);
 
         if (rentalProperties.isEmpty()) {
@@ -45,7 +48,8 @@ public class OwnerServiceImpl implements OwnerService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ContractResponse> getOwnerRentalRequests(Long ownerId) {
+    public List<ContractResponse> getOwnerRentalRequests() {
+        Long ownerId = getCurrentUserId();
         List<ContractEntity> requests =
                 contractRepository.findAllByRoom_RoomType_RentalProperty_Owner_Id(
                         ownerId);
@@ -59,5 +63,9 @@ public class OwnerServiceImpl implements OwnerService {
             responses.add(contractConverter.toContractResponse(request));
         }
         return responses;
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 }

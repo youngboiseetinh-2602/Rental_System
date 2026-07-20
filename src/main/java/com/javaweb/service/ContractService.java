@@ -7,13 +7,15 @@ import java.util.List;
 
 public interface ContractService {
 
-    String createRentalRequest(Long userId, RentalRequest request);
+    String createRentalRequest(RentalRequest request);
 
     String processRentalRequest(Long contractId, ContractStatus status);
 
-    String cancelRentalRequest(Long userId, Long contractId);
+    String cancelRentalRequest(Long contractId);
 
-    List<ContractResponse> getUserRentalRequests(Long userId);
+    String terminateContract(Long contractId);
+
+    List<ContractResponse> getUserRentalRequests();
 
     void notifyContractsExpiringInOneWeek();
 

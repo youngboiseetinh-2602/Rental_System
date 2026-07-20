@@ -16,6 +16,7 @@ import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +41,12 @@ public class ContractServiceImpl implements ContractService {
     private final NotificationService notificationService;
     private final ContractConverter contractConverter;
     private final ModelMapper modelMapper;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional
-    public String createRentalRequest(Long userId, RentalRequest request) {
+    public String createRentalRequest(RentalRequest request) {
+        Long userId = getCurrentUserId();
         UserEntity customer = getCustomer(userId);
         RoomEntity room = getAvailableRoom(request.getRoomId());
         checkDuplicateRequest(userId, room.getId());
@@ -57,6 +60,7 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public String processRentalRequest(Long contractId, ContractStatus status) {
         ContractEntity contract = getPendingContract(contractId);
+        checkOwnerAccess(contract);
 
         // Owner tu choi yeu cau.
         if (status == ContractStatus.CANCELLED) {
@@ -73,7 +77,8 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional
-    public String cancelRentalRequest(Long userId, Long contractId) {
+    public String cancelRentalRequest(Long contractId) {
+        Long userId = getCurrentUserId();
         ContractEntity contract = getPendingContract(contractId);
 
         if (!contract.getTenant().getId().equals(userId)) {
@@ -84,8 +89,34 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @Transactional
+    public String terminateContract(Long contractId) {
+        checkAdminAccess();
+
+        ContractEntity contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Contract not found with id: " + contractId
+                ));
+
+        if (contract.getStatus() != ContractStatus.APPROVED) {
+            throw new ConflictException("Only approved contracts can be terminated");
+        }
+
+        RoomEntity room = contract.getRoom();
+        contract.setStatus(ContractStatus.TERMINATED);
+        contract.setEndDate(LocalDate.now(VIETNAM_ZONE));
+        room.setStatus(RoomStatus.AVAILABLE);
+        room.setCurrentTenant(null);
+
+        contractRepository.save(contract);
+        roomRepository.save(room);
+        return "ket thuc hop dong thanh cong";
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public List<ContractResponse> getUserRentalRequests(Long userId) {
+    public List<ContractResponse> getUserRentalRequests() {
+        Long userId = getCurrentUserId();
         getCustomer(userId);
         List<ContractEntity> requests =
                 contractRepository.findAllByTenant_Id(userId);
@@ -246,5 +277,22 @@ public class ContractServiceImpl implements ContractService {
 
     private Long getOwnerId(ContractEntity contract) {
         return contract.getRoom().getRoomType().getRentalProperty().getOwner().getId();
+    }
+
+    private void checkOwnerAccess(ContractEntity contract) {
+        if (!getOwnerId(contract).equals(getCurrentUserId())
+                && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
+            throw new ForbiddenException("You are not allowed to process this rental request");
+        }
+    }
+
+    private void checkAdminAccess() {
+        if (!currentUserContext.hasAuthority("ROLE_ADMIN")) {
+            throw new ForbiddenException("Only administrators can terminate contracts");
+        }
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 }

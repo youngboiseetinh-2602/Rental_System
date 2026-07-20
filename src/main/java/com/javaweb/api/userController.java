@@ -27,96 +27,81 @@ public class userController {
     private final ContractService contractService;
     private final NotificationService notificationService;
 
-    // Lay cac yeu cau thue cua user.
-    // test customer lấy yêu cầu thuê thành công //
-    @GetMapping("/users/{userId}/rental-requests")
-    public ResponseEntity<List<ContractResponse>> getRentalRequests(
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(contractService.getUserRentalRequests(userId));
+    // Lay danh sach yeu cau thue cua nguoi dung dang dang nhap.
+    @GetMapping("/users/me/rental-requests")
+    public ResponseEntity<List<ContractResponse>> getRentalRequests() {
+        return ResponseEntity.ok(contractService.getUserRentalRequests());
     }
 
-    // Lay danh sach thong bao cua user.
-    // test lấy thông báo thành công //
-    @GetMapping("/users/{userId}/notifications")
-    public ResponseEntity<List<NotificationResponse>> getNotifications(
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(notificationService.getNotifications(userId));
+    // Lay danh sach thong bao cua nguoi dung dang dang nhap.
+    @GetMapping("/users/me/notifications")
+    public ResponseEntity<List<NotificationResponse>> getNotifications() {
+        return ResponseEntity.ok(notificationService.getNotifications());
     }
 
-    // Danh dau thong bao da doc khi user click.
-    @PatchMapping("/users/{userId}/notifications/{notificationId}")
+    // Danh dau mot thong bao thuoc nguoi dung dang dang nhap la da doc.
+    @PatchMapping("/users/me/notifications/{notificationId}")
     public ResponseEntity<String> readNotification(
-            @PathVariable Long userId,
             @PathVariable Long notificationId) {
         return ResponseEntity.ok(
-                notificationService.readNotification(userId, notificationId));
+                notificationService.readNotification(notificationId));
     }
 
-    // Gui yeu cau thue phong.
-    @PostMapping("/users/{userId}/rental-requests")
+    // Gui yeu cau thue phong cho nguoi dung dang dang nhap.
+    @PostMapping("/users/me/rental-requests")
     public ResponseEntity<String> createRentalRequest(
-            @PathVariable Long userId,
             @Valid @RequestBody RentalRequest request) {
-        return ResponseEntity.ok(contractService.createRentalRequest(userId, request));
+        return ResponseEntity.ok(contractService.createRentalRequest(request));
     }
 
-    // User huy yeu cau khi chu tro chua chap nhan.
-    @DeleteMapping("/users/{userId}/rental-requests/{contractId}")
+    // Huy yeu cau thue dang PENDING cua nguoi dung dang dang nhap.
+    @DeleteMapping("/users/me/rental-requests/{contractId}")
     public ResponseEntity<String> cancelRentalRequest(
-            @PathVariable Long userId,
             @PathVariable Long contractId) {
         return ResponseEntity.ok(
-                contractService.cancelRentalRequest(userId, contractId));
+                contractService.cancelRentalRequest(contractId));
     }
 
-    // Viet danh gia cho nha tro.
-    // test viết review thành công //
-    @PostMapping("/users/{userId}/rental-properties/{rentalPropertyId}/reviews")
+    // Tao danh gia nha tro bang tai khoan dang dang nhap.
+    @PostMapping("/users/me/rental-properties/{rentalPropertyId}/reviews")
     public ResponseEntity<String> createReview(
-            @PathVariable Long userId,
             @PathVariable Long rentalPropertyId,
             @Valid @RequestBody Review request) {
-        return ResponseEntity.ok(reviewService.createReview(userId, rentalPropertyId, request));
+        return ResponseEntity.ok(reviewService.createReview(rentalPropertyId, request));
     }
 
-    // Cap nhat danh gia cua user.
-    @PatchMapping("/users/{userId}/reviews/{reviewId}")
+    // Cap nhat danh gia thuoc nguoi dung dang dang nhap.
+    @PatchMapping("/users/me/reviews/{reviewId}")
     public ResponseEntity<String> updateReview(
-            @PathVariable Long userId,
             @PathVariable Long reviewId,
             @Valid @RequestBody Review request) {
-        return ResponseEntity.ok(reviewService.updateReview(userId, reviewId, request));
+        return ResponseEntity.ok(reviewService.updateReview(reviewId, request));
     }
 
-    // Xoa danh gia cua user.
-    // test xóa review thành công //
-    @DeleteMapping("/users/{userId}/reviews/{reviewId}")
+    // Xoa danh gia thuoc nguoi dung dang dang nhap.
+    @DeleteMapping("/users/me/reviews/{reviewId}")
     public ResponseEntity<String> deleteReview(
-            @PathVariable Long userId,
             @PathVariable Long reviewId) {
-        return ResponseEntity.ok(reviewService.deleteReview(userId, reviewId));
+        return ResponseEntity.ok(reviewService.deleteReview(reviewId));
     }
 
-    // Lay thong tin nguoi dung.
-    @GetMapping("/users/{userId}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getUserInfo(userId));
+    // Lay thong tin ca nhan cua nguoi dung dang dang nhap.
+    @GetMapping("/users/me")
+    public ResponseEntity<UserResponse> getUser() {
+        return ResponseEntity.ok(userService.getUserInfo());
     }
 
-    // Cap nhat thong tin nguoi dung.
-    @PutMapping("/users/{userId}")
+    // Cap nhat thong tin ca nhan cua nguoi dung dang dang nhap.
+    @PutMapping("/users/me")
     public ResponseEntity<String> updateUser(
-            @PathVariable Long userId,
             @Valid @RequestBody UpdateUserInfo request) {
-        return ResponseEntity.ok(userService.updateUserInfo(userId, request));
+        return ResponseEntity.ok(userService.updateUserInfo(request));
     }
 
-    // Doi mat khau nguoi dung.
-    // test đổi mật khẩu thành công //
-    @PatchMapping("/users/{userId}/password")
+    // Doi mat khau cua nguoi dung dang dang nhap.
+    @PatchMapping("/users/me/password")
     public ResponseEntity<String> changePassword(
-            @PathVariable Long userId,
             @Valid @RequestBody ChangePassword request) {
-        return ResponseEntity.ok(userService.changePassword(userId, request));
+        return ResponseEntity.ok(userService.changePassword(request));
     }
 }

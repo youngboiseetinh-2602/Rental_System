@@ -6,18 +6,16 @@ import com.javaweb.converter.UserConverter;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.UserStatus;
 import com.javaweb.model.request.ChangePassword;
-import com.javaweb.model.request.UserLogin;
 import com.javaweb.model.request.Register;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.UserService;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,23 +29,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
     private final UserConverter userConverter;
-    private final AuthenticationManager authenticationManager;
-
-    @Override
-    public String login(UserLogin request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
-                    )
-            );
-        } catch (BadCredentialsException ex) {
-            throw new BadCredentialsException("Sai mật khẩu hoặc tài khoản");
-        }
-
-        return "dang nhap thanh cong";
-    }
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional
@@ -80,14 +62,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserResponse getUserInfo(Long userId) {
-        UserEntity user = getUserById(userId);
+    public UserResponse getUserInfo() {
+        UserEntity user = getUserById(getCurrentUserId());
         return userConverter.toUserResponse(user);
     }
 
     @Override
     @Transactional
-    public String updateUserInfo(Long userId, UpdateUserInfo request) {
+    public String updateUserInfo(UpdateUserInfo request) {
+        Long userId = getCurrentUserId();
         UserEntity user = getUserById(userId);
 
         if (request.getUsername() != null) {
@@ -139,8 +122,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public String changePassword(Long userId, ChangePassword request) {
-        UserEntity user = getUserById(userId);
+    public String changePassword(ChangePassword request) {
+        UserEntity user = getUserById(getCurrentUserId());
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new BadCredentialsException("Current password is incorrect");
@@ -162,6 +145,10 @@ public class UserServiceImpl implements UserService {
     private UserEntity getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found with id: " + userId));
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 
 }

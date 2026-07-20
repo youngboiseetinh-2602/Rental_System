@@ -9,9 +9,9 @@ public interface ReviewService {
 
     List<ReviewResponse> reviewList(Long id);
 
-    String createReview(Long userId, Long rentalPropertyId, Review request);
+    String createReview(Long rentalPropertyId, Review request);
 
-    String updateReview(Long userId, Long reviewId, Review request);
+    String updateReview(Long reviewId, Review request);
 
-    String deleteReview(Long userId, Long reviewId);
+    String deleteReview(Long reviewId);
 }

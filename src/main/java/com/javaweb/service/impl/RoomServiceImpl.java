@@ -2,6 +2,7 @@ package com.javaweb.service.impl;
 
 import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
+import com.javaweb.customException.ForbiddenException;
 import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.entity.RoomEntity;
@@ -14,6 +15,7 @@ import com.javaweb.repository.FacilityRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.RoomTypeRepository;
+import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RoomService;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +35,7 @@ public class RoomServiceImpl implements RoomService {
     private final FacilityRepository facilityRepository;
     private final RoomRepository roomRepository;
     private final ModelMapper modelMapper;
+    private final CurrentUserContext currentUserContext;
 
     @Override
     @Transactional
@@ -160,24 +163,43 @@ public class RoomServiceImpl implements RoomService {
     }
 
     private RentalPropertyEntity getRentalPropertyById(Long rentalPropertyId) {
-        return rentalPropertyRepository.findById(rentalPropertyId)
+        RentalPropertyEntity rentalProperty = rentalPropertyRepository.findById(rentalPropertyId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Rental property not found with id: " + rentalPropertyId));
+        checkManageAccess(rentalProperty);
+        return rentalProperty;
     }
 
     private RoomTypeEntity getRoomTypeById(Long roomTypeId) {
-        return roomTypeRepository.findById(roomTypeId)
+        RoomTypeEntity roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> new DataNotFoundException("Room type not found with id: " + roomTypeId));
+        checkManageAccess(roomType.getRentalProperty());
+        return roomType;
     }
 
     private FacilityEntity getFacilityById(Long facilityId) {
-        return facilityRepository.findById(facilityId)
+        FacilityEntity facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new DataNotFoundException("Facility not found with id: " + facilityId));
+        checkManageAccess(facility.getRoomType().getRentalProperty());
+        return facility;
     }
 
     private RoomEntity getRoomById(Long roomId) {
-        return roomRepository.findById(roomId)
+        RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new DataNotFoundException("Room not found with id: " + roomId));
+        checkManageAccess(room.getRoomType().getRentalProperty());
+        return room;
+    }
+
+    private void checkManageAccess(RentalPropertyEntity rentalProperty) {
+        if (!rentalProperty.getOwner().getId().equals(getCurrentUserId())
+                && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
+            throw new ForbiddenException("You are not allowed to manage this rental property");
+        }
+    }
+
+    private Long getCurrentUserId() {
+        return currentUserContext.getCurrentUserId();
     }
 
     private RoomTypeEntity toRoomType(RoomType request, RentalPropertyEntity rentalProperty) {

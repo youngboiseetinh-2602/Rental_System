@@ -42,7 +42,7 @@ public class ownerController {
     private final RoomService roomService;
     private final ContractService contractService;
 
-    // Chap nhan hoac huy yeu cau thue.
+    // Chap nhan hoac tu choi yeu cau thue thuoc nha tro cua owner dang dang nhap.
     @PatchMapping("/rental-requests/{contractId}")
     public ResponseEntity<String> processRentalRequest(
             @PathVariable Long contractId,
@@ -51,31 +51,26 @@ public class ownerController {
                 contractService.processRentalRequest(contractId, status));
     }
 
-    // Lấy danh sách yêu cầu thuê nhà của owner theo thứ tự mới nhất trước.
-    @GetMapping("/owners/{ownerId}/rental-requests")
-    public ResponseEntity<List<ContractResponse>> getOwnerRentalRequests(
-            @PathVariable Long ownerId) {
-        return ResponseEntity.ok(ownerService.getOwnerRentalRequests(ownerId));
+    // Lay danh sach yeu cau thue gui den cac nha tro cua owner dang dang nhap.
+    @GetMapping("/owners/me/rental-requests")
+    public ResponseEntity<List<ContractResponse>> getOwnerRentalRequests() {
+        return ResponseEntity.ok(ownerService.getOwnerRentalRequests());
     }
 
-    // Lấy danh sách nha tro của owner.
-    // test lấy nhà trọ của OWNER thành công //
-    @GetMapping("/owners/{ownerId}/rental-properties")
-    public ResponseEntity<List<Rental>> getMyRentals(@PathVariable Long ownerId) {
-        return ResponseEntity.ok(ownerService.getOwnerRentals(ownerId));
+    // Lay danh sach nha tro thuoc owner dang dang nhap.
+    @GetMapping("/owners/me/rental-properties")
+    public ResponseEntity<List<Rental>> getMyRentals() {
+        return ResponseEntity.ok(ownerService.getOwnerRentals());
     }
 
-    // Tao nha tro moi cho owner.
-    // test tạo nhà trọ thành công //
-    @PostMapping("/owners/{ownerId}/rental-properties")
+    // Tao nha tro moi cho owner dang dang nhap.
+    @PostMapping("/owners/me/rental-properties")
     public ResponseEntity<String> createRentalProperty(
-            @PathVariable Long ownerId,
             @Valid @RequestBody RentalProperty request) {
-        return ResponseEntity.ok(rentalPropertyService.createRentalProperty(ownerId, request));
+        return ResponseEntity.ok(rentalPropertyService.createRentalProperty(request));
     }
 
-    // Cap nhat thong tin nha tro.
-    // test cập nhật nhà trọ thành công //
+    // Cap nhat nha tro neu thuoc owner dang dang nhap; ADMIN duoc phep quan tri.
     @PutMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<String> updateRentalProperty(
             @PathVariable Long rentalPropertyId,
@@ -83,14 +78,13 @@ public class ownerController {
         return ResponseEntity.ok(rentalPropertyService.updateRentalProperty(rentalPropertyId, request));
     }
 
-    // Xoa nha tro.
+    // Xoa nha tro neu thuoc owner dang dang nhap va khong co phong dang duoc thue.
     @DeleteMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<String> deleteRentalProperty(@PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(rentalPropertyService.deleteRentalProperty(rentalPropertyId));
     }
 
-    // Them danh sach anh cho nha tro.
-    // test thêm ảnh thành công //
+    // Them danh sach anh vao nha tro ma owner dang dang nhap duoc quan ly.
     @PostMapping("/rental-properties/{rentalPropertyId}/images")
     public ResponseEntity<String> addRentalPropertyImages(
             @PathVariable Long rentalPropertyId,
@@ -98,7 +92,7 @@ public class ownerController {
         return ResponseEntity.ok(rentalPropertyService.addRentalPropertyImages(rentalPropertyId, imageUrls));
     }
 
-    // Xoa mot anh nha tro.
+    // Xoa anh thuoc nha tro ma owner dang dang nhap duoc quan ly.
     @DeleteMapping("/images/{imageId}")
     public ResponseEntity<String> deleteRentalPropertyImage(
             @PathVariable Long imageId) {
@@ -106,8 +100,7 @@ public class ownerController {
                 rentalPropertyService.deleteRentalPropertyImage(imageId));
     }
 
-    // Them loai phong cho nha tro.
-    // test thêm loại phòng thành công //
+    // Them loai phong vao nha tro ma owner dang dang nhap duoc quan ly.
     @PostMapping("/rental-properties/{rentalPropertyId}/room-types")
     public ResponseEntity<String> addRoomType(
             @PathVariable Long rentalPropertyId,
@@ -115,8 +108,7 @@ public class ownerController {
         return ResponseEntity.ok(roomService.addRoomType(rentalPropertyId, request));
     }
 
-    // Cap nhat loai phong.
-    // test cập nhật loại phòng thành công //
+    // Cap nhat loai phong thuoc nha tro ma owner dang dang nhap duoc quan ly.
     @PutMapping("/room-types/{roomTypeId}")
     public ResponseEntity<String> updateRoomType(
             @PathVariable Long roomTypeId,
@@ -124,13 +116,13 @@ public class ownerController {
         return ResponseEntity.ok(roomService.updateRoomType(roomTypeId, request));
     }
 
-    // Xoa loai phong.
+    // Xoa loai phong neu khong co phong nao dang duoc thue.
     @DeleteMapping("/room-types/{roomTypeId}")
     public ResponseEntity<String> deleteRoomType(@PathVariable Long roomTypeId) {
         return ResponseEntity.ok(roomService.deleteRoomType(roomTypeId));
     }
 
-    // Them co so vat chat cho loai phong.
+    // Them danh sach co so vat chat vao loai phong duoc owner quan ly.
     @PostMapping("/room-types/{roomTypeId}/facilities")
     public ResponseEntity<String> addFacilities(
             @PathVariable Long roomTypeId,
@@ -139,8 +131,7 @@ public class ownerController {
         return ResponseEntity.ok(roomService.addFacilities(roomTypeId, requests));
     }
 
-    // Cap nhat co so vat chat.
-    // test sửa cơ sở vật chất thành công //
+    // Cap nhat co so vat chat thuoc nha tro duoc owner quan ly.
     @PutMapping("/facilities/{facilityId}")
     public ResponseEntity<String> updateFacility(
             @PathVariable Long facilityId,
@@ -148,14 +139,13 @@ public class ownerController {
         return ResponseEntity.ok(roomService.updateFacility(facilityId, request));
     }
 
-    // Xoa co so vat chat.
-    // test xóa cơ sở vật chất thành công //
+    // Xoa co so vat chat thuoc nha tro duoc owner quan ly.
     @DeleteMapping("/facilities/{facilityId}")
     public ResponseEntity<String> deleteFacility(@PathVariable Long facilityId) {
         return ResponseEntity.ok(roomService.deleteFacility(facilityId));
     }
 
-    // Them phong vao loai phong.
+    // Them danh sach phong vao loai phong duoc owner quan ly.
     @PostMapping("/room-types/{roomTypeId}/rooms")
     public ResponseEntity<String> addRooms(
             @PathVariable Long roomTypeId,
@@ -164,8 +154,7 @@ public class ownerController {
         return ResponseEntity.ok(roomService.addRooms(roomTypeId, requests));
     }
 
-    // Xoa phong.
-    // test xóa phòng thành công //
+    // Xoa phong neu phong thuoc owner dang dang nhap va chua duoc thue.
     @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<String> deleteRoom(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.deleteRoom(roomId));
