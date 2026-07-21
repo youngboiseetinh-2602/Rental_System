@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 // Doc userId va quyen cua user dang dang nhap tu SecurityContext.
@@ -13,15 +14,19 @@ public class CurrentUserContext {
     public Long getCurrentUserId() {
         Authentication authentication = getAuthentication();
 
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof OAuth2AuthenticatedPrincipal oauth2Principal) {
-            Object userId = oauth2Principal.getAttribute("userId");
-            if (userId instanceof Number number) {
-                return number.longValue();
-            }
-            if (userId instanceof String value) {
-                return Long.valueOf(value);
-            }
+        Object userId = null;
+        if (authentication instanceof JwtAuthenticationToken jwtAuthentication) {
+            userId = jwtAuthentication.getToken().getClaim("userId");
+        } else if (authentication.getPrincipal()
+                instanceof OAuth2AuthenticatedPrincipal oauth2Principal) {
+            userId = oauth2Principal.getAttribute("userId");
+        }
+
+        if (userId instanceof Number number) {
+            return number.longValue();
+        }
+        if (userId instanceof String value) {
+            return Long.valueOf(value);
         }
 
         throw new AuthenticationCredentialsNotFoundException("Authenticated user id is unavailable");

@@ -27,33 +27,27 @@ class AuthorizationRulesTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_OWNER", "SCOPE_room.read"})
-    void ownerReadRuleAllowsOwnerWithReadScope() {
-        assertEquals("ok", securedMethods.ownerRead());
+    @WithMockUser(roles = "OWNER")
+    void ownerRuleAllowsOwner() {
+        assertEquals("ok", securedMethods.ownerMethod());
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_OWNER", "SCOPE_room.read"})
-    void ownerWriteRuleRejectsOwnerWithoutWriteScope() {
-        assertThrows(AccessDeniedException.class, securedMethods::ownerWrite);
+    @WithMockUser(roles = "CUSTOMER")
+    void ownerRuleRejectsDifferentRole() {
+        assertThrows(AccessDeniedException.class, securedMethods::ownerMethod);
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_OWNER", "SCOPE_room.write"})
-    void ownerWriteRuleAllowsOwnerWithWriteScope() {
-        assertEquals("ok", securedMethods.ownerWrite());
+    @WithMockUser(roles = "ADMIN")
+    void ownerOrAdminRuleAllowsAdmin() {
+        assertEquals("ok", securedMethods.ownerOrAdminMethod());
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_CUSTOMER", "SCOPE_room.write"})
-    void ownerWriteRuleRejectsDifferentRole() {
-        assertThrows(AccessDeniedException.class, securedMethods::ownerWrite);
-    }
-
-    @Test
-    @WithMockUser(authorities = {"ROLE_ADMIN", "SCOPE_room.write"})
-    void ownerOrAdminWriteRuleAllowsAdminWithWriteScope() {
-        assertEquals("ok", securedMethods.ownerOrAdminWrite());
+    @WithMockUser(roles = "OWNER")
+    void ownerOrAdminRuleAllowsOwner() {
+        assertEquals("ok", securedMethods.ownerOrAdminMethod());
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -73,18 +67,13 @@ class AuthorizationRulesTest {
             return "ok";
         }
 
-        @PreAuthorize(AuthorizationRules.OWNER_READ)
-        String ownerRead() {
+        @PreAuthorize(AuthorizationRules.OWNER)
+        String ownerMethod() {
             return "ok";
         }
 
-        @PreAuthorize(AuthorizationRules.OWNER_WRITE)
-        String ownerWrite() {
-            return "ok";
-        }
-
-        @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
-        String ownerOrAdminWrite() {
+        @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
+        String ownerOrAdminMethod() {
             return "ok";
         }
     }

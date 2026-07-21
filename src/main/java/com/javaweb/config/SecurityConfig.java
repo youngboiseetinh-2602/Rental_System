@@ -3,8 +3,6 @@ package com.javaweb.config;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.RestAccessDeniedHandler;
 import com.javaweb.security.RestAuthenticationEntryPoint;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +16,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -32,7 +29,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-// Cau hinh cac filter chain va phan quyen role/scope cho OAuth2 va API.
+// Cau hinh cac filter chain va phan quyen role cho OAuth2 va API.
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -89,43 +86,43 @@ public class SecurityConfig {
                                 "/api/rental-properties/*/reviews"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/admin/**")
-                        .access(require(AuthorizationRules.ADMIN_READ))
+                        .access(require(AuthorizationRules.ADMIN))
                         .requestMatchers("/api/admin/**")
-                        .access(require(AuthorizationRules.ADMIN_WRITE))
+                        .access(require(AuthorizationRules.ADMIN))
                         .requestMatchers(HttpMethod.GET, "/api/owners/**")
-                        .access(require(AuthorizationRules.OWNER_READ))
+                        .access(require(AuthorizationRules.OWNER))
                         .requestMatchers("/api/owners/**")
-                        .access(require(AuthorizationRules.OWNER_WRITE))
+                        .access(require(AuthorizationRules.OWNER))
                         .requestMatchers(
                                 "/api/rental-requests/**",
                                 "/api/images/**",
                                 "/api/room-types/**",
                                 "/api/facilities/**",
                                 "/api/rooms/**"
-                        ).access(require(AuthorizationRules.OWNER_OR_ADMIN_WRITE))
+                        ).access(require(AuthorizationRules.OWNER_OR_ADMIN))
                         .requestMatchers("/api/rental-properties/**")
-                        .access(require(AuthorizationRules.OWNER_OR_ADMIN_WRITE))
+                        .access(require(AuthorizationRules.OWNER_OR_ADMIN))
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/users/me/rental-requests/**"
-                        ).access(require(AuthorizationRules.CUSTOMER_READ))
+                        ).access(require(AuthorizationRules.CUSTOMER))
                         .requestMatchers(
                                 "/api/users/me/rental-requests/**",
                                 "/api/users/me/rental-properties/**",
                                 "/api/users/me/reviews/**"
-                        ).access(require(AuthorizationRules.CUSTOMER_WRITE))
+                        ).access(require(AuthorizationRules.CUSTOMER))
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/users/me/notifications/**"
-                        ).access(require(AuthorizationRules.USER_READ))
+                        ).access(require(AuthorizationRules.USER))
                         .requestMatchers("/api/users/me/notifications/**")
-                        .access(require(AuthorizationRules.USER_WRITE))
+                        .access(require(AuthorizationRules.USER))
                         .requestMatchers(HttpMethod.GET, "/api/users/me")
-                        .access(require(AuthorizationRules.USER_READ))
+                        .access(require(AuthorizationRules.USER))
                         .requestMatchers(
                                 "/api/users/me",
                                 "/api/users/me/password"
-                        ).access(require(AuthorizationRules.USER_WRITE))
+                        ).access(require(AuthorizationRules.USER))
                         .anyRequest().denyAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
@@ -176,21 +173,18 @@ public class SecurityConfig {
 
     @Bean
     public Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
-
         JwtGrantedAuthoritiesConverter roleConverter = new JwtGrantedAuthoritiesConverter();
         roleConverter.setAuthoritiesClaimName("roles");
         roleConverter.setAuthorityPrefix("ROLE_");
 
-        return jwt -> {
-            Collection<GrantedAuthority> authorities = new LinkedHashSet<>();
-            authorities.addAll(scopeConverter.convert(jwt));
-            authorities.addAll(roleConverter.convert(jwt));
-            return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
-        };
+        return jwt -> new JwtAuthenticationToken(
+                jwt,
+                roleConverter.convert(jwt),
+                jwt.getSubject()
+        );
     }
 
-    // Chuyen bieu thuc role/scope thanh bo kiem tra quyen cho HTTP request.
+    // Chuyen bieu thuc role thanh bo kiem tra quyen cho HTTP request.
     private static WebExpressionAuthorizationManager require(String expression) {
         return new WebExpressionAuthorizationManager(expression);
     }

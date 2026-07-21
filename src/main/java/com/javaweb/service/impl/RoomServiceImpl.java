@@ -40,7 +40,7 @@ public class RoomServiceImpl implements RoomService {
     private final CurrentUserContext currentUserContext;
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String addRoomType(Long rentalPropertyId, RoomType request) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
@@ -51,7 +51,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String updateRoomType(Long roomTypeId, UpdateRoomType request) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -73,7 +73,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String deleteRoomType(Long roomTypeId) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -92,7 +92,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String addFacilities(Long roomTypeId, List<FacilityInfo> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -109,7 +109,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String updateFacility(Long facilityId, FacilityInfo request) {
         FacilityEntity facility = getFacilityById(facilityId);
@@ -120,7 +120,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String deleteFacility(Long facilityId) {
         FacilityEntity facility = getFacilityById(facilityId);
@@ -130,7 +130,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String addRooms(Long roomTypeId, List<Room> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -161,7 +161,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String deleteRoom(Long roomId) {
         RoomEntity room = getRoomById(roomId);

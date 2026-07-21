@@ -26,7 +26,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +41,10 @@ public class ContractServiceImpl implements ContractService {
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
     private final ContractConverter contractConverter;
-    private final ModelMapper modelMapper;
     private final CurrentUserContext currentUserContext;
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String createRentalRequest(RentalRequest request) {
         Long userId = getCurrentUserId();
@@ -60,7 +58,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String processRentalRequest(Long contractId, ContractStatus status) {
         if (status != ContractStatus.APPROVED && status != ContractStatus.CANCELLED) {
@@ -82,7 +80,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String cancelRentalRequest(Long contractId) {
         Long userId = getCurrentUserId();
@@ -98,7 +96,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
     public String terminateContract(Long contractId) {
         checkAdminAccess();
@@ -122,7 +120,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_READ)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional(readOnly = true)
     public List<ContractResponse> getUserRentalRequests() {
         Long userId = getCurrentUserId();
@@ -225,9 +223,11 @@ public class ContractServiceImpl implements ContractService {
 
     private ContractEntity toPendingContract(
             UserEntity customer, RoomEntity room, RentalRequest request) {
-        ContractEntity contract = modelMapper.map(request, ContractEntity.class);
+        ContractEntity contract = new ContractEntity();
         contract.setTenant(customer);
         contract.setRoom(room);
+        contract.setStartDate(request.getStartDate());
+        contract.setEndDate(request.getEndDate());
         contract.setStatus(ContractStatus.PENDING);
         return contract;
     }

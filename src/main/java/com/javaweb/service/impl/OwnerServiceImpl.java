@@ -30,7 +30,7 @@ public class OwnerServiceImpl implements OwnerService {
     private final CurrentUserContext currentUserContext;
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_READ)
+    @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional(readOnly = true)
     public List<Rental> getOwnerRentals() {
         Long ownerId = getCurrentUserId();
@@ -50,7 +50,7 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_READ)
+    @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional(readOnly = true)
     public List<ContractResponse> getOwnerRentalRequests() {
         Long ownerId = getCurrentUserId();

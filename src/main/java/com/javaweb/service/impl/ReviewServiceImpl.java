@@ -55,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String createReview(Long rentalPropertyId, Review request) {
         Long userId = getCurrentUserId();
@@ -77,7 +77,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String updateReview(Long reviewId, Review request) {
         Long userId = getCurrentUserId();
@@ -94,7 +94,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
+    @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String deleteReview(Long reviewId) {
         Long userId = getCurrentUserId();

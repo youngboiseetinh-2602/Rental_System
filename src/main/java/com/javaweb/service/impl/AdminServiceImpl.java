@@ -36,7 +36,7 @@ public class AdminServiceImpl implements AdminService {
     private final ModelMapper modelMapper;
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_READ)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         List<UserEntity> users = userRepository.findAll();
@@ -49,7 +49,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_READ)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
     public List<UserResponse> searchUsers(Map<String, Object> params) {
         UserSearchBuilder searchBuilder =
@@ -70,7 +70,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
     public String updateUserStatus(Long userId, UserStatus status) {
         UserEntity user = userRepository.findById(userId)
@@ -83,7 +83,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_READ)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
     public List<RentalTypeResponse> getRentalTypes() {
         List<RentalTypeEntity> rentalTypes = rentalTypeRepository.findAll();
@@ -100,7 +100,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
     public String updateRentalType(Long rentalTypeId, UpdateRentalType request) {
         RentalTypeEntity rentalType = rentalTypeRepository.findById(rentalTypeId)

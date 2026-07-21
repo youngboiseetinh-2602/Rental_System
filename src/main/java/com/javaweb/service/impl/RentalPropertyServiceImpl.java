@@ -106,7 +106,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional
     public String createRentalProperty(RentalProperty request) {
         Long ownerId = getCurrentUserId();
@@ -120,7 +120,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
@@ -134,7 +134,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String deleteRentalProperty(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
@@ -151,7 +151,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String addRentalPropertyImages(Long rentalPropertyId, List<String> imageUrls) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
@@ -162,7 +162,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public String deleteRentalPropertyImage(Long imageId) {
         ImageEntity image = imageRepository.findById(imageId)

@@ -56,7 +56,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.USER_READ)
+    @PreAuthorize(AuthorizationRules.USER)
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications() {
         Long userId = getCurrentUserId();
@@ -78,7 +78,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.USER_WRITE)
+    @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String readNotification(Long notificationId) {
         Long userId = getCurrentUserId();

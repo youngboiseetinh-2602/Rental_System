@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.USER_READ)
+    @PreAuthorize(AuthorizationRules.USER)
     @Transactional(readOnly = true)
     public UserResponse getUserInfo() {
         UserEntity user = getUserById(getCurrentUserId());
@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.USER_WRITE)
+    @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String updateUserInfo(UpdateUserInfo request) {
         Long userId = getCurrentUserId();
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.USER_WRITE)
+    @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String changePassword(ChangePassword request) {
         UserEntity user = getUserById(getCurrentUserId());
