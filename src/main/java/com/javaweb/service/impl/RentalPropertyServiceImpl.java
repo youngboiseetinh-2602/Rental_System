@@ -21,8 +21,10 @@ import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.ImageRepository;
+import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.specification.RentalPropertySpecification;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final UserRepository userRepository;
     private final RentalTypeRepository rentalTypeRepository;
     private final RentalPropertyRepository rentalPropertyRepository;
+    private final RoomRepository roomRepository;
     private final ImageRepository imageRepository;
     private final ModelMapper modelMapper;
     private final RentalConverter rentalConverter;
@@ -48,6 +52,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
     public List<Rental> getRentalProperties() {
         List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll();
@@ -66,6 +71,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
     public List<Rental> searchRentalProperties(Map<String, Object> params) {
         RentalSearchBuilder searchBuilder =
@@ -92,6 +98,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
     public RentalDetail getRentalPropertyDetail(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
@@ -99,6 +106,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_WRITE)
     @Transactional
     public String createRentalProperty(RentalProperty request) {
         Long ownerId = getCurrentUserId();
@@ -112,6 +120,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
@@ -125,11 +134,14 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String deleteRentalProperty(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
+        List<RoomEntity> rooms = lockRooms(
+                roomRepository.findIdsByRentalPropertyId(rentalPropertyId));
 
-        if (hasOccupiedRooms(rentalProperty)) {
+        if (hasOccupiedRooms(rooms)) {
             throw new IllegalArgumentException(
                     "Cannot delete rental property because one or more rooms are occupied");
         }
@@ -139,6 +151,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String addRentalPropertyImages(Long rentalPropertyId, List<String> imageUrls) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
@@ -149,6 +162,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String deleteRentalPropertyImage(Long imageId) {
         ImageEntity image = imageRepository.findById(imageId)
@@ -183,10 +197,18 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         return currentUserContext.getCurrentUserId();
     }
 
-    private boolean hasOccupiedRooms(RentalPropertyEntity rentalProperty) {
-        return rentalProperty.getRoomTypes().stream()
-                .flatMap(roomType -> roomType.getRooms().stream())
+    private boolean hasOccupiedRooms(List<RoomEntity> rooms) {
+        return rooms.stream()
                 .anyMatch(room -> room.getCurrentTenant() != null);
+    }
+
+    // Khoa cac phong theo id tang dan truoc khi xoa cascade nha tro.
+    private List<RoomEntity> lockRooms(List<Long> roomIds) {
+        return roomIds.stream()
+                .map(roomId -> roomRepository.findByIdForUpdate(roomId)
+                        .orElseThrow(() -> new DataNotFoundException(
+                                "Room not found with id: " + roomId)))
+                .toList();
     }
 
     private RentalTypeEntity getOrCreateRentalType(String rentalTypeName) {

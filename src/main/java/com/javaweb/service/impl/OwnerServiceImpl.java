@@ -9,11 +9,13 @@ import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RentalPropertyRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.OwnerService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class OwnerServiceImpl implements OwnerService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_READ)
     @Transactional(readOnly = true)
     public List<Rental> getOwnerRentals() {
         Long ownerId = getCurrentUserId();
@@ -47,6 +50,7 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_READ)
     @Transactional(readOnly = true)
     public List<ContractResponse> getOwnerRentalRequests() {
         Long ownerId = getCurrentUserId();

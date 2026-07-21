@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+// Xac thuc username/password tu database va ma hoa mat khau bang BCrypt.
 @Configuration
 public class WebSecurityConfig {
 

@@ -1,5 +1,6 @@
 package com.javaweb.config;
 
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.RestAccessDeniedHandler;
 import com.javaweb.security.RestAuthenticationEntryPoint;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,13 +25,16 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+// Cau hinh cac filter chain va phan quyen role/scope cho OAuth2 va API.
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -74,41 +79,53 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
+                                HttpMethod.POST,
                                 "/api/auth/register"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/rental-properties/**"
+                                "/api/rental-properties",
+                                "/api/rental-properties/*",
+                                "/api/rental-properties/*/reviews"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/**")
+                        .access(require(AuthorizationRules.ADMIN_READ))
                         .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        .access(require(AuthorizationRules.ADMIN_WRITE))
+                        .requestMatchers(HttpMethod.GET, "/api/owners/**")
+                        .access(require(AuthorizationRules.OWNER_READ))
                         .requestMatchers("/api/owners/**")
-                        .hasRole("OWNER")
+                        .access(require(AuthorizationRules.OWNER_WRITE))
                         .requestMatchers(
                                 "/api/rental-requests/**",
                                 "/api/images/**",
                                 "/api/room-types/**",
                                 "/api/facilities/**",
                                 "/api/rooms/**"
-                        ).hasAnyRole("OWNER", "ADMIN")
+                        ).access(require(AuthorizationRules.OWNER_OR_ADMIN_WRITE))
+                        .requestMatchers("/api/rental-properties/**")
+                        .access(require(AuthorizationRules.OWNER_OR_ADMIN_WRITE))
                         .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/rental-properties/**"
-                        ).hasAnyRole("OWNER", "ADMIN")
+                                HttpMethod.GET,
+                                "/api/users/me/rental-requests/**"
+                        ).access(require(AuthorizationRules.CUSTOMER_READ))
                         .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/rental-properties/**"
-                        ).hasAnyRole("OWNER", "ADMIN")
+                                "/api/users/me/rental-requests/**",
+                                "/api/users/me/rental-properties/**",
+                                "/api/users/me/reviews/**"
+                        ).access(require(AuthorizationRules.CUSTOMER_WRITE))
                         .requestMatchers(
-                                HttpMethod.PATCH,
-                                "/api/rental-properties/**"
-                        ).hasAnyRole("OWNER", "ADMIN")
+                                HttpMethod.GET,
+                                "/api/users/me/notifications/**"
+                        ).access(require(AuthorizationRules.USER_READ))
+                        .requestMatchers("/api/users/me/notifications/**")
+                        .access(require(AuthorizationRules.USER_WRITE))
+                        .requestMatchers(HttpMethod.GET, "/api/users/me")
+                        .access(require(AuthorizationRules.USER_READ))
                         .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/rental-properties/**"
-                        ).hasAnyRole("OWNER", "ADMIN")
-                        .requestMatchers("/api/users/**")
-                        .hasAnyRole("CUSTOMER", "OWNER", "ADMIN")
+                                "/api/users/me",
+                                "/api/users/me/password"
+                        ).access(require(AuthorizationRules.USER_WRITE))
                         .anyRequest().denyAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
@@ -171,6 +188,11 @@ public class SecurityConfig {
             authorities.addAll(roleConverter.convert(jwt));
             return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
         };
+    }
+
+    // Chuyen bieu thuc role/scope thanh bo kiem tra quyen cho HTTP request.
+    private static WebExpressionAuthorizationManager require(String expression) {
+        return new WebExpressionAuthorizationManager(expression);
     }
 
     // Cung cap quy tac CORS de quy dinh frontend nao duoc phep goi backend,

@@ -6,6 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.stereotype.Component;
 
+// Doc userId va quyen cua user dang dang nhap tu SecurityContext.
 @Component
 public class CurrentUserContext {
 
@@ -31,6 +32,7 @@ public class CurrentUserContext {
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
     }
 
+    // Tra ve Authentication hop le hoac bao loi khi request chua xac thuc.
     private Authentication getAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

@@ -10,6 +10,7 @@ import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.repository.NotificationRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.NotificationService;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +56,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.USER_READ)
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications() {
         Long userId = getCurrentUserId();
@@ -75,6 +78,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.USER_WRITE)
     @Transactional
     public String readNotification(Long notificationId) {
         Long userId = getCurrentUserId();

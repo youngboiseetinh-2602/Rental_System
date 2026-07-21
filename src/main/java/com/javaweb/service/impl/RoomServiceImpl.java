@@ -15,6 +15,7 @@ import com.javaweb.repository.FacilityRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.RoomTypeRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RoomService;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import java.util.Locale;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class RoomServiceImpl implements RoomService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String addRoomType(Long rentalPropertyId, RoomType request) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
@@ -48,6 +51,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String updateRoomType(Long roomTypeId, UpdateRoomType request) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -69,11 +73,14 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String deleteRoomType(Long roomTypeId) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
+        List<RoomEntity> rooms = lockRooms(
+                roomRepository.findIdsByRoomTypeId(roomTypeId));
 
-        boolean hasCurrentTenant = roomType.getRooms().stream()
+        boolean hasCurrentTenant = rooms.stream()
                 .anyMatch(room -> room.getCurrentTenant() != null);
         if (hasCurrentTenant) {
             throw new IllegalArgumentException(
@@ -85,6 +92,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String addFacilities(Long roomTypeId, List<FacilityInfo> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -101,6 +109,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String updateFacility(Long facilityId, FacilityInfo request) {
         FacilityEntity facility = getFacilityById(facilityId);
@@ -111,6 +120,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String deleteFacility(Long facilityId) {
         FacilityEntity facility = getFacilityById(facilityId);
@@ -120,6 +130,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String addRooms(Long roomTypeId, List<Room> requests) {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
@@ -150,6 +161,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String deleteRoom(Long roomId) {
         RoomEntity room = getRoomById(roomId);
@@ -185,10 +197,19 @@ public class RoomServiceImpl implements RoomService {
     }
 
     private RoomEntity getRoomById(Long roomId) {
-        RoomEntity room = roomRepository.findById(roomId)
+        RoomEntity room = roomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new DataNotFoundException("Room not found with id: " + roomId));
         checkManageAccess(room.getRoomType().getRentalProperty());
         return room;
+    }
+
+    // Khoa cac phong theo id tang dan truoc khi xoa cascade room type.
+    private List<RoomEntity> lockRooms(List<Long> roomIds) {
+        return roomIds.stream()
+                .map(roomId -> roomRepository.findByIdForUpdate(roomId)
+                        .orElseThrow(() -> new DataNotFoundException(
+                                "Room not found with id: " + roomId)))
+                .toList();
     }
 
     private void checkManageAccess(RentalPropertyEntity rentalProperty) {

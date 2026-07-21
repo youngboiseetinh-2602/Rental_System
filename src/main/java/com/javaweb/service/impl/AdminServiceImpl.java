@@ -13,6 +13,7 @@ import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.service.AdminService;
 import com.javaweb.specification.UserSpecification;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Locale;
 import org.modelmapper.ModelMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class AdminServiceImpl implements AdminService {
     private final ModelMapper modelMapper;
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_READ)
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         List<UserEntity> users = userRepository.findAll();
@@ -46,6 +49,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_READ)
     @Transactional(readOnly = true)
     public List<UserResponse> searchUsers(Map<String, Object> params) {
         UserSearchBuilder searchBuilder =
@@ -66,6 +70,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
     @Transactional
     public String updateUserStatus(Long userId, UserStatus status) {
         UserEntity user = userRepository.findById(userId)
@@ -78,6 +83,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_READ)
     @Transactional(readOnly = true)
     public List<RentalTypeResponse> getRentalTypes() {
         List<RentalTypeEntity> rentalTypes = rentalTypeRepository.findAll();
@@ -94,6 +100,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
     @Transactional
     public String updateRentalType(Long rentalTypeId, UpdateRentalType request) {
         RentalTypeEntity rentalType = rentalTypeRepository.findById(rentalTypeId)

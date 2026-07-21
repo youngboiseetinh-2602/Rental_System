@@ -17,7 +17,9 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+// Dang ky OAuth2 client va bo sung cac claim rieng vao access token JWT.
 @Configuration
 public class AuthorizationServerConfig {
 
@@ -25,11 +27,14 @@ public class AuthorizationServerConfig {
     public RegisteredClientRepository registeredClientRepository(
             @Value("${oauth2.client.internal-id}") String internalId,
             @Value("${oauth2.client.id}") String clientId,
-            @Value("${oauth2.client.redirect-uri}") String redirectUri
+            @Value("${oauth2.client.redirect-uri}") String redirectUri,
+            @Value("${oauth2.client.secret}") String clientSecret,
+            PasswordEncoder passwordEncoder
     ) {
         RegisteredClient rentalClient = RegisteredClient.withId(internalId)
                 .clientId(clientId)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                .clientSecret(passwordEncoder.encode(clientSecret))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri(redirectUri)
@@ -41,6 +46,8 @@ public class AuthorizationServerConfig {
                         .build())
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(30))
+                        .refreshTokenTimeToLive(Duration.ofDays(7))
+                        .reuseRefreshTokens(false)
                         .build())
                 .build();
 

@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.stereotype.Component;
 
+// Dam bao user con ACTIVE va co role truoc khi Authorization Server cap token.
 @Component
 @RequiredArgsConstructor
 public class AccessTokenUserValidator {
@@ -27,6 +28,7 @@ public class AccessTokenUserValidator {
         return user;
     }
 
+    // Tao loi OAuth2 chung de tu choi cap token ma khong lo chi tiet tai khoan.
     private OAuth2AuthenticationException invalidUserGrant() {
         OAuth2Error error = new OAuth2Error(
                 OAuth2ErrorCodes.INVALID_GRANT,

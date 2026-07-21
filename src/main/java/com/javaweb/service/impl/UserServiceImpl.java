@@ -4,17 +4,20 @@ import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.converter.UserConverter;
 import com.javaweb.entity.UserEntity;
+import com.javaweb.enums.UserRole;
 import com.javaweb.enums.UserStatus;
 import com.javaweb.model.request.ChangePassword;
 import com.javaweb.model.request.Register;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.UserService;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,8 +35,11 @@ public class UserServiceImpl implements UserService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional
     public String register(Register request) {
+        validateRegistrationRole(request.getRole());
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ConflictException("Username already exists");
         }
@@ -54,13 +60,22 @@ public class UserServiceImpl implements UserService {
         UserEntity user = modelMapper.map(request, UserEntity.class);
         user.setCitizenCode(request.getCitizenCode());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole());
         user.setStatus(UserStatus.ACTIVE);
 
         userRepository.save(user);
         return "dang ki thanh cong";
     }
 
+    private void validateRegistrationRole(UserRole role) {
+        if (role != UserRole.OWNER && role != UserRole.CUSTOMER) {
+            throw new IllegalArgumentException(
+                    "Registration role must be OWNER or CUSTOMER");
+        }
+    }
+
     @Override
+    @PreAuthorize(AuthorizationRules.USER_READ)
     @Transactional(readOnly = true)
     public UserResponse getUserInfo() {
         UserEntity user = getUserById(getCurrentUserId());
@@ -68,6 +83,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.USER_WRITE)
     @Transactional
     public String updateUserInfo(UpdateUserInfo request) {
         Long userId = getCurrentUserId();
@@ -121,6 +137,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.USER_WRITE)
     @Transactional
     public String changePassword(ChangePassword request) {
         UserEntity user = getUserById(getCurrentUserId());

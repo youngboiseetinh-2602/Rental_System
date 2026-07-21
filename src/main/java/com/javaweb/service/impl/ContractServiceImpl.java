@@ -16,6 +16,7 @@ import com.javaweb.model.response.ContractResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RoomRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.NotificationService;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,11 +46,12 @@ public class ContractServiceImpl implements ContractService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
     @Transactional
     public String createRentalRequest(RentalRequest request) {
         Long userId = getCurrentUserId();
         UserEntity customer = getCustomer(userId);
-        RoomEntity room = getAvailableRoom(request.getRoomId());
+        RoomEntity room = getAvailableRoomForUpdate(request.getRoomId());
         checkDuplicateRequest(userId, room.getId());
 
         contractRepository.save(toPendingContract(customer, room, request));
@@ -57,29 +60,35 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN_WRITE)
     @Transactional
     public String processRentalRequest(Long contractId, ContractStatus status) {
-        ContractEntity contract = getPendingContract(contractId);
+        if (status != ContractStatus.APPROVED && status != ContractStatus.CANCELLED) {
+            throw new IllegalArgumentException("Status must be APPROVED or CANCELLED");
+        }
+
+        Long roomId = getContractRoomId(contractId);
+        RoomEntity room = getRoomForUpdate(roomId);
+        ContractEntity contract = getPendingContractForUpdate(contractId);
         checkOwnerAccess(contract);
 
-        // Owner tu choi yeu cau.
         if (status == ContractStatus.CANCELLED) {
             String result = cancelContract(contract);
             sendRejectedNotification(contract);
             return result;
         }
-        if (status != ContractStatus.APPROVED) {
-            throw new IllegalArgumentException("Status must be APPROVED or CANCELLED");
-        }
 
-        return approveContract(contract);
+        return approveContract(contract, room);
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
     @Transactional
     public String cancelRentalRequest(Long contractId) {
         Long userId = getCurrentUserId();
-        ContractEntity contract = getPendingContract(contractId);
+        Long roomId = getContractRoomId(contractId);
+        getRoomForUpdate(roomId);
+        ContractEntity contract = getPendingContractForUpdate(contractId);
 
         if (!contract.getTenant().getId().equals(userId)) {
             throw new ForbiddenException("You are not allowed to cancel this rental request");
@@ -89,20 +98,19 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN_WRITE)
     @Transactional
     public String terminateContract(Long contractId) {
         checkAdminAccess();
 
-        ContractEntity contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new DataNotFoundException(
-                        "Contract not found with id: " + contractId
-                ));
+        Long roomId = getContractRoomId(contractId);
+        RoomEntity room = getRoomForUpdate(roomId);
+        ContractEntity contract = getContractForUpdate(contractId);
 
         if (contract.getStatus() != ContractStatus.APPROVED) {
             throw new ConflictException("Only approved contracts can be terminated");
         }
 
-        RoomEntity room = contract.getRoom();
         contract.setStatus(ContractStatus.TERMINATED);
         contract.setEndDate(LocalDate.now(VIETNAM_ZONE));
         room.setStatus(RoomStatus.AVAILABLE);
@@ -114,6 +122,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_READ)
     @Transactional(readOnly = true)
     public List<ContractResponse> getUserRentalRequests() {
         Long userId = getCurrentUserId();
@@ -146,16 +155,32 @@ public class ContractServiceImpl implements ContractService {
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Ho_Chi_Minh")
     public void expireContracts() {
         LocalDate today = LocalDate.now(VIETNAM_ZONE);
-        List<ContractEntity> expiredContracts =
-                contractRepository.findAllByStatusAndEndDateBefore(
+        List<Long> expiredContractIds =
+                contractRepository.findIdsByStatusAndEndDateBefore(
                         ContractStatus.APPROVED, today);
 
-        for (ContractEntity contract : expiredContracts) {
-            RoomEntity room = contract.getRoom();
+        for (Long contractId : expiredContractIds) {
+            Long roomId = contractRepository.findRoomIdByContractId(contractId)
+                    .orElse(null);
+            if (roomId == null) {
+                continue;
+            }
+            RoomEntity room = roomRepository.findByIdForUpdate(roomId)
+                    .orElse(null);
+            if (room == null) {
+                continue;
+            }
+            ContractEntity contract = contractRepository.findByIdForUpdate(contractId)
+                    .orElse(null);
+            if (contract == null
+                    || contract.getStatus() != ContractStatus.APPROVED
+                    || contract.getEndDate() == null
+                    || !contract.getEndDate().isBefore(today)) {
+                continue;
+            }
             contract.setStatus(ContractStatus.EXPIRED);
             room.setStatus(RoomStatus.AVAILABLE);
             room.setCurrentTenant(null);
-
             contractRepository.save(contract);
             roomRepository.save(room);
         }
@@ -170,13 +195,24 @@ public class ContractServiceImpl implements ContractService {
         return user;
     }
 
-    private RoomEntity getAvailableRoom(Long roomId) {
-        RoomEntity room = roomRepository.findById(roomId)
+    // Khoa phong lam mutex nghiep vu cho moi thay doi request cua phong do.
+    private RoomEntity getRoomForUpdate(Long roomId) {
+        RoomEntity room = roomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new DataNotFoundException("Room not found: " + roomId));
-        if (room.getStatus() != RoomStatus.AVAILABLE) {
+        return room;
+    }
+
+    // Khoa phong roi kiem tra trang thai hien tai, khong dung du lieu snapshot cu.
+    private RoomEntity getAvailableRoomForUpdate(Long roomId) {
+        RoomEntity room = getRoomForUpdate(roomId);
+        checkRoomAvailable(room);
+        return room;
+    }
+
+    private void checkRoomAvailable(RoomEntity room) {
+        if (room.getStatus() != RoomStatus.AVAILABLE || room.getCurrentTenant() != null) {
             throw new ConflictException("Room is not available");
         }
-        return room;
     }
 
     private void checkDuplicateRequest(Long userId, Long roomId) {
@@ -196,20 +232,36 @@ public class ContractServiceImpl implements ContractService {
         return contract;
     }
 
-    private String approveContract(ContractEntity contract) {
-        RoomEntity room = getAvailableRoom(contract.getRoom().getId());
+    // Phong da duoc khoa truoc; cac request PENDING duoc khoa theo id tang dan.
+    private String approveContract(ContractEntity selectedContract, RoomEntity room) {
+        if (selectedContract.getEndDate() == null
+                || !selectedContract.getEndDate().isAfter(LocalDate.now(VIETNAM_ZONE))) {
+            throw new ConflictException("Rental request has expired");
+        }
+        checkRoomAvailable(room);
+        List<ContractEntity> pendingContracts =
+                contractRepository.findAllByRoomIdAndStatusForUpdate(
+                        room.getId(),
+                        ContractStatus.PENDING
+                );
+
+        ContractEntity contract = pendingContracts.stream()
+                .filter(item -> item.getId().equals(selectedContract.getId()))
+                .findFirst()
+                .orElseThrow(() -> new ConflictException(
+                        "Rental request is no longer pending"));
+        checkOwnerAccess(contract);
 
         contract.setStatus(ContractStatus.APPROVED);
         room.setStatus(RoomStatus.RENTED);
         room.setCurrentTenant(contract.getTenant());
 
         // Mot phong chi co mot hop dong duoc duyet.
-        contractRepository.findAllByRoom_IdAndStatus(room.getId(), ContractStatus.PENDING)
-                .stream()
+        pendingContracts.stream()
                 .filter(item -> !item.getId().equals(contract.getId()))
                 .forEach(item -> item.setStatus(ContractStatus.CANCELLED));
 
-        contractRepository.save(contract);
+        contractRepository.saveAll(pendingContracts);
         roomRepository.save(room);
         sendApprovedNotification(contract);
         return "chap nhan yeu cau thue thanh cong";
@@ -221,10 +273,21 @@ public class ContractServiceImpl implements ContractService {
         return "huy yeu cau thue thanh cong";
     }
 
-    private ContractEntity getPendingContract(Long contractId) {
-        ContractEntity contract = contractRepository.findById(contractId)
+    private Long getContractRoomId(Long contractId) {
+        return contractRepository.findRoomIdByContractId(contractId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Rental request not found with id: " + contractId));
+                        "Contract not found with id: " + contractId));
+    }
+
+    private ContractEntity getContractForUpdate(Long contractId) {
+        return contractRepository.findByIdForUpdate(contractId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Contract not found with id: " + contractId));
+    }
+
+    // Khoa request de viec huy va duyet khong the cap nhat cung luc.
+    private ContractEntity getPendingContractForUpdate(Long contractId) {
+        ContractEntity contract = getContractForUpdate(contractId);
 
         if (contract.getStatus() != ContractStatus.PENDING) {
             throw new ConflictException("Rental request is no longer pending");

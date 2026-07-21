@@ -12,10 +12,12 @@ import com.javaweb.model.response.ReviewResponse;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.ReviewRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
     public List<ReviewResponse> reviewList(Long id) {
         RentalPropertyEntity rental = rentalPropertyRepository.findById(id)
@@ -52,6 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
     @Transactional
     public String createReview(Long rentalPropertyId, Review request) {
         Long userId = getCurrentUserId();
@@ -73,6 +77,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
     @Transactional
     public String updateReview(Long reviewId, Review request) {
         Long userId = getCurrentUserId();
@@ -89,6 +94,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.CUSTOMER_WRITE)
     @Transactional
     public String deleteReview(Long reviewId) {
         Long userId = getCurrentUserId();

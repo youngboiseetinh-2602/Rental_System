@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 
+// Cung cap khoa RSA va JwtDecoder de kiem tra chu ky, issuer va audience.
 @Configuration
 public class JwtKeyConfig {
 

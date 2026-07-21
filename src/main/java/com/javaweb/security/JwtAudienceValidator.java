@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.Assert;
 
+// Tu choi JWT khong duoc cap cho Rental Resource Server.
 public final class JwtAudienceValidator implements OAuth2TokenValidator<Jwt> {
 
     private final String requiredAudience;
