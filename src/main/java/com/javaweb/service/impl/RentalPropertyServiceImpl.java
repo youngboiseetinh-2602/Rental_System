@@ -28,11 +28,12 @@ import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.specification.RentalPropertySpecification;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,47 +55,33 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
-    public List<Rental> getRentalProperties() {
-        List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll();
-
+    public Page<Rental> getRentalProperties(Pageable pageable) {
+        Page<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll(pageable);
         if (rentalProperties.isEmpty()) {
             throw new DataNotFoundException("khong tim thay du lieu");
         }
-
-        List<Rental> responses = new ArrayList<>();
-
-        for (RentalPropertyEntity rentalProperty : rentalProperties) {
-            responses.add(rentalConverter.toRental(rentalProperty));
-        }
-        
-        return responses;
+        return rentalProperties.map(rentalConverter::toRental);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
-    public List<Rental> searchRentalProperties(Map<String, Object> params) {
+    public Page<Rental> searchRentalProperties(Map<String, Object> params, Pageable pageable) {
         RentalSearchBuilder searchBuilder =
                 rentalSearchBuilderConverter.toRentalSearchBuilder(params);
 
-        List<RentalPropertyEntity> rentalProperties;
-
         if (searchBuilder == null || searchBuilder.isEmpty()) {
-            rentalProperties = rentalPropertyRepository.findAll();
-        } else {
-            rentalProperties = rentalPropertyRepository.findAll(
-                    RentalPropertySpecification.search(searchBuilder));
+            return getRentalProperties(pageable);
         }
+
+        Page<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll(
+                RentalPropertySpecification.search(searchBuilder), pageable);
 
         if (rentalProperties.isEmpty()) {
             throw new DataNotFoundException("khong tim thay nha tro phu hop");
         }
 
-        List<Rental> responses = new ArrayList<>();
-        for (RentalPropertyEntity rentalProperty : rentalProperties) {
-            responses.add(rentalConverter.toRental(rentalProperty));
-        }
-        return responses;
+        return rentalProperties.map(rentalConverter::toRental);
     }
 
     @Override

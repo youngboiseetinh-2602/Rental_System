@@ -32,9 +32,21 @@ public class NotificationServiceImpl implements NotificationService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public NotificationResponse createNotification(Long senderId, NotificationRequest request) {
         UserEntity sender = getUser(senderId, "Sender");
+        return saveNotification(sender, request);
+    }
+
+    @Override
+    @Transactional
+    public NotificationResponse createSystemNotification(NotificationRequest request) {
+        return saveNotification(null, request);
+    }
+
+    private NotificationResponse saveNotification(
+            UserEntity sender, NotificationRequest request) {
         UserEntity receiver = getUser(request.getReceiverId(), "Receiver");
 
         NotificationEntity notification = new NotificationEntity();
@@ -46,13 +58,6 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
 
         return notificationConverter.toResponse(notification);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean notificationExists(Long receiverId, String title, String content) {
-        return notificationRepository.existsByReceiver_IdAndTitleAndContent(
-                receiverId, title, content);
     }
 
     @Override

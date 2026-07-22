@@ -15,8 +15,10 @@ public class NotificationConverter {
     public NotificationResponse toResponse(NotificationEntity notification) {
         NotificationResponse response = modelMapper.map(
                 notification, NotificationResponse.class);
-        response.setSenderId(notification.getSender().getId());
-        response.setSenderName(notification.getSender().getFullName());
+        if (notification.getSender() != null) {
+            response.setSenderId(notification.getSender().getId());
+            response.setSenderName(notification.getSender().getFullName());
+        }
         return response;
     }
 }

@@ -6,12 +6,14 @@ import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.enums.UserStatus;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AdminService {
 
-    List<UserResponse> getAllUsers();
+    Page<UserResponse> getAllUsers(Pageable pageable);
 
-    List<UserResponse> searchUsers(Map<String, Object> params);
+    Page<UserResponse> searchUsers(Map<String, Object> params, Pageable pageable);
 
     String updateUserStatus(Long userId, UserStatus status);
 

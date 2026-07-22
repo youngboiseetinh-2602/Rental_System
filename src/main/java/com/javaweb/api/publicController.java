@@ -11,6 +11,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class publicController {
+public class PublicController {
 
     private final UserService userService;
     private final RentalPropertyService rentalPropertyService;
@@ -37,9 +41,11 @@ public class publicController {
 
     // Tim kiem nha tro theo cac tieu chi; khong co tieu chi thi lay tat ca.
     @GetMapping("/rental-properties")
-    public ResponseEntity<List<Rental>> searchRentalProperties(
-            @RequestParam Map<String, Object> params) {
-        return ResponseEntity.ok(rentalPropertyService.searchRentalProperties(params));
+    public ResponseEntity<Page<Rental>> searchRentalProperties(
+            @RequestParam Map<String, Object> params,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return ResponseEntity.ok(rentalPropertyService.searchRentalProperties(params, pageable));
     }
 
     // Lay thong tin chi tiet cua mot nha tro.

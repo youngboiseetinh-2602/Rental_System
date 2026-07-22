@@ -48,8 +48,8 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "senderId", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "senderId")
     private UserEntity sender;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -10,6 +10,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,16 +27,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-public class adminController {
+public class AdminController {
 
     private final AdminService adminService;
     private final ContractService contractService;
 
     // Tim kiem va lay danh sach tai khoan theo cac dieu kien quan tri.
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> searchUsers(
-            @RequestParam Map<String, Object> params) {
-        return ResponseEntity.ok(adminService.searchUsers(params));
+    public ResponseEntity<Page<UserResponse>> searchUsers(
+            @RequestParam Map<String, Object> params,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return ResponseEntity.ok(adminService.searchUsers(params, pageable));
     }
 
     // Cap nhat trang thai ACTIVE, INACTIVE hoac LOCKED cua mot tai khoan.

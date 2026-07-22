@@ -1,6 +1,5 @@
 package com.javaweb.config;
 
-import com.javaweb.security.JwtAudienceValidator;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -14,7 +13,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -22,7 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 
-// Cung cap khoa RSA va JwtDecoder de kiem tra chu ky, issuer va audience.
+// Cung cap khoa RSA va JwtDecoder de kiem tra chu ky va issuer.
 @Configuration
 public class JwtKeyConfig {
 
@@ -44,21 +42,14 @@ public class JwtKeyConfig {
     @Bean
     public JwtDecoder jwtDecoder(
             JWKSource<SecurityContext> jwkSource,
-            @Value("${authorization-server.issuer}") String issuer,
-            @Value("${authorization-server.audience}") String audience
+            @Value("${authorization-server.issuer}") String issuer
     ) {
         NimbusJwtDecoder decoder = (NimbusJwtDecoder)
                 OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 
         OAuth2TokenValidator<Jwt> issuerValidator =
                 JwtValidators.createDefaultWithIssuer(issuer);
-        OAuth2TokenValidator<Jwt> audienceValidator =
-                new JwtAudienceValidator(audience);
-
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                issuerValidator,
-                audienceValidator
-        ));
+        decoder.setJwtValidator(issuerValidator);
         return decoder;
     }
 

@@ -6,12 +6,14 @@ import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.RentalDetail;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface RentalPropertyService {
 
-    List<Rental> getRentalProperties();
+    Page<Rental> getRentalProperties(Pageable pageable);
 
-    List<Rental> searchRentalProperties(Map<String, Object> params);
+    Page<Rental> searchRentalProperties(Map<String, Object> params, Pageable pageable);
 
     RentalDetail getRentalPropertyDetail(Long rentalPropertyId);
 

@@ -13,9 +13,6 @@ public class UserConverter {
     private final ModelMapper modelMapper;
 
     public UserResponse toUserResponse(UserEntity userEntity) {
-        UserResponse response = modelMapper.map(userEntity, UserResponse.class);
-        // TODO: Show citizenCode only when allowed by SecurityContext.
-        response.setCitizenCode(null);
-        return response;
+        return modelMapper.map(userEntity, UserResponse.class);
     }
 }

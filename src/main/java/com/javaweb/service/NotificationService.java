@@ -8,7 +8,7 @@ public interface NotificationService {
 
     NotificationResponse createNotification(Long senderId, NotificationRequest request);
 
-    boolean notificationExists(Long receiverId, String title, String content);
+    NotificationResponse createSystemNotification(NotificationRequest request);
 
     List<NotificationResponse> getNotifications();
 

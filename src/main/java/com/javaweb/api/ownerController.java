@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class ownerController {
+public class OwnerController {
     private final OwnerService ownerService;
     private final RentalPropertyService rentalPropertyService;
     private final RoomService roomService;

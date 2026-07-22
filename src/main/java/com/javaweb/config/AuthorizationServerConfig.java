@@ -43,7 +43,7 @@ public class AuthorizationServerConfig {
                         .requireAuthorizationConsent(false)
                         .build())
                 .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofMinutes(30))
+                        .accessTokenTimeToLive(Duration.ofMinutes(10))
                         .refreshTokenTimeToLive(Duration.ofDays(7))
                         .reuseRefreshTokens(false)
                         .build())
@@ -54,8 +54,7 @@ public class AuthorizationServerConfig {
 
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer(
-            AccessTokenUserValidator accessTokenUserValidator,
-            @Value("${authorization-server.audience}") String audience
+            AccessTokenUserValidator accessTokenUserValidator
     ) {
         return context -> {
             if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
@@ -71,7 +70,6 @@ public class AuthorizationServerConfig {
 
             context.getClaims().claim("userId", user.getId());
             context.getClaims().claim("roles", roles);
-            context.getClaims().audience(List.of(audience));
         };
     }
 }

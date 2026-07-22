@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -38,35 +40,33 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        List<UserEntity> users = userRepository.findAll();
-
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        Page<UserEntity> users = userRepository.findAll(pageable);
         if (users.isEmpty()) {
             throw new DataNotFoundException("Khong tim thay tai khoan nao");
         }
-
-        return toUserResponses(users);
+        return users.map(userConverter::toUserResponse);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
-    public List<UserResponse> searchUsers(Map<String, Object> params) {
+    public Page<UserResponse> searchUsers(Map<String, Object> params, Pageable pageable) {
         UserSearchBuilder searchBuilder =
                 userSearchBuilderConverter.toUserSearchBuilder(params);
 
         if (searchBuilder.isEmpty()) {
-            return getAllUsers();
+            return getAllUsers(pageable);
         }
 
-        List<UserEntity> users = userRepository.findAll(
-                UserSpecification.search(searchBuilder));
+        Page<UserEntity> users = userRepository.findAll(
+                UserSpecification.search(searchBuilder), pageable);
 
         if (users.isEmpty()) {
             throw new DataNotFoundException("Khong tim thay tai khoan phu hop");
         }
 
-        return toUserResponses(users);
+        return users.map(userConverter::toUserResponse);
     }
 
     @Override
@@ -125,9 +125,4 @@ public class AdminServiceImpl implements AdminService {
         return value.trim();
     }
 
-    private List<UserResponse> toUserResponses(List<UserEntity> users) {
-        return users.stream()
-                .map(userConverter::toUserResponse)
-                .toList();
-    }
 }

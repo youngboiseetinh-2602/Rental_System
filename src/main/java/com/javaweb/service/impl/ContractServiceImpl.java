@@ -301,8 +301,7 @@ public class ContractServiceImpl implements ContractService {
                 contract,
                 "Yeu cau thue da duoc chap nhan",
                 "Yeu cau thue phong " + contract.getRoom().getName()
-                        + " da duoc chu tro chap nhan",
-                false);
+                        + " da duoc chu tro chap nhan");
     }
 
     private void sendRejectedNotification(ContractEntity contract) {
@@ -310,8 +309,7 @@ public class ContractServiceImpl implements ContractService {
                 contract,
                 "Yeu cau thue da bi tu choi",
                 "Yeu cau thue phong " + contract.getRoom().getName()
-                        + " da bi chu tro tu choi",
-                false);
+                        + " da bi chu tro tu choi");
     }
 
     private void sendContractExpiryNotification(ContractEntity contract) {
@@ -320,22 +318,26 @@ public class ContractServiceImpl implements ContractService {
                 + " cua phong " + contract.getRoom().getName()
                 + " se het han vao ngay " + contract.getEndDate();
 
-        sendNotification(contract, title, content, true);
+        sendSystemNotification(contract, title, content);
     }
 
     private void sendNotification(
-            ContractEntity contract, String title, String content, boolean checkDuplicate) {
+            ContractEntity contract, String title, String content) {
         Long receiverId = contract.getTenant().getId();
-        if (checkDuplicate && notificationService.notificationExists(
-                receiverId, title, content)) {
-            return;
-        }
-
         NotificationRequest request = new NotificationRequest();
         request.setReceiverId(receiverId);
         request.setTitle(title);
         request.setContent(content);
         notificationService.createNotification(getOwnerId(contract), request);
+    }
+
+    private void sendSystemNotification(
+            ContractEntity contract, String title, String content) {
+        NotificationRequest request = new NotificationRequest();
+        request.setReceiverId(contract.getTenant().getId());
+        request.setTitle(title);
+        request.setContent(content);
+        notificationService.createSystemNotification(request);
     }
 
     private Long getOwnerId(ContractEntity contract) {
