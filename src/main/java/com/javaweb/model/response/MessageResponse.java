@@ -21,5 +21,5 @@ public class MessageResponse {
 
     private MessageStatus status;
 
-    private boolean mine;
+    private String note;
 }

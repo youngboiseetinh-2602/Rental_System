@@ -1,11 +1,13 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.converter.ConversationConverter;
+import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.customException.ForbiddenException;
 import com.javaweb.entity.ConversationEntity;
+import com.javaweb.entity.MessageEntity;
 import com.javaweb.entity.UserEntity;
-import com.javaweb.enums.UserRole;
+import com.javaweb.enums.ConversationStatus;
 import com.javaweb.model.response.ConversationResponse;
 import com.javaweb.model.response.MessageResponse;
 import com.javaweb.repository.ConversationRepository;
@@ -19,12 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
-import static com.javaweb.enums.ConversationStatus.READ;
+import org.springframework.data.domain.Slice;
 
 @Service
 @RequiredArgsConstructor
 public class ConversationServiceImpl implements ConversationService {
+    private static final int MESSAGE_PAGE_SIZE = 30;
+
     private final ConversationConverter conversationConverter;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
@@ -32,7 +35,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final CurrentUserContext currentUserContext;
 
    @Override
-   @Transactional(readOnly = true)
+   @Transactional
    public Page<ConversationResponse> myConversations(int page){
        long userId = currentUserContext.getCurrentUserId();
        Page<ConversationEntity> conversations =
@@ -48,72 +51,142 @@ public class ConversationServiceImpl implements ConversationService {
                        conversation,
                        userId,
                        messageRepository
-                               .findFirstByConversation_IdOrderBySentAtDesc(
+                               .findFirstByConversation_IdAndHiddenFalseOrderByIdDesc(
                                        conversation.getId())
                                .orElse(null)));
    }
 
    @Override
    @Transactional
-   public Page<MessageResponse> createConversation(Long otherUserId) {
+   public Slice<MessageResponse> createConversation(Long otherUserId) {
        Long currentUserId = currentUserContext.getCurrentUserId();
+       if (currentUserId.equals(otherUserId)) {
+           throw new IllegalArgumentException(
+                   "Cannot create a conversation with yourself");
+       }
+
        UserEntity currentUser = getUser(currentUserId);
        UserEntity otherUser = getUser(otherUserId);
 
-       UserEntity owner;
-       UserEntity customer;
-       if (currentUser.getRole() == UserRole.OWNER
-               && otherUser.getRole() == UserRole.CUSTOMER) {
-           owner = currentUser;
-           customer = otherUser;
-       } else if (currentUser.getRole() == UserRole.CUSTOMER
-               && otherUser.getRole() == UserRole.OWNER) {
-           owner = otherUser;
-           customer = currentUser;
-       } else {
-           throw new IllegalArgumentException(
-                   "Conversation must be between an owner and a customer");
-       }
+       UserEntity participantOne = currentUserId < otherUserId
+               ? currentUser
+               : otherUser;
+       UserEntity participantTwo = currentUserId < otherUserId
+               ? otherUser
+               : currentUser;
 
        ConversationEntity conversation = conversationRepository
-               .findByOwner_IdAndCustomer_Id(owner.getId(), customer.getId())
+               .findByParticipantOne_IdAndParticipantTwo_Id(
+                       participantOne.getId(), participantTwo.getId())
                .orElseGet(() -> {
                    ConversationEntity newConversation = new ConversationEntity();
-                   newConversation.setOwner(owner);
-                   newConversation.setCustomer(customer);
+                   newConversation.setParticipantOne(participantOne);
+                   newConversation.setParticipantTwo(participantTwo);
                    return conversationRepository.save(newConversation);
                });
 
-       return getConversation(conversation.getId(), 0);
+       return getConversation(conversation.getId(), null);
    }
 
    @Override
    @Transactional
-   public Page<MessageResponse> getConversation(Long conversationId, int page){
+   public Slice<MessageResponse> getConversation(
+           Long conversationId,
+           Long beforeId) {
        Long userId = currentUserContext.getCurrentUserId();
        ConversationEntity conversation = conversationRepository.findById(conversationId)
                .orElseThrow(() -> new DataNotFoundException(
                        "Conversation not found: " + conversationId));
 
-       if (!conversation.getOwner().getId().equals(userId)
-               && !conversation.getCustomer().getId().equals(userId)) {
+       if (!isParticipant(conversation, userId)) {
            throw new ForbiddenException(
-                   "You are not a participant of this conversation");
+                   "You are not allowed to view this conversation");
        }
 
-       conversation.setStatus(READ);
+       if (beforeId != null && beforeId <= 0) {
+           throw new IllegalArgumentException("beforeId must be positive");
+       }
 
-       return messageRepository
-               .findAllByConversation_IdOrderBySentAtDesc(
-                       conversationId, PageRequest.of(page, 30))
-               .map(message -> conversationConverter
-                       .toMessageResponse(message, userId));
+       messageRepository.markReceivedMessagesAsRead(conversationId, userId);
+
+       PageRequest limit = PageRequest.of(0, MESSAGE_PAGE_SIZE);
+       Slice<MessageEntity> messages = beforeId == null
+               ? messageRepository
+                       .findAllByConversation_IdAndHiddenFalseOrderByIdDesc(
+                               conversationId, limit)
+               : messageRepository
+                       .findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
+                               conversationId, beforeId, limit);
+
+       return messages.map(conversationConverter::toMessageResponse);
    }
 
    private UserEntity getUser(Long userId) {
        return userRepository.findById(userId)
                .orElseThrow(() -> new DataNotFoundException(
                        "User not found: " + userId));
+   }
+
+   @Override
+   @Transactional
+   public String blockConversation(Long conversationId){
+       Long currentUserId = currentUserContext.getCurrentUserId();
+       ConversationEntity conversation = conversationRepository.findById(conversationId)
+               .orElseThrow(() -> new DataNotFoundException(
+                       "Conversation not found."));
+
+       UserEntity blocker = findParticipant(conversation, currentUserId);
+       if (blocker == null) {
+           throw new ForbiddenException(
+                   "You are not allowed to block this conversation");
+       }
+
+       if (conversation.getStatus() == ConversationStatus.BLOCKED) {
+           throw new ConflictException("Conversation is already blocked");
+       }
+
+       conversation.setStatus(ConversationStatus.BLOCKED);
+       conversation.setBlockedBy(blocker);
+       return "Conversation blocked successfully";
+   }
+
+   @Override
+   @Transactional
+   public String unblockConversation(Long conversationId) {
+       Long currentUserId = currentUserContext.getCurrentUserId();
+       ConversationEntity conversation = conversationRepository.findById(conversationId)
+               .orElseThrow(() -> new DataNotFoundException(
+                       "Conversation not found: " + conversationId));
+
+       if (conversation.getStatus() != ConversationStatus.BLOCKED) {
+           throw new ConflictException("Conversation is not blocked");
+       }
+
+       if (conversation.getBlockedBy() == null
+               || !conversation.getBlockedBy().getId().equals(currentUserId)) {
+           throw new ForbiddenException(
+                   "Only the user who blocked this conversation can unblock it");
+       }
+
+       conversation.setStatus(ConversationStatus.ACTIVE);
+       conversation.setBlockedBy(null);
+       return "Conversation unblocked successfully";
+   }
+
+   private boolean isParticipant(
+           ConversationEntity conversation, Long userId) {
+       return findParticipant(conversation, userId) != null;
+   }
+
+   private UserEntity findParticipant(
+           ConversationEntity conversation, Long userId) {
+       if (conversation.getParticipantOne().getId().equals(userId)) {
+           return conversation.getParticipantOne();
+       }
+       if (conversation.getParticipantTwo().getId().equals(userId)) {
+           return conversation.getParticipantTwo();
+       }
+       return null;
    }
 
 }

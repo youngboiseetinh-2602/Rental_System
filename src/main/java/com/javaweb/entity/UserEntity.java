@@ -84,13 +84,13 @@ public class UserEntity {
     @BatchSize(size = 50)
     private List<NotificationEntity> receivedNotifications = new ArrayList<>();
 
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(mappedBy = "participantOne")
     @BatchSize(size = 50)
-    private List<ConversationEntity> ownerConversations = new ArrayList<>();
+    private List<ConversationEntity> participantOneConversations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "participantTwo")
     @BatchSize(size = 50)
-    private List<ConversationEntity> customerConversations = new ArrayList<>();
+    private List<ConversationEntity> participantTwoConversations = new ArrayList<>();
 
     @OneToMany(mappedBy = "sender")
     @BatchSize(size = 50)

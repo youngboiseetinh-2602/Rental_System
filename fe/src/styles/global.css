@@ -1,0 +1,562 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --green: #147a43;
+    --green-dark: #0c6134;
+    --ink: #182127;
+    --muted: #66716d;
+    --border: #e7ebe8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    font-family: 'Manrope', Arial, sans-serif;
+    color: var(--ink);
+    background: #f7f9f8;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.site-header {
+    position: relative;
+    z-index: 20;
+    height: 88px;
+    background: rgba(255, 255, 255, 0.98);
+    border-bottom: 1px solid #f0f2f1;
+}
+
+.header-inner {
+    width: 96%;
+    max-width: none;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+    align-items: center;
+    gap: 24px;
+    padding-inline: 0;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    width: max-content;
+    color: var(--green);
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -0.7px;
+}
+
+.brand svg {
+    width: 38px;
+    height: 38px;
+    fill: #e3f1e9;
+    stroke: var(--green);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.8;
+}
+
+.main-nav {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: clamp(38px, 4.5vw, 76px);
+}
+
+.main-nav a {
+    position: relative;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.main-nav a::after {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    border-radius: 4px;
+    background: var(--green);
+    content: '';
+    transform: translateX(-50%);
+    transition: width 180ms ease;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    color: var(--green-dark);
+}
+
+.main-nav a.active::after {
+    width: 22px;
+}
+
+.auth-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-self: end;
+    padding-right: 0;
+}
+
+.login-link,
+.register-link {
+    min-width: 116px;
+    padding: 13px 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.login-link {
+    border: 1px solid var(--border);
+    background: #fff;
+}
+
+.register-link {
+    color: #fff;
+    background: var(--green);
+    box-shadow: 0 5px 12px rgba(20, 122, 67, 0.18);
+}
+
+.menu-toggle {
+    display: none;
+}
+
+.home-page {
+    width: 98%;
+    max-width: none;
+    margin: 18px auto 34px;
+}
+
+.hero-section {
+    position: relative;
+    min-height: 650px;
+    overflow: hidden;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 16px 48px rgba(30, 65, 47, 0.07);
+}
+
+.hero-background {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.99) 0%, rgba(255, 255, 255, 0.96) 36%, rgba(255, 255, 255, 0.2) 61%, rgba(255, 255, 255, 0) 100%),
+        linear-gradient(0deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0) 30%);
+}
+
+.hero-copy {
+    position: relative;
+    z-index: 2;
+    width: 58.333333%;
+    padding: 4.5% 0 3.5% 5%;
+}
+
+.hero-eyebrow {
+    margin: 0 0 18px;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.hero-copy h1 {
+    margin: 0;
+    color: #151d22;
+    font-size: clamp(38px, 3.3vw, 55px);
+    font-weight: 800;
+    line-height: 1.13;
+    letter-spacing: -2.4px;
+}
+
+.hero-copy h1 span,
+.hero-description span {
+    display: block;
+}
+
+.hero-description {
+    margin: 22px 0 28px;
+    color: #59645f;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.room-search {
+    width: 112%;
+    max-width: 780px;
+    padding: 16px;
+    border: 1px solid rgba(223, 230, 226, 0.82);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 14px 34px rgba(32, 62, 47, 0.09);
+    backdrop-filter: blur(8px);
+}
+
+.rental-introduction {
+    width: 112%;
+    max-width: 760px;
+    padding: 18px 22px;
+    border-left: 4px solid var(--green);
+    border-radius: 0 12px 12px 0;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 12px 30px rgba(32, 62, 47, 0.07);
+    backdrop-filter: blur(8px);
+}
+
+.introduction-label {
+    margin: 0 0 7px;
+    color: var(--green-dark);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.introduction-copy {
+    max-width: 650px;
+    margin: 0;
+    color: #59645f;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.search-field {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+}
+
+.search-field input,
+.search-field select {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    color: #4f5a55;
+    background-color: #fff;
+    font-size: 12px;
+}
+
+.search-field input {
+    padding-right: 42px;
+}
+
+.search-field input:focus,
+.search-field select:focus {
+    border-color: #83b99c;
+    box-shadow: 0 0 0 3px rgba(20, 122, 67, 0.08);
+}
+
+.location-field svg {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 17px;
+    fill: none;
+    stroke: #56635d;
+    stroke-width: 1.7;
+    transform: translateY(-50%);
+}
+
+.room-search button {
+    min-height: 48px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: var(--green);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(20, 122, 67, 0.24);
+    transition: transform 160ms ease, background 160ms ease;
+}
+
+.room-search button:hover {
+    background: var(--green-dark);
+    transform: translateY(-1px);
+}
+
+.benefit-list {
+    margin-top: 55px;
+    width: 112%;
+    max-width: 760px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 0;
+}
+
+.benefit-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--green);
+    background: #e3f2e9;
+    border: 1px solid #d3e9dc;
+    font-size: 23px;
+    font-weight: 700;
+}
+
+.benefit-item h2,
+.room-preview-card h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.benefit-item p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.room-preview-list {
+    position: absolute;
+    z-index: 3;
+    right: 2%;
+    bottom: 34px;
+    display: flex;
+    gap: 1vw;
+    width: 44%;
+    justify-content: flex-end;
+}
+
+.room-preview-card {
+    width: 31%;
+    min-width: 130px;
+    padding: 7px 7px 13px;
+    border: 1px solid rgba(225, 229, 227, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 8px 20px rgba(31, 45, 38, 0.13);
+}
+
+.room-preview-image {
+    height: 88px;
+    margin-bottom: 10px;
+    border-radius: 9px;
+    background-image: url('../assets/rental-hero.png');
+    background-size: 330%;
+}
+
+.room-preview-card h2 {
+    padding-inline: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.room-preview-card p {
+    margin: 5px 3px 0;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+@media (max-width: 1100px) {
+    .main-nav {
+        gap: 28px;
+    }
+
+    .hero-copy {
+        width: 66.666667%;
+        padding-left: 4%;
+    }
+
+    .benefit-list {
+        gap: 22px;
+    }
+
+}
+
+@media (max-width: 850px) {
+    .header-inner {
+        grid-template-columns: 1fr auto;
+    }
+
+    .menu-toggle {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-content: center;
+        gap: 5px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .menu-toggle span {
+        width: 20px;
+        height: 2px;
+        background: var(--ink);
+    }
+
+    .main-nav {
+        position: absolute;
+        top: 88px;
+        left: 16px;
+        right: 16px;
+        height: auto;
+        padding: 12px;
+        display: none;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 2px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 16px 32px rgba(30, 50, 40, .14);
+    }
+
+    .main-nav.is-open {
+        display: flex;
+    }
+
+    .main-nav a {
+        height: auto;
+        padding: 12px;
+        display: block;
+        border-radius: 8px;
+    }
+
+    .main-nav a.active {
+        background: #edf7f1;
+    }
+
+    .main-nav a::after,
+    .auth-actions {
+        display: none;
+    }
+
+    .hero-section {
+        min-height: 760px;
+    }
+
+    .hero-copy {
+        width: 100%;
+        padding: 6% 5%;
+    }
+
+    .hero-overlay {
+        background: linear-gradient(180deg, rgba(255, 255, 255, .99) 0%, rgba(255, 255, 255, .91) 53%, rgba(255, 255, 255, .16) 100%);
+    }
+
+    .room-search {
+        width: 100%;
+        max-width: none;
+    }
+
+    .rental-introduction {
+        width: 100%;
+        max-width: none;
+    }
+
+    .benefit-list {
+        margin-top: 34px;
+        flex-wrap: wrap;
+    }
+
+    .room-preview-list {
+        left: 24px;
+        right: 24px;
+        width: auto;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 5px 3px 12px;
+    }
+
+    .room-preview-card {
+        width: 32%;
+        min-width: 170px;
+        flex: 0 0 32%;
+    }
+}
+
+@media (max-width: 560px) {
+    .site-header {
+        height: 64px;
+    }
+
+    .brand {
+        font-size: 18px;
+    }
+
+    .brand svg {
+        width: 29px;
+    }
+
+    .main-nav {
+        top: 64px;
+    }
+
+    .home-page {
+        width: 97%;
+        margin-top: 8px;
+    }
+
+    .hero-section {
+        min-height: 920px;
+        border-radius: 16px;
+    }
+
+    .hero-copy {
+        padding: 10% 5%;
+    }
+
+    .hero-copy h1 {
+        font-size: 36px;
+        letter-spacing: -1.7px;
+    }
+
+    .hero-description span {
+        display: inline;
+    }
+
+    .benefit-list {
+        width: 100%;
+        max-width: none;
+    }
+
+    .room-preview-list {
+        bottom: 22px;
+        left: 16px;
+        right: 16px;
+    }
+}

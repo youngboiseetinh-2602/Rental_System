@@ -50,6 +50,24 @@ class AuthorizationRulesTest {
         assertEquals("ok", securedMethods.ownerOrAdminMethod());
     }
 
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void chatUserRuleAllowsCustomer() {
+        assertEquals("ok", securedMethods.chatUserMethod());
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    void chatUserRuleAllowsOwner() {
+        assertEquals("ok", securedMethods.chatUserMethod());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void chatUserRuleAllowsAdmin() {
+        assertEquals("ok", securedMethods.chatUserMethod());
+    }
+
     @Configuration(proxyBeanMethods = false)
     @EnableMethodSecurity
     static class TestConfiguration {
@@ -74,6 +92,11 @@ class AuthorizationRulesTest {
 
         @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
         String ownerOrAdminMethod() {
+            return "ok";
+        }
+
+        @PreAuthorize(AuthorizationRules.CHAT_USER)
+        String chatUserMethod() {
             return "ok";
         }
     }

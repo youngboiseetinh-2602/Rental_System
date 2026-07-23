@@ -22,9 +22,15 @@ public class ConversationConverter {
         ConversationResponse response = modelMapper.map(
                 conversation, ConversationResponse.class);
 
-        UserEntity otherUser = conversation.getOwner().getId().equals(currentUserId)
-                ? conversation.getCustomer()
-                : conversation.getOwner();
+        UserEntity otherUser;
+        if (conversation.getParticipantOne().getId().equals(currentUserId)) {
+            otherUser = conversation.getParticipantTwo();
+        } else if (conversation.getParticipantTwo().getId().equals(currentUserId)) {
+            otherUser = conversation.getParticipantOne();
+        } else {
+            throw new IllegalArgumentException(
+                    "Current user is not a conversation participant");
+        }
         response.setName(otherUser.getFullName());
 
         if (latestMessage != null) {
@@ -35,12 +41,9 @@ public class ConversationConverter {
         return response;
     }
 
-    public MessageResponse toMessageResponse(
-            MessageEntity message, Long currentUserId) {
-        MessageResponse response = modelMapper.map(
-                message, MessageResponse.class);
+    public MessageResponse toMessageResponse(MessageEntity message) {
+        MessageResponse response = modelMapper.map(message, MessageResponse.class);
         response.setSenderId(message.getSender().getId());
-        response.setMine(message.getSender().getId().equals(currentUserId));
         return response;
     }
 }

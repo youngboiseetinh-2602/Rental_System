@@ -37,7 +37,8 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(
-            HttpSecurity http
+            HttpSecurity http,
+            @Value("${app.frontend.login-url}") String frontendLoginUrl
     ) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
@@ -45,13 +46,14 @@ public class SecurityConfig {
         http
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new LoginUrlAuthenticationEntryPoint(frontendLoginUrl),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 );
@@ -123,6 +125,11 @@ public class SecurityConfig {
                                 "/api/users/me",
                                 "/api/users/me/password"
                         ).access(require(AuthorizationRules.USER))
+                        .requestMatchers(
+                                "/api/conversations",
+                                "/api/conversations/**",
+                                "/api/messages/**"
+                        ).access(require(AuthorizationRules.CHAT_USER))
                         .anyRequest().denyAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
@@ -143,10 +150,12 @@ public class SecurityConfig {
     @Bean
     @Order(3)
     public SecurityFilterChain applicationSecurityFilterChain(
-            HttpSecurity http
+            HttpSecurity http,
+            @Value("${app.frontend.login-url}") String frontendLoginUrl
     ) throws Exception {
         http
                 .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/login",
@@ -157,7 +166,12 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults());
+                .formLogin(form -> form
+                        // POST /login van do UsernamePasswordAuthenticationFilter xu ly.
+                        .loginProcessingUrl("/login")
+                        .failureUrl(frontendLoginUrl + "?error=true")
+                        .permitAll()
+                );
 
         return http.build();
     }

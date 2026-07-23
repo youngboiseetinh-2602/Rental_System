@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,12 +18,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "message")
+@Table(
+        name = "message",
+        indexes = @Index(
+                name = "idx_message_conversation_hidden_id",
+                columnList = "conversationId,hidden,id"))
 @BatchSize(size = 50)
 public class MessageEntity {
 
@@ -41,10 +47,18 @@ public class MessageEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime sentAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "ENUM('READ','UNREAD')")
-    private MessageStatus status = MessageStatus.UNREAD;
+    @Column(nullable = false, columnDefinition = "ENUM('SENT','READ')")
+    private MessageStatus status = MessageStatus.SENT;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean hidden = false;
+
+    @Column
+    private String note;
 }

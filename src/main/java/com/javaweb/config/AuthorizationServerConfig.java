@@ -17,7 +17,6 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 // Dang ky OAuth2 client va bo sung cac claim rieng vao access token JWT.
 @Configuration
@@ -27,14 +26,13 @@ public class AuthorizationServerConfig {
     public RegisteredClientRepository registeredClientRepository(
             @Value("${oauth2.client.internal-id}") String internalId,
             @Value("${oauth2.client.id}") String clientId,
-            @Value("${oauth2.client.redirect-uri}") String redirectUri,
-            @Value("${oauth2.client.secret}") String clientSecret,
-            PasswordEncoder passwordEncoder
+            @Value("${oauth2.client.redirect-uri}") String redirectUri
     ) {
         RegisteredClient rentalClient = RegisteredClient.withId(internalId)
                 .clientId(clientId)
-                .clientSecret(passwordEncoder.encode(clientSecret))
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                // React la public client, khong the bao mat client secret.
+                // PKCE la bat buoc de bao ve Authorization Code Flow.
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .redirectUri(redirectUri)

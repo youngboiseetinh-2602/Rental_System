@@ -29,8 +29,8 @@ import org.hibernate.annotations.BatchSize;
 @Table(
         name = "conversation",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_conversation_owner_customer",
-                columnNames = {"ownerId", "customerId"}))
+                name = "uq_conversation_participant_pair",
+                columnNames = {"participantOneId", "participantTwoId"}))
 @BatchSize(size = 50)
 public class ConversationEntity {
 
@@ -39,19 +39,23 @@ public class ConversationEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ownerId", nullable = false)
-    private UserEntity owner;
+    @JoinColumn(name = "participantOneId", nullable = false)
+    private UserEntity participantOne;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "customerId", nullable = false)
-    private UserEntity customer;
+    @JoinColumn(name = "participantTwoId", nullable = false)
+    private UserEntity participantTwo;
 
     @Column(insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "ENUM('READ','UNREAD')")
-    private ConversationStatus status = ConversationStatus.READ;
+    @Column(nullable = false, columnDefinition = "ENUM('ACTIVE','BLOCKED')")
+    private ConversationStatus status = ConversationStatus.ACTIVE;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "blockedById")
+    private UserEntity blockedBy;
 
     @OneToMany(mappedBy = "conversation")
     @BatchSize(size = 50)
