@@ -1,5 +1,7 @@
 target/
 *.log
+fe/node_modules/
+fe/build/
 
 .env
 .idea/
