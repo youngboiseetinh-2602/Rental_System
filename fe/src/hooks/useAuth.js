@@ -1,16 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useContext } from 'react';
+import AuthContext from '../contexts/AuthContext';
 
 function useAuth() {
-    const [user, setUser] = useState(null);
+    const context = useContext(AuthContext);
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+    if (context === undefined) {
+        throw new Error('useAuth phải được sử dụng bên trong AuthProvider.');
+    }
 
-    return { user, setUser };
+    return context;
 }
 
 export default useAuth;
