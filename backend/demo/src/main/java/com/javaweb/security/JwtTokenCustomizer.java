@@ -8,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -26,9 +25,7 @@ public class JwtTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingCont
 
     @Override
     public void customize(JwtEncodingContext context) {
-        boolean accessToken = OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType());
-        boolean idToken = OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue());
-        if (!accessToken && !idToken) {
+        if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
             return;
         }
 
@@ -36,11 +33,8 @@ public class JwtTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingCont
         context.getClaims()
                 .claim("roles", List.of(user.getRole().name()))
                 .claim("username", user.getUsername())
-                .claim("userId", user.getId());
-
-        if (accessToken) {
-            context.getClaims().subject(user.getId().toString());
-        }
+                .claim("userId", user.getId())
+                .subject(user.getId().toString());
     }
 
     private UserEntity loadActiveUser(JwtEncodingContext context) {

@@ -67,9 +67,7 @@ public class WebSecurityConfig {
                 .securityMatcher(authorizationServer.getEndpointsMatcher())
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .with(authorizationServer, server -> server
-                        .oidc(Customizer.withDefaults())
-                )
+                .with(authorizationServer, Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().authenticated()
                 )
@@ -79,9 +77,6 @@ public class WebSecurityConfig {
                                 new LoginUrlAuthenticationEntryPoint(frontendLoginUrl),
                                 htmlRequestMatcher
                         )
-                )
-                .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt(Customizer.withDefaults())
                 );
 
         return http.build();
@@ -294,12 +289,6 @@ public class WebSecurityConfig {
                 List.of(HttpHeaders.ACCEPT),
                 false
         );
-        CorsConfiguration userInfoEndpoint = corsConfiguration(
-                allowedOrigin,
-                List.of(HttpMethod.GET.name()),
-                List.of(HttpHeaders.ACCEPT, HttpHeaders.AUTHORIZATION),
-                false
-        );
         CorsConfiguration frontendAuthentication = corsConfiguration(
                 allowedOrigin,
                 List.of(
@@ -320,7 +309,6 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/oauth2/token", tokenEndpoint);
         source.registerCorsConfiguration("/oauth2/jwks", browserReadableMetadata);
         source.registerCorsConfiguration("/.well-known/**", browserReadableMetadata);
-        source.registerCorsConfiguration("/userinfo", userInfoEndpoint);
         return source;
     }
 

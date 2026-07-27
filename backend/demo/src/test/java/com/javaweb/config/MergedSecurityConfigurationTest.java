@@ -241,7 +241,7 @@ class MergedSecurityConfigurationTest {
                         .param("code_verifier", PKCE_VERIFIER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token").isNotEmpty())
-                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(jsonPath("$.id_token").doesNotExist())
                 .andExpect(jsonPath("$.token_type").value("Bearer"))
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -296,14 +296,13 @@ class MergedSecurityConfigurationTest {
                 .queryParam("client_id", "rental-spa")
                 .queryParam(
                         "scope",
-                        "openid profile user.read user.write"
+                        "user.read user.write"
                 )
                 .queryParam(
                         "redirect_uri",
                         "http://localhost:3000/callback"
                 )
                 .queryParam("state", "state-123")
-                .queryParam("nonce", "nonce-123")
                 .queryParam("code_challenge", PKCE_CHALLENGE)
                 .queryParam("code_challenge_method", "S256");
     }

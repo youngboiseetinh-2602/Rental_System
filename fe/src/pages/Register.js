@@ -26,7 +26,6 @@ function Register() {
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -39,7 +38,6 @@ function Register() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
-        setSuccess('');
         setSubmitting(true);
 
         try {
@@ -54,17 +52,14 @@ function Register() {
             };
 
             await registerUser(payload);
-            setSuccess('Đăng ký thành công. Vui lòng đăng nhập.');
-            setFormValues({
-                username: '',
-                fullName: '',
-                phoneNumber: '',
-                password: '',
-                citizenCode: '',
-                gender: '',
-                role: '',
+            navigate('/login', {
+                replace: true,
+                state: {
+                    username: payload.username,
+                    registrationMessage:
+                        'Đăng ký thành công. Vui lòng đăng nhập.',
+                },
             });
-            setTimeout(() => navigate('/login'), 1200);
         } catch (registrationError) {
             setError(registrationError.message || 'Đăng ký không thành công.');
         } finally {
@@ -81,11 +76,6 @@ function Register() {
                             Đăng ký
                         </h1>
 
-                        {success && (
-                            <div className="alert alert-success" role="status">
-                                {success}
-                            </div>
-                        )}
                         {error && (
                             <div className="alert alert-danger" role="alert">
                                 {error}

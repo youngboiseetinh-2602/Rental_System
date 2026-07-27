@@ -10,7 +10,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 
@@ -23,8 +22,7 @@ class RegisteredClientConfigTest {
         RegisteredClientRepository repository =
                 registeredClientConfig.registeredClientRepository(
                         "rental-spa",
-                        "http://localhost:3000/callback",
-                        "http://localhost:3000"
+                        "http://localhost:3000/callback"
                 );
 
         RegisteredClient client = repository.findByClientId("rental-spa");
@@ -45,13 +43,7 @@ class RegisteredClientConfigTest {
                 client.getRedirectUris()
         );
         assertEquals(
-                Set.of("http://localhost:3000"),
-                client.getPostLogoutRedirectUris()
-        );
-        assertEquals(
                 Set.of(
-                        OidcScopes.OPENID,
-                        OidcScopes.PROFILE,
                         "room.read",
                         "room.write",
                         "user.read",

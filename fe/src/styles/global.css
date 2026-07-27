@@ -89,8 +89,8 @@ a {
     height: 100%;
     display: grid;
     place-items: center;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .main-nav a::after {
@@ -133,8 +133,8 @@ a {
     padding: 13px 20px;
     border-radius: 8px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
 }
 
 .login-link {
@@ -175,14 +175,16 @@ a {
 .auth-user strong {
     max-width: 150px;
     overflow: hidden;
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .auth-user span {
     color: var(--muted);
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .auth-user .auth-error {
@@ -631,6 +633,7 @@ a {
         right: 16px;
     }
 }
+
 .dashboard-page {
     width: 98%;
     max-width: 1240px;
@@ -911,19 +914,100 @@ a {
     font-weight: 700;
 }
 
-.status-ch?-ph?n-h?i {
+.status-cho-phan-hoi {
     color: #b06a00;
     background: #fff4d5;
 }
 
-.status-dang-xem-xét {
+.status-dang-xem-xet {
     color: #1f6b38;
     background: #e2f5e7;
 }
 
-.status-dã-liên-h? {
+.status-da-lien-he {
     color: #13614f;
     background: #def4ef;
+}
+
+/* Sidebar layout for user dashboard */
+.user-dashboard {
+    width: 98%;
+    max-width: 1240px;
+    margin: 28px auto 48px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+}
+
+.dashboard-sidebar {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 12px 32px rgba(30, 60, 47, 0.06);
+    height: fit-content;
+}
+
+.sidebar-profile {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #e3f2e9, #f7faf7);
+    border: 2px solid rgba(20, 122, 67, 0.08);
+}
+
+.profile-info strong {
+    display: block;
+}
+
+.profile-info .role {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-nav a {
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #23302b;
+}
+
+.sidebar-nav a.active {
+    background: #edf7f1;
+    color: var(--green-dark);
+    font-weight: 700;
+}
+
+.dashboard-main {
+    min-width: 0;
+}
+
+.search-input {
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.btn-search {
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 12px;
+    background: var(--green);
+    color: #fff;
+    border: 0;
+    font-weight: 700;
 }
 
 .dashboard-chat-card .chat-list {
@@ -984,5 +1068,121 @@ a {
     .dashboard-summary-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* Rental search: larger, stronger typography for easier scanning. */
+.rental-search-page {
+    font-size: 17px;
+}
+
+.rental-search-page .rental-search-input {
+    min-height: 58px;
+    padding-inline: 18px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.rental-search-page .form-label {
+    margin-bottom: 8px;
+    color: #26352e;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.rental-search-page .form-control,
+.rental-search-page .form-select {
+    min-height: 46px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.rental-search-page .btn {
+    min-height: 44px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.rental-filter-title {
+    margin-bottom: 16px;
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.rental-results-title {
+    margin: 0;
+    font-size: clamp(32px, 2.5vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.8px;
+}
+
+.rental-results-subtitle {
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.rental-sort-label {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.rental-search-page .rental-sort-select {
+    min-width: 190px;
+    font-weight: 600;
+}
+
+.rental-result-card .card-body {
+    padding: 22px;
+}
+
+.rental-result-title {
+    margin-bottom: 9px;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.rental-result-card p {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.rental-result-card .text-muted {
+    color: #59665f !important;
+    font-weight: 600;
+}
+
+.rental-result-badge {
+    padding-inline: 12px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.rental-owner-info p {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.rental-owner-info .text-success {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.rental-search-page .alert {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+@media (max-width: 680px) {
+    .rental-search-page {
+        padding-inline: 16px !important;
+        font-size: 16px;
+    }
+
+    .rental-results-title {
+        font-size: 30px;
+    }
+
+    .rental-filter-title {
+        font-size: 23px;
     }
 }

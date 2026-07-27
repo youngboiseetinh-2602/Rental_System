@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -42,28 +41,6 @@ class JwtTokenCustomizerTest {
         JwtClaimsSet claims = context.getClaims().build();
 
         assertEquals("42", claims.getSubject());
-        assertEquals(List.of("CUSTOMER"), claims.getClaim("roles"));
-        assertEquals("customer", claims.getClaim("username"));
-        assertEquals(Long.valueOf(42L), claims.<Long>getClaim("userId"));
-    }
-
-    @Test
-    void idTokenKeepsOidcClientAudience() {
-        UserEntity user = user("customer", UserStatus.ACTIVE);
-        when(userRepository.findByUsername("customer")).thenReturn(Optional.of(user));
-        JwtEncodingContext context = context(
-                new OAuth2TokenType(OidcParameterNames.ID_TOKEN),
-                "customer",
-                JwtClaimsSet.builder()
-                        .subject("customer")
-                        .audience(List.of("rental-spa"))
-        );
-
-        customizer.customize(context);
-        JwtClaimsSet claims = context.getClaims().build();
-
-        assertEquals("customer", claims.getSubject());
-        assertEquals(List.of("rental-spa"), claims.getAudience());
         assertEquals(List.of("CUSTOMER"), claims.getClaim("roles"));
         assertEquals("customer", claims.getClaim("username"));
         assertEquals(Long.valueOf(42L), claims.<Long>getClaim("userId"));

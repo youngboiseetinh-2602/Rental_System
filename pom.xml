@@ -12,6 +12,6 @@
     <name>Rental Room System</name>
 
     <modules>
-        <module>backend/resource-server</module>
+        <module>backend/demo</module>
     </modules>
 </project>

@@ -34,15 +34,10 @@ class WebSecurityConfigTest {
         );
         assertFalse(Boolean.TRUE.equals(token.getAllowCredentials()));
 
-        CorsConfiguration userInfo = configurationFor(source, "/userinfo");
-        assertNotNull(userInfo);
-        assertEquals(List.of(HttpMethod.GET.name()), userInfo.getAllowedMethods());
-        assertEquals(
-                List.of(HttpHeaders.ACCEPT, HttpHeaders.AUTHORIZATION),
-                userInfo.getAllowedHeaders()
-        );
-
-        assertNotNull(configurationFor(source, "/.well-known/openid-configuration"));
+        assertNotNull(configurationFor(
+                source,
+                "/.well-known/oauth-authorization-server"
+        ));
         assertNotNull(configurationFor(source, "/oauth2/jwks"));
         assertNotNull(configurationFor(source, "/api/users/me"));
 

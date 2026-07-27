@@ -7,7 +7,9 @@ function Login() {
     const [startingLogin, setStartingLogin] = useState(false);
     const [loginError, setLoginError] = useState('');
     const [formValues, setFormValues] = useState({
-        username: '',
+        username: typeof location.state?.username === 'string'
+            ? location.state.username
+            : '',
         password: '',
     });
     const { user, loading, isAuthenticated, login } = useAuth();
@@ -37,7 +39,7 @@ function Login() {
                     : stateFrom
                         ? `${stateFrom.pathname || ''}${stateFrom.search || ''}${stateFrom.hash || ''}`
                         : null)
-                || '/dashboard';
+                || '/';
             await login(
                 formValues.username.trim(),
                 formValues.password,
@@ -76,6 +78,11 @@ function Login() {
                             </>
                         ) : !loading && (
                             <>
+                                {location.state?.registrationMessage && (
+                                    <div className="alert alert-success" role="status">
+                                        {location.state.registrationMessage}
+                                    </div>
+                                )}
                                 <form onSubmit={handleLogin}>
                                     <div className="mb-3">
                                         <label className="form-label" htmlFor="username">

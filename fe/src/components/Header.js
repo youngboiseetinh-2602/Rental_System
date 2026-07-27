@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import { defaultAuthenticatedRoute } from '../utils/authRouting';
 
 const navigation = [
     { label: 'Trang chủ', to: '/' },
@@ -36,6 +37,9 @@ function Header() {
             ? [user.role]
             : [];
     const primaryRole = roles[0]?.replace(/^ROLE_/, '');
+    const homePath = isAuthenticated
+        ? defaultAuthenticatedRoute(user)
+        : '/';
 
     const handleLogout = async () => {
         setLogoutError('');
@@ -104,7 +108,7 @@ function Header() {
     return (
         <header className="site-header">
             <div className="header-inner container-fluid">
-                <NavLink className="brand" to="/" onClick={() => setOpen(false)}>
+                <NavLink className="brand" to={homePath} onClick={() => setOpen(false)}>
                     <LogoIcon />
                     <span>RentalRoom</span>
                 </NavLink>
@@ -125,10 +129,9 @@ function Header() {
                     {navigation.map((item) => (
                         <NavLink
                             key={item.to}
-                            to={item.to}
+                            to={item.to === '/' ? homePath : item.to}
                             className={({ isActive }) => isActive ? 'active' : ''}
                             onClick={() => setOpen(false)}
-                            style={{ fontSize: '1.1rem' }}
                         >
                             {item.label}
                         </NavLink>

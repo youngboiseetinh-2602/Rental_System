@@ -23,8 +23,8 @@ function Callback() {
         );
 
         handleCallback(callbackSearch)
-            .then((returnTo) => {
-                navigate(returnTo || '/dashboard', { replace: true });
+            .then((destination) => {
+                navigate(destination || '/', { replace: true });
             })
             .catch((callbackError) => {
                 setError(

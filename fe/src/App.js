@@ -8,6 +8,7 @@ import AboutUs from './pages/AboutUs';
 import Callback from './pages/Callback';
 import Dashboard from './pages/Dashboard';
 import Header from './components/Header';
+import CustomerRoute from './components/CustomerRoute';
 import { AuthProvider } from './contexts/AuthProvider';
 import './styles/global.css';
 
@@ -24,7 +25,14 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/callback" element={<Callback />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route
+                            path="/dashboard"
+                            element={(
+                                <CustomerRoute>
+                                    <Dashboard />
+                                </CustomerRoute>
+                            )}
+                        />
                     </Routes>
                 </main>
             </AuthProvider>

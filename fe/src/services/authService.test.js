@@ -8,8 +8,8 @@ import {
     authenticateWithCredentials,
     completeAuthorization,
     createAuthorizationRequest,
-    createEndSessionUrl,
     loginWithCredentials,
+    logout,
     restoreAuthenticatedUser,
 } from './authService';
 
@@ -35,7 +35,7 @@ function currentTransaction() {
     );
 }
 
-function successfulTokenResponse(transaction, overrides = {}) {
+function successfulTokenResponse(overrides = {}) {
     const expiresAt = Math.floor(Date.now() / 1000) + 3600;
     return {
         access_token: createJwt({
@@ -45,16 +45,9 @@ function successfulTokenResponse(transaction, overrides = {}) {
             scope: 'room.read room.write',
             exp: expiresAt,
         }),
-        id_token: createJwt({
-            sub: 'user-1',
-            iss: 'http://localhost:8080',
-            aud: 'rental-spa',
-            nonce: transaction.nonce,
-            exp: expiresAt,
-        }),
         token_type: 'Bearer',
         expires_in: 3600,
-        scope: 'openid profile room.read room.write',
+        scope: 'room.read room.write',
         ...overrides,
     };
 }
@@ -101,7 +94,7 @@ describe('OAuth2 Authorization Code với PKCE', () => {
         global.TextEncoder = originalTextEncoder;
     });
 
-    it('tạo authorize request có state, nonce và PKCE S256', async () => {
+    it('tạo authorize request có state và PKCE S256', async () => {
         const request = await createAuthorizationRequest('/rooms');
         const url = new URL(request);
         const transaction = currentTransaction();
@@ -115,10 +108,11 @@ describe('OAuth2 Authorization Code với PKCE', () => {
             'http://localhost:3000/callback',
         );
         expect(url.searchParams.get('scope')).toBe(
-            'openid profile room.read room.write user.read user.write booking.read booking.write',
+            'room.read room.write user.read user.write booking.read booking.write',
         );
         expect(url.searchParams.get('state')).toBe(transaction.state);
-        expect(url.searchParams.get('nonce')).toBe(transaction.nonce);
+        expect(url.searchParams.has('nonce')).toBe(false);
+        expect(transaction).not.toHaveProperty('nonce');
         expect(url.searchParams.get('code_challenge_method')).toBe('S256');
         expect(url.searchParams.get('code_challenge')).toBeTruthy();
         expect(transaction.codeVerifier.length).toBeGreaterThanOrEqual(43);
@@ -198,13 +192,13 @@ describe('OAuth2 Authorization Code với PKCE', () => {
         expect(window.sessionStorage.getItem(AUTH_STORAGE_KEYS.transaction)).toBeNull();
     });
 
-    it('validate state/nonce và chỉ exchange code một lần', async () => {
+    it('validate state và chỉ exchange code một lần', async () => {
         const request = new URL(await createAuthorizationRequest('/rooms'));
         const transaction = currentTransaction();
         global.fetch.mockResolvedValue({
             ok: true,
             status: 200,
-            json: async () => successfulTokenResponse(transaction),
+            json: async () => successfulTokenResponse(),
         });
 
         const search =
@@ -238,7 +232,7 @@ describe('OAuth2 Authorization Code với PKCE', () => {
             window.sessionStorage.getItem(AUTH_STORAGE_KEYS.tokens),
         );
         expect(storedTokens.accessToken).toBeTruthy();
-        expect(storedTokens.idToken).toBeTruthy();
+        expect(storedTokens).not.toHaveProperty('idToken');
         expect(storedTokens).not.toHaveProperty('refreshToken');
     });
 
@@ -254,32 +248,6 @@ describe('OAuth2 Authorization Code với PKCE', () => {
         expect(window.sessionStorage.getItem(AUTH_STORAGE_KEYS.transaction)).toBeNull();
     });
 
-    it('không lưu token khi nonce trong ID Token không khớp', async () => {
-        const request = new URL(await createAuthorizationRequest('/'));
-        const transaction = currentTransaction();
-        global.fetch.mockResolvedValue({
-            ok: true,
-            status: 200,
-            json: async () => successfulTokenResponse(transaction, {
-                id_token: createJwt({
-                    sub: 'user-1',
-                    iss: 'http://localhost:8080',
-                    aud: 'rental-spa',
-                    nonce: 'unexpected-nonce',
-                    exp: Math.floor(Date.now() / 1000) + 3600,
-                }),
-            }),
-        });
-
-        await expect(
-            completeAuthorization(
-                `?code=nonce-mismatch-code&state=${request.searchParams.get('state')}`,
-            ),
-        ).rejects.toThrow('ID Token không khớp');
-
-        expect(window.sessionStorage.getItem(AUTH_STORAGE_KEYS.tokens)).toBeNull();
-    });
-
     it('xóa JWT hết hạn thay vì sử dụng refresh token', async () => {
         window.sessionStorage.setItem(
             AUTH_STORAGE_KEYS.tokens,
@@ -288,9 +256,8 @@ describe('OAuth2 Authorization Code với PKCE', () => {
                     sub: 'user-1',
                     exp: Math.floor(Date.now() / 1000) - 60,
                 }),
-                idToken: 'id-token',
                 tokenType: 'Bearer',
-                scope: 'openid',
+                scope: 'room.read',
                 expiresAt: Date.now() - 60_000,
             }),
         );
@@ -302,16 +269,28 @@ describe('OAuth2 Authorization Code với PKCE', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('tạo URL OIDC end-session với ID Token', () => {
-        const logoutUrl = new URL(createEndSessionUrl('id-token-value'));
+    it('đăng xuất chỉ xóa token và transaction của SPA', () => {
+        window.sessionStorage.setItem(
+            AUTH_STORAGE_KEYS.tokens,
+            JSON.stringify({
+                accessToken: createJwt({
+                    sub: 'user-1',
+                    exp: Math.floor(Date.now() / 1000) + 3600,
+                }),
+                tokenType: 'Bearer',
+                scope: 'room.read',
+                expiresAt: Date.now() + 3_600_000,
+            }),
+        );
+        window.sessionStorage.setItem(
+            AUTH_STORAGE_KEYS.transaction,
+            JSON.stringify({ state: 'pending-state' }),
+        );
 
-        expect(`${logoutUrl.origin}${logoutUrl.pathname}`).toBe(
-            'http://localhost:8080/connect/logout',
-        );
-        expect(logoutUrl.searchParams.get('id_token_hint')).toBe('id-token-value');
-        expect(logoutUrl.searchParams.get('client_id')).toBe('rental-spa');
-        expect(logoutUrl.searchParams.get('post_logout_redirect_uri')).toBe(
-            'http://localhost:3000',
-        );
+        logout();
+
+        expect(window.sessionStorage.getItem(AUTH_STORAGE_KEYS.tokens)).toBeNull();
+        expect(window.sessionStorage.getItem(AUTH_STORAGE_KEYS.transaction)).toBeNull();
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

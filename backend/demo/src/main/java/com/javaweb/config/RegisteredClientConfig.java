@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
@@ -25,9 +24,7 @@ public class RegisteredClientConfig {
     @Bean
     public RegisteredClientRepository registeredClientRepository(
             @Value("${authorization-server.client.id}") String clientId,
-            @Value("${authorization-server.client.redirect-uri}") String redirectUri,
-            @Value("${authorization-server.client.post-logout-redirect-uri}")
-            String postLogoutRedirectUri
+            @Value("${authorization-server.client.redirect-uri}") String redirectUri
     ) {
         String registeredClientId = UUID.nameUUIDFromBytes(
                 clientId.getBytes(StandardCharsets.UTF_8)
@@ -39,9 +36,6 @@ public class RegisteredClientConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .redirectUri(redirectUri)
-                .postLogoutRedirectUri(postLogoutRedirectUri)
-                .scope(OidcScopes.OPENID)
-                .scope(OidcScopes.PROFILE)
                 .scope("room.read")
                 .scope("room.write")
                 .scope("user.read")

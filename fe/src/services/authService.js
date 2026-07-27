@@ -1,13 +1,10 @@
 import {
     AUTH_LOGIN_ENDPOINT,
-    AUTHORIZATION_SERVER_URL,
     OAUTH_AUTHORIZATION_ENDPOINT,
     OAUTH_CLIENT_ID,
-    OAUTH_POST_LOGOUT_REDIRECT_URI,
     OAUTH_REDIRECT_URI,
     OAUTH_SCOPES,
     OAUTH_TOKEN_ENDPOINT,
-    OIDC_END_SESSION_ENDPOINT,
 } from '../constants/config';
 
 const EXPIRY_SKEW_MS = 30_000;
@@ -156,7 +153,6 @@ function normalizeTokenResponse(payload) {
 
     return {
         accessToken: payload.access_token,
-        idToken: payload.id_token || null,
         tokenType: payload.token_type || 'Bearer',
         scope: payload.scope || '',
         expiresAt,
@@ -304,29 +300,6 @@ export async function loginWithCredentials(
     return createAuthorizationRequest(returnTo);
 }
 
-function validateIdToken(idToken, expectedNonce) {
-    if (!idToken) {
-        throw new Error('Authorization Server không trả về ID Token cho yêu cầu OpenID.');
-    }
-
-    const claims = decodeJwtClaims(idToken);
-    if (!claims) {
-        throw new Error('ID Token không có định dạng JWT hợp lệ.');
-    }
-
-    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-    const expiresAt = Number(claims.exp) * 1000;
-    if (
-        claims.iss !== AUTHORIZATION_SERVER_URL
-        || !audiences.includes(OAUTH_CLIENT_ID)
-        || claims.nonce !== expectedNonce
-        || !Number.isFinite(expiresAt)
-        || expiresAt <= Date.now()
-    ) {
-        throw new Error('ID Token không khớp với yêu cầu đăng nhập.');
-    }
-}
-
 function rolesFromClaims(claims) {
     const roles = claims.roles ?? claims.role ?? [];
     return (Array.isArray(roles) ? roles : [roles])
@@ -366,7 +339,6 @@ export function userFromTokenSet(tokens) {
 
 export async function createAuthorizationRequest(returnTo = '/') {
     const state = createRandomValue(32);
-    const nonce = createRandomValue(32);
     const codeVerifier = createRandomValue(64);
     const codeChallenge = await createCodeChallenge(codeVerifier);
 
@@ -374,7 +346,6 @@ export async function createAuthorizationRequest(returnTo = '/') {
         AUTH_STORAGE_KEYS.transaction,
         JSON.stringify({
             state,
-            nonce,
             codeVerifier,
             returnTo: normalizeReturnTo(returnTo),
             createdAt: Date.now(),
@@ -388,7 +359,6 @@ export async function createAuthorizationRequest(returnTo = '/') {
         redirect_uri: OAUTH_REDIRECT_URI,
         scope: OAUTH_SCOPES.join(' '),
         state,
-        nonce,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
     }).toString();
@@ -440,7 +410,6 @@ async function completeAuthorizationOnce(search) {
         code_verifier: transaction.codeVerifier,
     });
 
-    validateIdToken(payload?.id_token, transaction.nonce);
     const tokens = normalizeTokenResponse(payload);
     storeTokenSet(tokens);
 
@@ -496,26 +465,6 @@ export async function getValidAccessToken() {
     return tokens.accessToken;
 }
 
-export function createEndSessionUrl(idToken) {
-    if (!idToken) {
-        return null;
-    }
-
-    const logoutUrl = new URL(OIDC_END_SESSION_ENDPOINT);
-    logoutUrl.search = new URLSearchParams({
-        id_token_hint: idToken,
-        client_id: OAUTH_CLIENT_ID,
-        post_logout_redirect_uri: OAUTH_POST_LOGOUT_REDIRECT_URI,
-    }).toString();
-    return logoutUrl.toString();
-}
-
 export function logout() {
-    const tokens = readTokenSet();
-    const endSessionUrl = createEndSessionUrl(tokens?.idToken);
     clearAuthSession();
-
-    if (endSessionUrl) {
-        window.location.assign(endSessionUrl);
-    }
 }
