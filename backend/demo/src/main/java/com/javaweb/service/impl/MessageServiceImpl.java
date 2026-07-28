@@ -32,8 +32,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public MessageResponse sendMessage(
-            MessageRequest request, Long conversationId) {
+    public MessageResponse sendMessage(MessageRequest request, Long conversationId) {
         Long userId = currentUserContext.getCurrentUserId();
         ConversationEntity conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new DataNotFoundException(

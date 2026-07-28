@@ -60,10 +60,12 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
-    public String processRentalRequest(Long contractId, ContractStatus status) {
+    public String processRentalRequest(
+            Long contractId, ContractStatus status, String rejectionReason) {
         if (status != ContractStatus.APPROVED && status != ContractStatus.CANCELLED) {
             throw new IllegalArgumentException("Status must be APPROVED or CANCELLED");
         }
+        String normalizedReason = normalizeRejectionReason(status, rejectionReason);
 
         Long roomId = getContractRoomId(contractId);
         RoomEntity room = getRoomForUpdate(roomId);
@@ -72,7 +74,7 @@ public class ContractServiceImpl implements ContractService {
 
         if (status == ContractStatus.CANCELLED) {
             String result = cancelContract(contract);
-            sendRejectedNotification(contract);
+            sendRejectedNotification(contract, normalizedReason);
             return result;
         }
 
@@ -304,12 +306,30 @@ public class ContractServiceImpl implements ContractService {
                         + " da duoc chu tro chap nhan");
     }
 
-    private void sendRejectedNotification(ContractEntity contract) {
+    private void sendRejectedNotification(
+            ContractEntity contract, String rejectionReason) {
         sendNotification(
                 contract,
                 "Yeu cau thue da bi tu choi",
                 "Yeu cau thue phong " + contract.getRoom().getName()
-                        + " da bi chu tro tu choi");
+                        + " da bi chu tro tu choi. Ly do: " + rejectionReason);
+    }
+
+    private String normalizeRejectionReason(
+            ContractStatus status, String rejectionReason) {
+        if (status != ContractStatus.CANCELLED) {
+            return null;
+        }
+        if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Rejection reason is required");
+        }
+        String normalizedReason = rejectionReason.trim();
+        if (normalizedReason.length() > 500) {
+            throw new IllegalArgumentException(
+                    "Rejection reason must not exceed 500 characters");
+        }
+        return normalizedReason;
     }
 
     private void sendContractExpiryNotification(ContractEntity contract) {

@@ -31,7 +31,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataNotFoundException.class)
     public ResponseEntity<String> handleDataNotFoundException(DataNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Không tìm thấy dữ liệu phù hợp với yêu cầu.");
     }
 
     @ExceptionHandler(GoneException.class)
@@ -159,12 +160,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Không tìm thấy tài nguyên được yêu cầu.");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<String> handleNoResourceFoundException(NoResourceFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Đường dẫn hoặc tài nguyên không tồn tại.");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

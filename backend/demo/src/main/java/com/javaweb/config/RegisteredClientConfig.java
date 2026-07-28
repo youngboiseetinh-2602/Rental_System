@@ -18,6 +18,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
+/**
+ * Đăng ký ứng dụng giao diện làm OAuth2 client và cấu hình phạm vi, PKCE cùng thời hạn token.
+ */
 @Configuration(proxyBeanMethods = false)
 public class RegisteredClientConfig {
 

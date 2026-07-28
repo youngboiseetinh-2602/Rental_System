@@ -13,7 +13,9 @@ export function userHasRole(user, expectedRole) {
 }
 
 export function defaultAuthenticatedRoute(user) {
-    return userHasRole(user, 'CUSTOMER') ? '/dashboard' : '/';
+    if (userHasRole(user, 'CUSTOMER')) return '/dashboard';
+    if (userHasRole(user, 'OWNER')) return '/owner/dashboard';
+    return '/';
 }
 
 export function postLoginRoute(user, returnTo) {
@@ -36,6 +38,9 @@ export function postLoginRoute(user, returnTo) {
         (pathname === '/dashboard' || pathname.startsWith('/dashboard/'))
         && !userHasRole(user, 'CUSTOMER')
     ) {
+        return fallback;
+    }
+    if (pathname.startsWith('/owner/') && !userHasRole(user, 'OWNER')) {
         return fallback;
     }
 

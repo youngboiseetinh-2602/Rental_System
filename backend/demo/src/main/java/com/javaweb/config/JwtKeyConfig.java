@@ -24,6 +24,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
+/**
+ * Cấu hình cặp khóa RSA dùng để ký và xác minh access token JWT.
+ */
 @Configuration(proxyBeanMethods = false)
 public class JwtKeyConfig {
 

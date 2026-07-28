@@ -40,11 +40,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Security configuration for the Authorization Server, JWT Resource Server
- * and React login flow.
- *
- * <p>The filter-chain order keeps browser login sessions isolated from
- * {@code /api/**}, where every protected request requires a JWT access token.</p>
+ * Cấu hình các chuỗi bộ lọc bảo mật cho máy chủ OAuth2, API sử dụng JWT và luồng đăng nhập React.
  */
 @Configuration(proxyBeanMethods = false)
 @EnableMethodSecurity
@@ -112,7 +108,6 @@ public class WebSecurityConfig {
                                 "/api/rental-properties/*/reviews"
                         ).permitAll()
 
-                        // Scope protects the delegated client capability; role protects the user.
                         .requestMatchers("/api/admin/**")
                         .access(require(AuthorizationRules.ADMIN))
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**")
@@ -152,6 +147,15 @@ public class WebSecurityConfig {
                                 "/api/users/me/notifications/**",
                                 "/api/users/me",
                                 "/api/users/me/password"
+                        ).access(require(AuthorizationRules.USER_WRITE))
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/system/imagekit/auth"
+                        ).access(require(AuthorizationRules.USER_WRITE))
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/system/avatar",
+                                "/api/system/property-image"
                         ).access(require(AuthorizationRules.USER_WRITE))
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -212,7 +216,6 @@ public class WebSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .formLogin(form -> form
-                        // React renders the form; this URL only processes it.
                         .loginPage("/auth/login")
                         .loginProcessingUrl("/auth/login")
                         .successHandler(authenticationSuccessHandler)

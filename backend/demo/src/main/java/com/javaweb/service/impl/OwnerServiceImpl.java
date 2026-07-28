@@ -1,6 +1,5 @@
 package com.javaweb.service.impl;
 
-import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.converter.RentalPropertyConverter;
 import com.javaweb.converter.ContractConverter;
 import com.javaweb.entity.ContractEntity;
@@ -36,10 +35,6 @@ public class OwnerServiceImpl implements OwnerService {
         Long ownerId = getCurrentUserId();
         List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findByOwnerId(ownerId);
 
-        if (rentalProperties.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay du lieu");
-        }
-
         List<RentalPropertyResponse> responses = new ArrayList<>();
 
         for (RentalPropertyEntity rentalProperty : rentalProperties) {
@@ -57,10 +52,6 @@ public class OwnerServiceImpl implements OwnerService {
         List<ContractEntity> requests =
                 contractRepository.findAllByRoom_RoomType_RentalProperty_Owner_Id(
                         ownerId);
-
-        if (requests.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay yeu cau thue nao");
-        }
 
         List<ContractResponse> responses = new ArrayList<>();
         for (ContractEntity request : requests) {

@@ -11,6 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 
+/**
+ * Cấu hình bộ mã hóa mật khẩu, nhà cung cấp xác thực và bộ nhớ yêu cầu đăng nhập.
+ */
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
 

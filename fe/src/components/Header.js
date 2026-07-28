@@ -47,6 +47,7 @@ function Header() {
         try {
             await logout();
             setOpen(false);
+            window.location.replace('/');
         } catch (error) {
             setLogoutError(error.message || 'Đăng xuất không thành công.');
         }
@@ -84,7 +85,7 @@ function Header() {
 
         return (
             <>
-                <div className="auth-user" title={logoutError || undefined}>
+                <NavLink className="auth-user" to="/profile" title={logoutError || undefined}>
                     <strong>{username || 'Người dùng'}</strong>
                     {primaryRole && <span>{primaryRole}</span>}
                     {logoutError && !mobile && (
@@ -92,7 +93,7 @@ function Header() {
                             {logoutError}
                         </span>
                     )}
-                </div>
+                </NavLink>
                 <button
                     className="register-link logout-button"
                     type="button"

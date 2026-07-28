@@ -328,9 +328,9 @@ function PhongTro() {
                                                     {rental.ownerPhoneNumber}
                                                 </p>
                                             )}
-                                            <button type="button" className="btn btn-outline-success">
+                                            <a href={`/phong-tro/${rental.id}`} className="btn btn-outline-success">
                                                 Xem chi tiết
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

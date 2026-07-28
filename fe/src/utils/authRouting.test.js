@@ -15,8 +15,8 @@ describe('điều hướng theo role sau đăng nhập', () => {
     });
 
     it('không cho role khác đi vào customer dashboard', () => {
-        expect(defaultAuthenticatedRoute(owner)).toBe('/');
-        expect(postLoginRoute(owner, '/dashboard')).toBe('/');
+        expect(defaultAuthenticatedRoute(owner)).toBe('/owner/dashboard');
+        expect(postLoginRoute(owner, '/dashboard')).toBe('/owner/dashboard');
     });
 
     it('giữ returnTo nội bộ hợp lệ và loại URL không an toàn', () => {
@@ -24,7 +24,7 @@ describe('điều hướng theo role sau đăng nhập', () => {
             '/phong-tro?city=hanoi',
         );
         expect(postLoginRoute(customer, '//attacker.example')).toBe('/dashboard');
-        expect(postLoginRoute(owner, 'https://attacker.example')).toBe('/');
+        expect(postLoginRoute(owner, 'https://attacker.example')).toBe('/owner/dashboard');
         expect(postLoginRoute(customer, '/callback')).toBe('/dashboard');
     });
 });

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../constants/config';
+import { apiFetch } from './apiClient';
 
 const RENTAL_FILTER_KEYS = [
     'rentalType',
@@ -86,4 +87,67 @@ export async function searchRentalProperties(params = {}) {
     }
 
     return response.json();
+}
+
+export async function getRentalPropertyDetail(rentalPropertyId) {
+    const response = await fetch(`${API_BASE_URL}/rental-properties/${rentalPropertyId}`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: { Accept: 'application/json' },
+    });
+    const text = await response.text();
+    let body;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        body = null;
+    }
+    if (!response.ok) {
+        throw new Error(body?.message || text || 'Không thể tải chi tiết phòng trọ.');
+    }
+    return body;
+}
+
+export async function createRentalRequest(payload) {
+    const response = await apiFetch('/api/users/me/rental-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const text = await response.text();
+    let body = text;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        // This endpoint currently returns a plain-text success message.
+    }
+    if (!response.ok) {
+        const message = body && typeof body === 'object'
+            ? body.message || Object.values(body).join('. ')
+            : body;
+        throw new Error(message || 'Không thể gửi yêu cầu thuê trọ.');
+    }
+    return typeof body === 'string' ? body : 'Gửi yêu cầu thuê trọ thành công.';
+}
+
+export async function getMyRentalRequests() {
+    const response = await apiFetch('/api/users/me/rental-requests');
+    if (response.status === 404) return [];
+    const text = await response.text();
+    if (!response.ok) {
+        throw new Error(text || 'Không thể tải danh sách yêu cầu thuê trọ.');
+    }
+    return text ? JSON.parse(text) : [];
+}
+
+export async function cancelMyRentalRequest(contractId) {
+    const response = await apiFetch(`/api/users/me/rental-requests/${contractId}`, {
+        method: 'DELETE',
+    });
+    const text = await response.text();
+    if (!response.ok) {
+        throw new Error(text || 'Không thể hủy yêu cầu thuê trọ.');
+    }
+    return text;
 }

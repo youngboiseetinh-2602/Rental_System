@@ -9,7 +9,8 @@ public interface ContractService {
 
     String createRentalRequest(RentalRequest request);
 
-    String processRentalRequest(Long contractId, ContractStatus status);
+    String processRentalRequest(
+            Long contractId, ContractStatus status, String rejectionReason);
 
     String cancelRentalRequest(Long contractId);
 

@@ -1,6 +1,8 @@
 package com.javaweb.security;
 
-// Tap trung cac bieu thuc role dung chung cho HTTP va @PreAuthorize.
+/**
+ * Tập trung các biểu thức phân quyền theo vai trò và phạm vi để tái sử dụng trong hệ thống.
+ */
 public final class AuthorizationRules {
 
     public static final String PUBLIC = "permitAll()";
@@ -44,7 +46,6 @@ public final class AuthorizationRules {
     public static final String BOOKING_WRITE_OWNER_OR_ADMIN =
             BOOKING_WRITE + " and " + OWNER_OR_ADMIN;
 
-    // Ngan khoi tao class chi chua hang so.
     private AuthorizationRules() {
     }
 }

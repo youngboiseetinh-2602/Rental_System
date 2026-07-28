@@ -9,6 +9,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
 
+/**
+ * Chuyển đổi JWT thành đối tượng xác thực, kết hợp quyền từ scope và vai trò của người dùng.
+ */
 @Component
 public class JwtAuthenticationConverter
         implements Converter<Jwt, AbstractAuthenticationToken> {

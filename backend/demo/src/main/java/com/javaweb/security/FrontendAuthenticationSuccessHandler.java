@@ -19,6 +19,9 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
 
+/**
+ * Xử lý đăng nhập thành công và trả về địa chỉ chuyển hướng OAuth2 hợp lệ cho giao diện.
+ */
 @Component
 public class FrontendAuthenticationSuccessHandler
         implements AuthenticationSuccessHandler {

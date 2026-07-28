@@ -46,9 +46,11 @@ public class OwnerController {
     @PatchMapping("/rental-requests/{contractId}")
     public ResponseEntity<String> processRentalRequest(
             @PathVariable Long contractId,
-            @RequestParam ContractStatus status) {
+            @RequestParam ContractStatus status,
+            @RequestParam(required = false) String rejectionReason) {
         return ResponseEntity.ok(
-                contractService.processRentalRequest(contractId, status));
+                contractService.processRentalRequest(
+                        contractId, status, rejectionReason));
     }
 
     // Lay danh sach yeu cau thue gui den cac nha tro cua owner dang dang nhap.

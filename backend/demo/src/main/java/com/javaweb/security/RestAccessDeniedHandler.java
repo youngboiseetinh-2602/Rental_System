@@ -15,7 +15,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
-// Tra JSON 403 khi user da xac thuc nhung khong du role hoac scope.
+/**
+ * Xử lý yêu cầu bị từ chối do người dùng không đủ vai trò hoặc phạm vi quyền.
+ */
 @Component
 @RequiredArgsConstructor
 public class RestAccessDeniedHandler implements AccessDeniedHandler {

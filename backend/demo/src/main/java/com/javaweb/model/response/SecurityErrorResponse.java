@@ -1,6 +1,8 @@
 package com.javaweb.model.response;
 
-// Dinh dang JSON chung cho cac loi bao mat tra ve client.
+/**
+ * Biểu diễn cấu trúc phản hồi JSON thống nhất cho các lỗi bảo mật trả về phía người dùng.
+ */
 public record SecurityErrorResponse(
         int status,
         String error,

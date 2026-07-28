@@ -7,7 +7,9 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-// Doc userId va quyen cua user dang dang nhap tu SecurityContext.
+/**
+ * Cung cấp mã người dùng và quyền của tài khoản đang đăng nhập từ ngữ cảnh bảo mật.
+ */
 @Component
 public class CurrentUserContext {
 
@@ -37,7 +39,6 @@ public class CurrentUserContext {
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
     }
 
-    // Tra ve Authentication hop le hoac bao loi khi request chua xac thuc.
     private Authentication getAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

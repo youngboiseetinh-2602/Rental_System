@@ -1,4 +1,59 @@
 import { API_BASE_URL } from '../constants/config';
+import { apiFetch } from './apiClient';
+
+async function readApiResponse(response, fallbackMessage) {
+    const text = await response.text();
+    let body = text;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        // Some backend endpoints intentionally return plain text.
+    }
+    if (!response.ok) {
+        const message = body && typeof body === 'object'
+            ? body.message || Object.values(body).join('. ')
+            : body;
+        throw new Error(message || fallbackMessage);
+    }
+    return body;
+}
+
+export async function getMyProfile() {
+    const response = await apiFetch('/api/users/me');
+    return readApiResponse(response, 'Không thể tải thông tin cá nhân.');
+}
+
+export async function updateMyProfile(payload) {
+    const response = await apiFetch('/api/users/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    return readApiResponse(response, 'Không thể cập nhật thông tin cá nhân.');
+}
+
+export async function changeMyPassword(payload) {
+    const response = await apiFetch('/api/users/me/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    return readApiResponse(response, 'Không thể đổi mật khẩu.');
+}
+
+export async function uploadAvatarImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiFetch('/api/system/avatar', {
+        method: 'POST',
+        body: formData,
+    });
+    const result = await readApiResponse(response, 'Tải ảnh đại diện thất bại.');
+    if (!result?.url) {
+        throw new Error('Dịch vụ tải ảnh không trả về đường dẫn hợp lệ.');
+    }
+    return result.url;
+}
 
 export async function registerUser(payload) {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
