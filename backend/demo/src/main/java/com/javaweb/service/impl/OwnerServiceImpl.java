@@ -1,12 +1,12 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.customException.DataNotFoundException;
-import com.javaweb.converter.RentalConverter;
+import com.javaweb.converter.RentalPropertyConverter;
 import com.javaweb.converter.ContractConverter;
 import com.javaweb.entity.ContractEntity;
 import com.javaweb.entity.RentalPropertyEntity;
-import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.ContractResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.security.AuthorizationRules;
@@ -25,14 +25,14 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final RentalPropertyRepository rentalPropertyRepository;
     private final ContractRepository contractRepository;
-    private final RentalConverter rentalConverter;
+    private final RentalPropertyConverter rentalPropertyConverter;
     private final ContractConverter contractConverter;
     private final CurrentUserContext currentUserContext;
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional(readOnly = true)
-    public List<Rental> getOwnerRentals() {
+    public List<RentalPropertyResponse> getOwnerRentals() {
         Long ownerId = getCurrentUserId();
         List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findByOwnerId(ownerId);
 
@@ -40,10 +40,10 @@ public class OwnerServiceImpl implements OwnerService {
             throw new DataNotFoundException("khong tim thay du lieu");
         }
 
-        List<Rental> responses = new ArrayList<>();
+        List<RentalPropertyResponse> responses = new ArrayList<>();
 
         for (RentalPropertyEntity rentalProperty : rentalProperties) {
-            responses.add(rentalConverter.toRental(rentalProperty));
+            responses.add(rentalPropertyConverter.toRentalPropertyResponse(rentalProperty));
         }
 
         return responses;

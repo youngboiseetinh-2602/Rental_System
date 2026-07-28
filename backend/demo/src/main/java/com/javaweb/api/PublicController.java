@@ -1,8 +1,8 @@
 package com.javaweb.api;
 
 import com.javaweb.model.request.Register;
-import com.javaweb.model.response.Rental;
-import com.javaweb.model.response.RentalDetail;
+import com.javaweb.model.response.RentalPropertyDetailResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.model.response.ReviewResponse;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.service.ReviewService;
@@ -49,7 +49,7 @@ public class PublicController {
 
     // Tim kiem nha tro theo cac tieu chi; khong co tieu chi thi lay tat ca.
     @GetMapping("/rental-properties")
-    public ResponseEntity<Page<Rental>> searchRentalProperties(
+    public ResponseEntity<Page<RentalPropertyResponse>> searchRentalProperties(
             @RequestParam Map<String, Object> params,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
             Pageable pageable) {
@@ -58,7 +58,8 @@ public class PublicController {
 
     // Lay thong tin chi tiet cua mot nha tro.
     @GetMapping("/rental-properties/{rentalPropertyId}")
-    public ResponseEntity<RentalDetail> getRentalPropertyDetail(@PathVariable Long rentalPropertyId) {
+    public ResponseEntity<RentalPropertyDetailResponse> getRentalPropertyDetail(
+            @PathVariable Long rentalPropertyId) {
         return ResponseEntity.ok(rentalPropertyService.getRentalPropertyDetail(rentalPropertyId));
     }
 

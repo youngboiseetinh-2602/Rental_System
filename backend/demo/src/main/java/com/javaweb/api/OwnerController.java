@@ -1,14 +1,14 @@
 package com.javaweb.api;
 
 import com.javaweb.enums.ContractStatus;
-import com.javaweb.model.request.RentalProperty;
+import com.javaweb.model.request.RentalPropertyRequest;
 import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
-import com.javaweb.model.request.RentalPropertyInfo;
+import com.javaweb.model.request.RentalPropertyInfoRequest;
 import com.javaweb.model.request.UpdateRoomType;
-import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.ContractResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.service.OwnerService;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.RentalPropertyService;
@@ -59,14 +59,14 @@ public class OwnerController {
 
     // Lay danh sach nha tro thuoc owner dang dang nhap.
     @GetMapping("/owners/me/rental-properties")
-    public ResponseEntity<List<Rental>> getMyRentals() {
+    public ResponseEntity<List<RentalPropertyResponse>> getMyRentals() {
         return ResponseEntity.ok(ownerService.getOwnerRentals());
     }
 
     // Tao nha tro moi cho owner dang dang nhap.
     @PostMapping("/owners/me/rental-properties")
     public ResponseEntity<String> createRentalProperty(
-            @Valid @RequestBody RentalProperty request) {
+            @Valid @RequestBody RentalPropertyRequest request) {
         return ResponseEntity.ok(rentalPropertyService.createRentalProperty(request));
     }
 
@@ -74,7 +74,7 @@ public class OwnerController {
     @PutMapping("/rental-properties/{rentalPropertyId}")
     public ResponseEntity<String> updateRentalProperty(
             @PathVariable Long rentalPropertyId,
-            @Valid @RequestBody RentalPropertyInfo request) {
+            @Valid @RequestBody RentalPropertyInfoRequest request) {
         return ResponseEntity.ok(rentalPropertyService.updateRentalProperty(rentalPropertyId, request));
     }
 

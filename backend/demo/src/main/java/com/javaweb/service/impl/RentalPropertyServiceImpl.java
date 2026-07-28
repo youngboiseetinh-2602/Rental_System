@@ -3,7 +3,7 @@ package com.javaweb.service.impl;
 import com.javaweb.builder.RentalSearchBuilder;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.customException.ForbiddenException;
-import com.javaweb.converter.RentalConverter;
+import com.javaweb.converter.RentalPropertyConverter;
 import com.javaweb.converter.RentalSearchBuilderConverter;
 import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.ImageEntity;
@@ -12,13 +12,13 @@ import com.javaweb.entity.RentalTypeEntity;
 import com.javaweb.entity.RoomEntity;
 import com.javaweb.entity.RoomTypeEntity;
 import com.javaweb.entity.UserEntity;
-import com.javaweb.model.request.RentalProperty;
+import com.javaweb.model.request.RentalPropertyRequest;
 import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
-import com.javaweb.model.request.RentalPropertyInfo;
-import com.javaweb.model.response.Rental;
-import com.javaweb.model.response.RentalDetail;
+import com.javaweb.model.request.RentalPropertyInfoRequest;
+import com.javaweb.model.response.RentalPropertyDetailResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.ImageRepository;
 import com.javaweb.repository.RoomRepository;
@@ -48,25 +48,25 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     private final RoomRepository roomRepository;
     private final ImageRepository imageRepository;
     private final ModelMapper modelMapper;
-    private final RentalConverter rentalConverter;
+    private final RentalPropertyConverter rentalPropertyConverter;
     private final RentalSearchBuilderConverter rentalSearchBuilderConverter;
     private final CurrentUserContext currentUserContext;
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
-    public Page<Rental> getRentalProperties(Pageable pageable) {
+    public Page<RentalPropertyResponse> getRentalProperties(Pageable pageable) {
         Page<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll(pageable);
         if (rentalProperties.isEmpty()) {
             throw new DataNotFoundException("khong tim thay du lieu");
         }
-        return rentalProperties.map(rentalConverter::toRental);
+        return rentalProperties.map(rentalPropertyConverter::toRentalPropertyResponse);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
-    public Page<Rental> searchRentalProperties(Map<String, Object> params, Pageable pageable) {
+    public Page<RentalPropertyResponse> searchRentalProperties(Map<String, Object> params, Pageable pageable) {
         RentalSearchBuilder searchBuilder =
                 rentalSearchBuilderConverter.toRentalSearchBuilder(params);
 
@@ -81,21 +81,21 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
             throw new DataNotFoundException("khong tim thay nha tro phu hop");
         }
 
-        return rentalProperties.map(rentalConverter::toRental);
+        return rentalProperties.map(rentalPropertyConverter::toRentalPropertyResponse);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
-    public RentalDetail getRentalPropertyDetail(Long rentalPropertyId) {
+    public RentalPropertyDetailResponse getRentalPropertyDetail(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
-        return rentalConverter.toRentalDetail(rentalProperty);
+        return rentalPropertyConverter.toRentalPropertyDetailResponse(rentalProperty);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional
-    public String createRentalProperty(RentalProperty request) {
+    public String createRentalProperty(RentalPropertyRequest request) {
         Long ownerId = getCurrentUserId();
         UserEntity owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new DataNotFoundException("Owner not found with id: " + ownerId));
@@ -109,7 +109,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @Override
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
-    public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfo request) {
+    public String updateRentalProperty(Long rentalPropertyId, RentalPropertyInfoRequest request) {
         RentalPropertyEntity rentalProperty = getManageableRentalPropertyById(rentalPropertyId);
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
 
@@ -209,7 +209,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     }
 
     private RentalPropertyEntity buildRentalProperty(
-            RentalProperty request,
+            RentalPropertyRequest request,
             UserEntity owner,
             RentalTypeEntity rentalType) {
         RentalPropertyEntity rentalProperty = modelMapper.map(request, RentalPropertyEntity.class);

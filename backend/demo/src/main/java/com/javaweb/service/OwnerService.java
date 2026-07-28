@@ -1,12 +1,12 @@
 package com.javaweb.service;
 
-import com.javaweb.model.response.Rental;
 import com.javaweb.model.response.ContractResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import java.util.List;
 
 public interface OwnerService {
 
-    List<Rental> getOwnerRentals();
+    List<RentalPropertyResponse> getOwnerRentals();
 
     List<ContractResponse> getOwnerRentalRequests();
 }

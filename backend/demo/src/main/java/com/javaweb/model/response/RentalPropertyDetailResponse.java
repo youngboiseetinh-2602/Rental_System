@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RentalDetail extends Rental {
+public class RentalPropertyDetailResponse extends RentalPropertyResponse {
 
     private List<Image> images;
 

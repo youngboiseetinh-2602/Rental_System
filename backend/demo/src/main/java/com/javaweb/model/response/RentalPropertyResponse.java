@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Rental {
+public class RentalPropertyResponse {
 
     private Long id;
 

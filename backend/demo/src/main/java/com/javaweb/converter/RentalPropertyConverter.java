@@ -3,31 +3,33 @@ package com.javaweb.converter;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.entity.RentalTypeEntity;
 import com.javaweb.entity.UserEntity;
-import com.javaweb.model.response.Rental;
-import com.javaweb.model.response.RentalDetail;
+import com.javaweb.model.response.RentalPropertyDetailResponse;
+import com.javaweb.model.response.RentalPropertyResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RentalConverter {
+public class RentalPropertyConverter {
 
     private final ModelMapper modelMapper;
 
-    public Rental toRental(RentalPropertyEntity rentalProperty) {
-        Rental response = modelMapper.map(rentalProperty, Rental.class);
+    public RentalPropertyResponse toRentalPropertyResponse(RentalPropertyEntity rentalProperty) {
+        RentalPropertyResponse response = modelMapper.map(rentalProperty, RentalPropertyResponse.class);
         setExtraInfo(rentalProperty, response);
         return response;
     }
 
-    public RentalDetail toRentalDetail(RentalPropertyEntity rentalProperty) {
-        RentalDetail response = modelMapper.map(rentalProperty, RentalDetail.class);
+    public RentalPropertyDetailResponse toRentalPropertyDetailResponse(RentalPropertyEntity rentalProperty) {
+        RentalPropertyDetailResponse response = modelMapper.map(
+                rentalProperty,
+                RentalPropertyDetailResponse.class);
         setExtraInfo(rentalProperty, response);
         return response;
     }
 
-    private void setExtraInfo(RentalPropertyEntity rentalProperty, Rental response) {
+    private void setExtraInfo(RentalPropertyEntity rentalProperty, RentalPropertyResponse response) {
         UserEntity owner = rentalProperty.getOwner();
         response.setOwnerName(owner.getFullName());
         response.setOwnerPhoneNumber(owner.getPhoneNumber());

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class RentalPropertyInfo {
+public class RentalPropertyInfoRequest {
 
     @NotBlank(message = "Rental property name is required")
     @Size(max = 150, message = "Rental property name must not exceed 150 characters")
