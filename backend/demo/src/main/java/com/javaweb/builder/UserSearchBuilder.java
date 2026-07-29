@@ -8,11 +8,13 @@ import lombok.Getter;
 public class UserSearchBuilder {
 
     private final UserRole role;
+    private final UserRole excludeRole;
     private final UserStatus status;
     private final String citizenCode;
 
     private UserSearchBuilder(Builder builder) {
         this.role = builder.role;
+        this.excludeRole = builder.excludeRole;
         this.status = builder.status;
         this.citizenCode = builder.citizenCode;
     }
@@ -23,6 +25,7 @@ public class UserSearchBuilder {
 
     public boolean isEmpty() {
         return role == null
+                && excludeRole == null
                 && status == null
                 && (citizenCode == null || citizenCode.isBlank());
     }
@@ -30,11 +33,17 @@ public class UserSearchBuilder {
     public static class Builder {
 
         private UserRole role;
+        private UserRole excludeRole;
         private UserStatus status;
         private String citizenCode;
 
         public Builder role(UserRole role) {
             this.role = role;
+            return this;
+        }
+
+        public Builder excludeRole(UserRole excludeRole) {
+            this.excludeRole = excludeRole;
             return this;
         }
 

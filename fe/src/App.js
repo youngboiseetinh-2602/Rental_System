@@ -20,8 +20,15 @@ import OwnerPropertyEdit from './pages/OwnerPropertyEdit';
 import RentalDetail from './pages/RentalDetail';
 import CustomerRentalRequests from './pages/CustomerRentalRequests';
 import OwnerRentalRequests from './pages/OwnerRentalRequests';
+import OwnerContracts from './pages/OwnerContracts';
 import Notifications from './pages/Notifications';
 import Chats from './pages/Chats';
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
+import AdminRentalTypes from './pages/AdminRentalTypes';
+import AdminProperties from './pages/AdminProperties';
+import AdminContactFooter from './components/AdminContactFooter';
 import { AuthProvider } from './contexts/AuthProvider';
 import './styles/global.css';
 
@@ -104,6 +111,14 @@ function App() {
                             )}
                         />
                         <Route
+                            path="/owner/contracts"
+                            element={(
+                                <OwnerRoute>
+                                    <OwnerContracts />
+                                </OwnerRoute>
+                            )}
+                        />
+                        <Route
                             path="/owner/properties"
                             element={(
                                 <OwnerRoute>
@@ -135,8 +150,13 @@ function App() {
                                 </OwnerRoute>
                             )}
                         />
+                        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                        <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
+                        <Route path="/admin/rental-types" element={<AdminRoute><AdminRentalTypes /></AdminRoute>} />
                     </Routes>
                 </main>
+                <AdminContactFooter />
             </AuthProvider>
         </Router>
     );

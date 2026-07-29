@@ -18,6 +18,11 @@ public interface ContractRepository extends JpaRepository<ContractEntity, Long> 
                         Long roomId,
                         ContractStatus status);
 
+        boolean existsByTenant_IdAndRoom_RoomType_RentalProperty_Owner_IdAndStatusIn(
+                        Long tenantId,
+                        Long ownerId,
+                        List<ContractStatus> statuses);
+
         // Chi lay roomId de service co the khoa phong truoc khi load va khoa contract.
         @Query("select contract.room.id from ContractEntity contract where contract.id = :contractId")
         Optional<Long> findRoomIdByContractId(@Param("contractId") Long contractId);

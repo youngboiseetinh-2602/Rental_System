@@ -52,7 +52,10 @@ describe('trang Phòng trọ', () => {
         });
 
         expect(searchRentalProperties).toHaveBeenCalledTimes(1);
-        expect(searchRentalProperties).toHaveBeenLastCalledWith({});
+        expect(searchRentalProperties).toHaveBeenLastCalledWith({
+            page: 0,
+            size: 10,
+        });
         expect(container.textContent).toContain('Nhà trọ API');
 
         const city = container.querySelector('[name="city"]');
@@ -86,6 +89,8 @@ describe('trang Phòng trọ', () => {
         expect(searchRentalProperties).toHaveBeenLastCalledWith({
             description: 'nội thất',
             city: 'Hà Nội',
+            page: 0,
+            size: 10,
         });
     });
 
@@ -111,6 +116,33 @@ describe('trang Phòng trọ', () => {
         });
 
         expect(ward.value).toBe('');
-        expect(searchRentalProperties).toHaveBeenLastCalledWith({});
+        expect(searchRentalProperties).toHaveBeenLastCalledWith({
+            page: 0,
+            size: 10,
+        });
+    });
+
+    it('chuyển trang bằng cùng API tìm kiếm rental', async () => {
+        searchRentalProperties.mockResolvedValue({
+            content: [],
+            totalElements: 13,
+            totalPages: 3,
+            number: 0,
+        });
+
+        await act(async () => {
+            root.render(<PhongTro />);
+        });
+
+        const pageTwo = [...container.querySelectorAll('.rental-pagination button')]
+            .find((button) => button.textContent.trim() === '2');
+        await act(async () => {
+            pageTwo.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+
+        expect(searchRentalProperties).toHaveBeenLastCalledWith({
+            page: 1,
+            size: 10,
+        });
     });
 });

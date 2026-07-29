@@ -26,6 +26,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -135,6 +137,31 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER)
+    @Transactional(readOnly = true)
+    public List<ContractResponse> getOwnerContracts() {
+        Long ownerId = currentUserContext.getCurrentUserId();
+        List<ContractEntity> contractEntities =
+                contractRepository
+                        .findAllByRoom_RoomType_RentalProperty_Owner_Id(ownerId);
+        List<ContractResponse> results = new ArrayList<>();
+        for (ContractEntity contractEntity : contractEntities) {
+            if (contractEntity.getStatus() == ContractStatus.APPROVED
+                    || contractEntity.getStatus() == ContractStatus.TERMINATED
+                    || contractEntity.getStatus() == ContractStatus.EXPIRED) {
+                results.add(contractConverter.toContractResponse(contractEntity));
+            }
+        }
+
+        if (results.isEmpty()) {
+            throw new DataNotFoundException(
+                    "Không tìm thấy hợp đồng thuê nào");
+        }
+
+        return results;
+    }
+
+    @Override
     @Transactional
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Ho_Chi_Minh")
     public void notifyContractsExpiringInOneWeek() {
@@ -146,6 +173,7 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Ho_Chi_Minh")
+    @EventListener(ApplicationReadyEvent.class)
     public void expireContracts() {
         LocalDate today = LocalDate.now(VIETNAM_ZONE);
         List<Long> expiredContractIds =

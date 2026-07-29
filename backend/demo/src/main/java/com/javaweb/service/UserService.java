@@ -4,6 +4,7 @@ import com.javaweb.model.request.ChangePassword;
 import com.javaweb.model.request.Register;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
+import com.javaweb.model.response.AdminContactResponse;
 
 public interface UserService {
 
@@ -14,4 +15,6 @@ public interface UserService {
     String updateUserInfo(UpdateUserInfo request);
 
     String changePassword(ChangePassword request);
+
+    AdminContactResponse getAdminContact();
 }

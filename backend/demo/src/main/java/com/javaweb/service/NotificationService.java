@@ -8,6 +8,8 @@ public interface NotificationService {
 
     NotificationResponse createNotification(Long senderId, NotificationRequest request);
 
+    NotificationResponse createNotification(NotificationRequest request);
+
     NotificationResponse createSystemNotification(NotificationRequest request);
 
     List<NotificationResponse> getNotifications();

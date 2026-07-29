@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface RentalPropertyRepository extends JpaRepository<RentalPropertyEntity, Long>,
         JpaSpecificationExecutor<RentalPropertyEntity> {
     List<RentalPropertyEntity> findByOwnerId(Long ownerId);
+
+    boolean existsByRentalType_Id(Long rentalTypeId);
 }

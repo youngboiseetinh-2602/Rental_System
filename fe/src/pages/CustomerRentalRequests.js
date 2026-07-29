@@ -4,6 +4,8 @@ import useAuth from '../hooks/useAuth';
 import { cancelMyRentalRequest, getMyRentalRequests } from '../services/rentalService';
 import { getMyProfile } from '../services/userService';
 import AccountMenuIcon from '../components/AccountMenuIcon';
+import ChatNavLink from '../components/ChatNavLink';
+import NotificationNavLink from '../components/NotificationNavLink';
 
 const statusLabels = {
     PENDING: 'Đang chờ duyệt',
@@ -86,8 +88,8 @@ function CustomerRentalRequests() {
                     <NavLink to="/dashboard"><AccountMenuIcon name="home" /> Trang chủ</NavLink>
                     <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
                     <NavLink to="/yeu-cau-thue-tro" className="active"><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
-                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" /> Thông báo</NavLink>
+                    <ChatNavLink />
+                    <NotificationNavLink />
                 </nav>
             </aside>
 

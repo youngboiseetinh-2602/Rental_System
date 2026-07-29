@@ -186,12 +186,12 @@ function storeTokenSet(tokens) {
     emitSessionChanged();
 }
 
-export function clearAuthSession() {
+export function clearAuthSession(emitChange = true) {
     const hadTokens = window.sessionStorage.getItem(AUTH_STORAGE_KEYS.tokens) !== null;
     window.sessionStorage.removeItem(AUTH_STORAGE_KEYS.tokens);
     window.sessionStorage.removeItem(AUTH_STORAGE_KEYS.transaction);
 
-    if (hadTokens) {
+    if (hadTokens && emitChange) {
         emitSessionChanged();
     }
 }
@@ -330,6 +330,7 @@ export function userFromTokenSet(tokens) {
             || claims.username
             || claims.name
             || claims.sub,
+        fullName: claims.fullName || claims.name || '',
         name: claims.name,
         roles: rolesFromClaims(claims),
         scopes: scopesFromClaims(claims, tokens.scope),
@@ -466,5 +467,5 @@ export async function getValidAccessToken() {
 }
 
 export function logout() {
-    clearAuthSession();
+    clearAuthSession(false);
 }

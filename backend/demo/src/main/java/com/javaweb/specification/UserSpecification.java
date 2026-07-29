@@ -25,6 +25,10 @@ public final class UserSpecification {
                 predicates.add(criteriaBuilder.equal(
                         root.get("role"), searchBuilder.getRole()));
             }
+            if (searchBuilder.getExcludeRole() != null) {
+                predicates.add(criteriaBuilder.notEqual(
+                        root.get("role"), searchBuilder.getExcludeRole()));
+            }
             if (searchBuilder.getStatus() != null) {
                 predicates.add(criteriaBuilder.equal(
                         root.get("status"), searchBuilder.getStatus()));

@@ -19,5 +19,9 @@ public interface AdminService {
 
     List<RentalTypeResponse> getRentalTypes();
 
+    String createRentalType(UpdateRentalType request);
+
     String updateRentalType(Long rentalTypeId, UpdateRentalType request);
+
+    String deleteRentalType(Long rentalTypeId);
 }

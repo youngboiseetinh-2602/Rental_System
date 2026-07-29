@@ -26,4 +26,6 @@ public class ConversationResponse {
     private LocalDateTime latestMessageSentAt;
 
     private ConversationStatus status;
+
+    private Long unreadCount;
 }

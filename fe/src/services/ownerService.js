@@ -25,6 +25,32 @@ export async function getOwnerRentalRequests() {
     );
 }
 
+export async function getOwnerContracts() {
+    return readJson(
+        await apiFetch('/api/owners/me/contracts'),
+        'Không thể tải danh sách hợp đồng thuê.',
+    );
+}
+
+export async function sendOwnerNotification(payload) {
+    const response = await apiFetch('/api/owners/me/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const text = await response.text();
+    let body;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        body = null;
+    }
+    if (!response.ok) {
+        throw new Error(body?.message || text || 'Không thể gửi thông báo.');
+    }
+    return body;
+}
+
 export async function deleteOwnerProperty(propertyId) {
     const response = await apiFetch(`/api/rental-properties/${propertyId}`, {
         method: 'DELETE',
@@ -180,6 +206,13 @@ export async function getOwnerPropertyDetail(propertyId) {
         throw new Error(body?.message || text || 'Không thể tải chi tiết nhà trọ.');
     }
     return body;
+}
+
+export async function getOwnerPropertyTenants(propertyId) {
+    return readJson(
+        await apiFetch(`/api/rental-properties/${propertyId}/tenants`),
+        'Không thể tải danh sách người thuê.',
+    );
 }
 
 export async function processOwnerRentalRequest(contractId, status, rejectionReason = '') {

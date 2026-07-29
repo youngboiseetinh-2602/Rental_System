@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import {
@@ -7,7 +6,10 @@ import {
     markNotificationAsRead,
 } from '../services/notificationService';
 import { userHasRole } from '../utils/authRouting';
-import AccountMenuIcon from '../components/AccountMenuIcon';
+import {
+    NOTIFICATION_UNREAD_CHANGED_EVENT,
+} from '../components/NotificationNavLink';
+import AccountNavigation from '../components/AccountNavigation';
 
 function formatDate(value) {
     if (!value) return '';
@@ -32,6 +34,7 @@ function Notifications() {
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [error, setError] = useState('');
     const isOwner = userHasRole(user, 'OWNER');
+    const isAdmin = userHasRole(user, 'ADMIN');
 
     useEffect(() => {
         let active = true;
@@ -48,7 +51,7 @@ function Notifications() {
     }, []);
 
     const displayName = profile?.fullName || user?.username
-        || (isOwner ? 'Chủ trọ' : 'Khách hàng');
+        || (isAdmin ? 'Quản trị viên' : isOwner ? 'Chủ trọ' : 'Khách hàng');
     const initials = displayName.trim().split(/\s+/).slice(-2)
         .map((part) => part[0]).join('').toUpperCase();
     const unreadCount = notifications.filter((item) => item.status === 'UNREAD').length;
@@ -69,6 +72,9 @@ function Notifications() {
             setNotifications((current) => current.map((item) => item.id === notification.id
                 ? readNotification : item));
             setSelectedNotification(readNotification);
+            window.dispatchEvent(
+                new Event(NOTIFICATION_UNREAD_CHANGED_EVENT),
+            );
         } catch (requestError) {
             setError(requestError.message);
         } finally {
@@ -83,21 +89,9 @@ function Notifications() {
                     <div className="profile-avatar">{profile?.avatarUrl
                         ? <img src={profile.avatarUrl} alt="" /> : <span>{initials}</span>}</div>
                     <div><strong>{displayName}</strong>
-                        <span>{isOwner ? 'Chủ trọ' : 'Khách hàng'}</span></div>
+                        <span>{isAdmin ? 'Quản trị viên' : isOwner ? 'Chủ trọ' : 'Khách hàng'}</span></div>
                 </div>
-                <nav aria-label="Menu tài khoản">
-                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}><AccountMenuIcon name="home" /> Trang chủ</NavLink>
-                    <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
-                    {isOwner && <NavLink to="/owner/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>}
-                    {isOwner && <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>}
-                    <NavLink to={isOwner ? '/owner/rental-requests' : '/yeu-cau-thue-tro'}>
-                        <AccountMenuIcon name="requests" /> Yêu cầu thuê trọ
-                    </NavLink>
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
-                    <NavLink to="/notifications" className="active"><AccountMenuIcon name="notifications" /> Thông báo
-                        {unreadCount > 0 && <b className="notification-menu-badge">{unreadCount}</b>}
-                    </NavLink>
-                </nav>
+                <AccountNavigation user={user} />
             </aside>
 
             <main className="customer-request-main notification-main">

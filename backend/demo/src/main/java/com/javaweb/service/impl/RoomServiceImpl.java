@@ -9,6 +9,7 @@ import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.entity.RoomEntity;
 import com.javaweb.entity.RoomTypeEntity;
+import com.javaweb.enums.ContractStatus;
 import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
@@ -45,19 +46,35 @@ public class RoomServiceImpl implements RoomService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional(readOnly = true)
     public List<ContractResponse> getCustomerByRental(Long id) {
+        RentalPropertyEntity rentalProperty =
+                rentalPropertyRepository.findById(id)
+                        .orElseThrow(() -> new DataNotFoundException(
+                                "Không tìm thấy nhà trọ có mã: " + id));
+
+        if (!rentalProperty.getOwner().getId().equals(
+                currentUserContext.getCurrentUserId())) {
+            throw new ForbiddenException(
+                    "Bạn không có quyền xem người thuê của nhà trọ này");
+        }
+
         List<ContractEntity> contractEntities =
                 contractRepository.findAllByRoom_RoomType_RentalProperty_Id(id);
-
-        if (contractEntities.isEmpty()) {
-            throw new DataNotFoundException("Nhà trọ chưa có người thuê");
-        }
 
         List<ContractResponse> results = new ArrayList<>();
 
         for (ContractEntity contractEntity : contractEntities) {
-            results.add(contractConverter.toContractResponse(contractEntity));
+            if (contractEntity.getStatus() == ContractStatus.APPROVED
+                    || contractEntity.getStatus() == ContractStatus.TERMINATED
+                    || contractEntity.getStatus() == ContractStatus.EXPIRED) {
+                results.add(contractConverter.toContractResponse(contractEntity));
+            }
+        }
+
+        if (results.isEmpty()) {
+            throw new DataNotFoundException("Nhà trọ chưa có người thuê");
         }
 
         return results;

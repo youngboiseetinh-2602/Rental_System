@@ -9,6 +9,8 @@ const RENTAL_FILTER_KEYS = [
     'street',
     'minPrice',
     'maxPrice',
+    'page',
+    'size',
 ];
 
 export function normalizeRentalSearchParams(params = {}) {

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import {
     changeMyPassword,
@@ -7,7 +6,7 @@ import {
     uploadAvatarImage,
     updateMyProfile,
 } from '../services/userService';
-import AccountMenuIcon from '../components/AccountMenuIcon';
+import AccountNavigation from '../components/AccountNavigation';
 
 function Icon({ name, size = 21 }) {
     const paths = {
@@ -87,12 +86,41 @@ function Profile() {
         return () => { active = false; };
     }, []);
 
-    const roleLabel = useMemo(() => {
+    const normalizedRole = useMemo(() => {
         const role = profile.role || user?.role || user?.roles?.[0];
-        return String(role || 'CUSTOMER').replace('ROLE_', '') === 'OWNER'
-            ? 'Chủ trọ' : 'Khách hàng';
+        return String(role || 'CUSTOMER').replace('ROLE_', '');
     }, [profile.role, user]);
-    const isOwner = roleLabel === 'Chủ trọ';
+    const roleLabel = normalizedRole === 'ADMIN'
+        ? 'Quản trị viên'
+        : normalizedRole === 'OWNER'
+            ? 'Chủ trọ'
+            : 'Khách hàng';
+    const isOwner = normalizedRole === 'OWNER';
+    const isAdmin = normalizedRole === 'ADMIN';
+
+    if (loading) {
+        return (
+            <div className="profile-shell profile-account-frame profile-loading-shell" aria-busy="true">
+                <aside className="profile-sidebar profile-account-sidebar">
+                    <div className="profile-sidebar-user profile-loading-user">
+                        <span className="profile-skeleton profile-skeleton-avatar" />
+                        <div>
+                            <span className="profile-skeleton profile-skeleton-name" />
+                            <span className="profile-skeleton profile-skeleton-role" />
+                        </div>
+                    </div>
+                    <AccountNavigation user={user} />
+                </aside>
+                <main className="profile-main profile-account-main">
+                    <div className="profile-skeleton profile-skeleton-title" />
+                    <div className="profile-loading-card">
+                        <span className="profile-loading-spinner" />
+                        <strong>Đang tải thông tin cá nhân...</strong>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     const updateDraft = (event) => {
         const { name, value } = event.target;
@@ -213,27 +241,16 @@ function Profile() {
     ];
 
     return (
-        <div className="profile-shell">
-            <aside className="profile-sidebar">
+        <div className="profile-shell profile-account-frame">
+            <aside className="profile-sidebar profile-account-sidebar">
                 <div className="profile-sidebar-user">
                     <ProfileAvatar src={profile.avatarUrl} name={profile.fullName} />
                     <div><strong>{profile.fullName || user?.username || 'Người dùng'}</strong><span>{roleLabel}</span></div>
                 </div>
-                <nav aria-label="Menu tài khoản">
-                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}>
-                        <AccountMenuIcon name="home" /> {isOwner ? 'Tổng quan' : 'Trang chủ'}
-                    </NavLink>
-                    <NavLink to="/profile" className="active"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
-                    {isOwner && <NavLink to="/owner/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>}
-                    {isOwner && <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>}
-                    <NavLink to={isOwner ? '/owner/rental-requests' : '/yeu-cau-thue-tro'}><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
-                    {isOwner && <a href="#contracts"><AccountMenuIcon name="contract" /> Hợp đồng thuê</a>}
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
-                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" /> Thông báo</NavLink>
-                </nav>
+                <AccountNavigation user={user} />
             </aside>
 
-            <main className="profile-main">
+            <main className="profile-main profile-account-main">
                 <header className="profile-title">
                     <h1>Thông tin cá nhân</h1>
                     <p>Quản lý và cập nhật hồ sơ của bạn</p>

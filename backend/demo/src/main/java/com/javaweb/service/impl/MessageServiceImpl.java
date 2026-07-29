@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageServiceImpl implements MessageService {
 
     private static final String EDITED_NOTE = "Đã chỉnh sửa";
+    private static final String RECALLED_NOTE = "Đã thu hồi";
 
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
@@ -79,6 +80,11 @@ public class MessageServiceImpl implements MessageService {
                     "Bạn không có quyền chỉnh sửa tin nhắn này");
         }
 
+        if (message.isHidden()) {
+            throw new ForbiddenException(
+                    "Không thể chỉnh sửa tin nhắn đã thu hồi");
+        }
+
         if (message.getConversation().getStatus() == ConversationStatus.BLOCKED) {
             throw new ForbiddenException(
                     "Không thể chỉnh sửa tin nhắn trong cuộc trò chuyện đã bị chặn");
@@ -106,6 +112,7 @@ public class MessageServiceImpl implements MessageService {
 
         if (!message.isHidden()) {
             message.setHidden(true);
+            message.setNote(RECALLED_NOTE);
             messageRepository.save(message);
         }
     }

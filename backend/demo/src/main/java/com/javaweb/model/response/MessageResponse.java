@@ -21,5 +21,7 @@ public class MessageResponse {
 
     private MessageStatus status;
 
+    private boolean hidden;
+
     private String note;
 }

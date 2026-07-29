@@ -7,12 +7,15 @@ import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.RentalPropertyInfoRequest;
 import com.javaweb.model.request.UpdateRoomType;
+import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.ContractResponse;
+import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.service.OwnerService;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.service.RoomService;
+import com.javaweb.service.NotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -41,6 +44,7 @@ public class OwnerController {
     private final RentalPropertyService rentalPropertyService;
     private final RoomService roomService;
     private final ContractService contractService;
+    private final NotificationService notificationService;
 
     // Chap nhan hoac tu choi yeu cau thue thuoc nha tro cua owner dang dang nhap.
     @PatchMapping("/rental-requests/{contractId}")
@@ -59,10 +63,32 @@ public class OwnerController {
         return ResponseEntity.ok(ownerService.getOwnerRentalRequests());
     }
 
+    // Lay tat ca hop dong thue cua owner dang dang nhap.
+    @GetMapping("/owners/me/contracts")
+    public ResponseEntity<List<ContractResponse>> getOwnerContracts() {
+        return ResponseEntity.ok(contractService.getOwnerContracts());
+    }
+
+    // Gui thong bao tu owner dang dang nhap den mot nguoi thue.
+    @PostMapping("/owners/me/notifications")
+    public ResponseEntity<NotificationResponse> createNotification(
+            @Valid @RequestBody NotificationRequest request) {
+        return ResponseEntity.ok(
+                notificationService.createNotification(request));
+    }
+
     // Lay danh sach nha tro thuoc owner dang dang nhap.
     @GetMapping("/owners/me/rental-properties")
     public ResponseEntity<List<RentalPropertyResponse>> getMyRentals() {
         return ResponseEntity.ok(ownerService.getOwnerRentals());
+    }
+
+    // Lay danh sach nguoi thue va lich su thue cua mot nha tro.
+    @GetMapping("/rental-properties/{rentalPropertyId}/tenants")
+    public ResponseEntity<List<ContractResponse>> getRentalPropertyTenants(
+            @PathVariable Long rentalPropertyId) {
+        return ResponseEntity.ok(
+                roomService.getCustomerByRental(rentalPropertyId));
     }
 
     // Tao nha tro moi cho owner dang dang nhap.

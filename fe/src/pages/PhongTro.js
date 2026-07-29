@@ -26,15 +26,20 @@ const EMPTY_FILTERS = Object.freeze({
     minPrice: '',
     maxPrice: '',
 });
+const PAGE_SIZE = 10;
 
 function PhongTro() {
     const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
     const [rentals, setRentals] = useState([]);
     const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const initialRequestStarted = useRef(false);
     const latestRequestId = useRef(0);
+    const appliedFiltersRef = useRef({});
+    const resultsTopRef = useRef(null);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -44,14 +49,18 @@ function PhongTro() {
         }));
     };
 
-    const fetchRentals = useCallback(async (searchParams = {}) => {
+    const fetchRentals = useCallback(async (searchParams = {}, requestedPage = 0) => {
         const requestId = latestRequestId.current + 1;
         latestRequestId.current = requestId;
         setLoading(true);
         setError('');
 
         try {
-            const response = await searchRentalProperties(searchParams);
+            const response = await searchRentalProperties({
+                ...searchParams,
+                page: requestedPage,
+                size: PAGE_SIZE,
+            });
             if (requestId !== latestRequestId.current) {
                 return;
             }
@@ -61,6 +70,8 @@ function PhongTro() {
                 : [];
             setRentals(content.map(mapRentalProperty));
             setTotal(Number(response.totalElements ?? content.length));
+            setPage(Number(response.number ?? requestedPage));
+            setTotalPages(Number(response.totalPages ?? 0));
         } catch (requestError) {
             if (requestId !== latestRequestId.current) {
                 return;
@@ -68,6 +79,7 @@ function PhongTro() {
 
             setRentals([]);
             setTotal(0);
+            setTotalPages(0);
             setError(
                 requestError.message
                 || 'Không thể tải danh sách phòng trọ.',
@@ -112,13 +124,32 @@ function PhongTro() {
             return;
         }
 
-        fetchRentals(params);
+        appliedFiltersRef.current = params;
+        fetchRentals(params, 0);
     };
 
     const clearFilters = () => {
         setFilters({ ...EMPTY_FILTERS });
-        fetchRentals({});
+        appliedFiltersRef.current = {};
+        fetchRentals({}, 0);
     };
+
+    const goToPage = (nextPage) => {
+        if (loading || nextPage < 0 || nextPage >= totalPages || nextPage === page) return;
+        fetchRentals(appliedFiltersRef.current, nextPage);
+        window.requestAnimationFrame(() => {
+            if (typeof resultsTopRef.current?.scrollIntoView === 'function') {
+                resultsTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    };
+
+    const visiblePages = Array.from({ length: totalPages }, (_, index) => index)
+        .filter((index) => (
+            index === 0
+            || index === totalPages - 1
+            || Math.abs(index - page) <= 1
+        ));
 
     return (
         <div className="page-container rental-search-page" style={{ width: '100%', maxWidth: '1900px', padding: '0 30px', margin: '36px auto 60px' }}>
@@ -259,7 +290,7 @@ function PhongTro() {
                     </div>
                 </div>
 
-                <div className="col-lg-8 col-xl-9">
+                <div className="col-lg-8 col-xl-9" ref={resultsTopRef}>
                     <div className="d-flex flex-column gap-3">
                         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-3">
                             <div>
@@ -336,6 +367,33 @@ function PhongTro() {
                                 </div>
                             </div>
                         ))}
+
+                        {!error && totalPages > 1 && (
+                            <nav className="rental-pagination" aria-label="Phân trang phòng trọ">
+                                <button type="button" disabled={loading || page === 0} onClick={() => goToPage(page - 1)}>
+                                    ← Trước
+                                </button>
+                                <div>
+                                    {visiblePages.map((pageIndex, index) => (
+                                        <React.Fragment key={pageIndex}>
+                                            {index > 0 && pageIndex - visiblePages[index - 1] > 1 && <span>…</span>}
+                                            <button
+                                                type="button"
+                                                className={pageIndex === page ? 'active' : ''}
+                                                aria-current={pageIndex === page ? 'page' : undefined}
+                                                disabled={loading}
+                                                onClick={() => goToPage(pageIndex)}
+                                            >
+                                                {pageIndex + 1}
+                                            </button>
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                                <button type="button" disabled={loading || page + 1 >= totalPages} onClick={() => goToPage(page + 1)}>
+                                    Sau →
+                                </button>
+                            </nav>
+                        )}
                     </div>
                 </div>
             </div>

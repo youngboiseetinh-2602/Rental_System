@@ -8,6 +8,7 @@ import com.javaweb.entity.ConversationEntity;
 import com.javaweb.entity.MessageEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.ConversationStatus;
+import com.javaweb.enums.MessageStatus;
 import com.javaweb.model.response.ConversationResponse;
 import com.javaweb.model.response.MessageResponse;
 import com.javaweb.repository.ConversationRepository;
@@ -46,14 +47,22 @@ public class ConversationServiceImpl implements ConversationService {
            throw new DataNotFoundException("Không tìm thấy cuộc trò chuyện nào");
        }
 
-       return conversations.map(conversation -> conversationConverter
-               .toConversationResponse(
-                       conversation,
-                       userId,
-                       messageRepository
-                               .findFirstByConversation_IdAndHiddenFalseOrderByIdDesc(
-                                       conversation.getId())
-                               .orElse(null)));
+       return conversations.map(conversation -> {
+           ConversationResponse response = conversationConverter
+                   .toConversationResponse(
+                           conversation,
+                           userId,
+                           messageRepository
+                                   .findFirstByConversation_IdAndHiddenFalseOrderByIdDesc(
+                                           conversation.getId())
+                                   .orElse(null));
+           response.setUnreadCount(messageRepository
+                   .countByConversation_IdAndSender_IdNotAndStatusAndHiddenFalse(
+                           conversation.getId(),
+                           userId,
+                           MessageStatus.SENT));
+           return response;
+       });
    }
 
    @Override
@@ -112,10 +121,10 @@ public class ConversationServiceImpl implements ConversationService {
        PageRequest limit = PageRequest.of(0, MESSAGE_PAGE_SIZE);
        Slice<MessageEntity> messages = beforeId == null
                ? messageRepository
-                       .findAllByConversation_IdAndHiddenFalseOrderByIdDesc(
+                       .findAllByConversation_IdOrderByIdDesc(
                                conversationId, limit)
                : messageRepository
-                       .findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
+                       .findAllByConversation_IdAndIdLessThanOrderByIdDesc(
                                conversationId, beforeId, limit);
        return messages.map(conversationConverter::toMessageResponse);
    }

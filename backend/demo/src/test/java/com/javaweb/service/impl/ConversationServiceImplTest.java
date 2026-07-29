@@ -94,7 +94,7 @@ class ConversationServiceImplTest {
         when(conversationRepository.findByParticipantOne_IdAndParticipantTwo_Id(3L, 9L))
                 .thenReturn(Optional.of(conversation));
         when(conversationRepository.findById(10L)).thenReturn(Optional.of(conversation));
-        when(messageRepository.findAllByConversation_IdAndHiddenFalseOrderByIdDesc(
+        when(messageRepository.findAllByConversation_IdOrderByIdDesc(
                 eq(10L), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of()));
 
@@ -165,7 +165,7 @@ class ConversationServiceImplTest {
         when(currentUserContext.getCurrentUserId()).thenReturn(1L);
         when(conversationRepository.findById(10L)).thenReturn(Optional.of(conversation));
         when(messageRepository
-                .findAllByConversation_IdAndHiddenFalseOrderByIdDesc(
+                .findAllByConversation_IdOrderByIdDesc(
                         eq(10L), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of()));
 
@@ -193,14 +193,14 @@ class ConversationServiceImplTest {
         when(currentUserContext.getCurrentUserId()).thenReturn(1L);
         when(conversationRepository.findById(10L)).thenReturn(Optional.of(conversation));
         when(messageRepository
-                .findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
+                .findAllByConversation_IdAndIdLessThanOrderByIdDesc(
                         eq(10L), eq(99L), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of()));
 
         conversationService.getConversation(10L, 99L);
 
         verify(messageRepository)
-                .findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
+                .findAllByConversation_IdAndIdLessThanOrderByIdDesc(
                         eq(10L), eq(99L), any(Pageable.class));
     }
 

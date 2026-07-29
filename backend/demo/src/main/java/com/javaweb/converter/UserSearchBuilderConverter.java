@@ -13,6 +13,7 @@ public class UserSearchBuilderConverter {
     public UserSearchBuilder toUserSearchBuilder(Map<String, Object> params) {
         return UserSearchBuilder.builder()
                 .role(MapUtil.getObject(params, "role", UserRole.class))
+                .excludeRole(MapUtil.getObject(params, "excludeRole", UserRole.class))
                 .status(MapUtil.getObject(params, "status", UserStatus.class))
                 .citizenCode(MapUtil.getObject(params, "citizenCode", String.class))
                 .build();

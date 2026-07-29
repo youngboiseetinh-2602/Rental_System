@@ -4,6 +4,8 @@ import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import { getMyRentalRequests } from '../services/rentalService';
 import AccountMenuIcon from '../components/AccountMenuIcon';
+import ChatNavLink from '../components/ChatNavLink';
+import NotificationNavLink from '../components/NotificationNavLink';
 
 function formatRentalDate(value) {
     if (!value) return 'Chưa cập nhật';
@@ -63,8 +65,8 @@ function Dashboard() {
                     <NavLink to="/dashboard" className="active"><AccountMenuIcon name="home" /> Trang chủ</NavLink>
                     <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
                     <NavLink to="/yeu-cau-thue-tro"><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
-                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" /> Thông báo</NavLink>
+                    <ChatNavLink />
+                    <NotificationNavLink />
                 </nav>
             </aside>
 

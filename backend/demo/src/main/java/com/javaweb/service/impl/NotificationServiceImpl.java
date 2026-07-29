@@ -6,9 +6,11 @@ import com.javaweb.converter.NotificationConverter;
 import com.javaweb.entity.NotificationEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.NotificationStatus;
+import com.javaweb.enums.ContractStatus;
 import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.repository.NotificationRepository;
+import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
@@ -28,6 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
+    private final ContractRepository contractRepository;
     private final NotificationConverter notificationConverter;
     private final CurrentUserContext currentUserContext;
 
@@ -38,6 +41,31 @@ public class NotificationServiceImpl implements NotificationService {
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người gửi: " + senderId));
+
+        return saveNotification(sender, request);
+    }
+
+    @Override
+    @PreAuthorize(AuthorizationRules.OWNER)
+    @Transactional
+    public NotificationResponse createNotification(NotificationRequest request) {
+        Long senderId = currentUserContext.getCurrentUserId();
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người gửi: " + senderId));
+
+        boolean isOwnerTenant = contractRepository
+                .existsByTenant_IdAndRoom_RoomType_RentalProperty_Owner_IdAndStatusIn(
+                        request.getReceiverId(),
+                        senderId,
+                        List.of(
+                                ContractStatus.APPROVED,
+                                ContractStatus.TERMINATED,
+                                ContractStatus.EXPIRED));
+        if (!isOwnerTenant) {
+            throw new ForbiddenException(
+                    "Bạn chỉ có thể gửi thông báo cho người thuê của mình");
+        }
 
         return saveNotification(sender, request);
     }

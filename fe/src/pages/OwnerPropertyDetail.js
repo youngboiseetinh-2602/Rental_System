@@ -2,8 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import OwnerRentalRequestNavLink from '../components/OwnerRentalRequestNavLink';
 import AccountMenuIcon from '../components/AccountMenuIcon';
+import ChatNavLink from '../components/ChatNavLink';
+import NotificationNavLink from '../components/NotificationNavLink';
 import useAuth from '../hooks/useAuth';
-import { getOwnerPropertyDetail } from '../services/ownerService';
+import {
+    getOwnerPropertyDetail,
+    getOwnerPropertyTenants,
+    sendOwnerNotification,
+} from '../services/ownerService';
 import { getMyProfile } from '../services/userService';
 
 const currency = new Intl.NumberFormat('vi-VN', {
@@ -11,6 +17,12 @@ const currency = new Intl.NumberFormat('vi-VN', {
     currency: 'VND',
     maximumFractionDigits: 0,
 });
+
+function formatDate(value) {
+    if (!value) return 'Không thời hạn';
+    const [year, month, day] = String(value).split('-');
+    return year && month && day ? `${day}/${month}/${year}` : value;
+}
 
 function OwnerPropertyDetail() {
     const { propertyId } = useParams();
@@ -20,6 +32,16 @@ function OwnerPropertyDetail() {
     const [selectedImage, setSelectedImage] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showTenants, setShowTenants] = useState(false);
+    const [tenants, setTenants] = useState([]);
+    const [tenantsLoading, setTenantsLoading] = useState(false);
+    const [tenantsError, setTenantsError] = useState('');
+    const [notificationRecipient, setNotificationRecipient] = useState(null);
+    const [notificationTitle, setNotificationTitle] = useState('');
+    const [notificationContent, setNotificationContent] = useState('');
+    const [notificationSending, setNotificationSending] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationError, setNotificationError] = useState('');
 
     useEffect(() => {
         let active = true;
@@ -42,10 +64,59 @@ function OwnerPropertyDetail() {
         property?.houseNumber, property?.street, property?.ward, property?.city,
     ].filter(Boolean).join(', '), [property]);
 
+    const openTenantList = async () => {
+        setShowTenants(true);
+        setTenantsLoading(true);
+        setTenantsError('');
+        setNotificationMessage('');
+        setNotificationError('');
+        setNotificationRecipient(null);
+        try {
+            const data = await getOwnerPropertyTenants(propertyId);
+            setTenants(Array.isArray(data) ? data : []);
+        } catch (requestError) {
+            setTenantsError(requestError.message);
+        } finally {
+            setTenantsLoading(false);
+        }
+    };
+
+    const openNotificationForm = (tenant) => {
+        setNotificationRecipient(tenant);
+        setNotificationTitle('');
+        setNotificationContent('');
+        setNotificationMessage('');
+        setNotificationError('');
+    };
+
+    const submitNotification = async (event) => {
+        event.preventDefault();
+        if (!notificationRecipient || notificationSending) return;
+
+        setNotificationSending(true);
+        setNotificationError('');
+        try {
+            await sendOwnerNotification({
+                receiverId: notificationRecipient.tenantId,
+                title: notificationTitle.trim(),
+                content: notificationContent.trim(),
+            });
+            setNotificationMessage(
+                `Đã gửi thông báo đến ${notificationRecipient.tenantName || 'người thuê'}.`,
+            );
+            setNotificationRecipient(null);
+            setNotificationTitle('');
+            setNotificationContent('');
+        } catch (requestError) {
+            setNotificationError(requestError.message);
+        } finally {
+            setNotificationSending(false);
+        }
+    };
+
     return (
         <div className="owner-dashboard owner-property-detail-page">
             <aside className="owner-sidebar">
-                <NavLink className="owner-brand" to="/owner/dashboard">⌂ <span>RentalRoom</span></NavLink>
                 <NavLink className="owner-profile" to="/profile">
                     <span className="owner-avatar">{profile?.avatarUrl
                         ? <img src={profile.avatarUrl} alt="" /> : initials}</span>
@@ -57,9 +128,9 @@ function OwnerPropertyDetail() {
                     <NavLink to="/owner/properties" className="active"><AccountMenuIcon name="properties" />Danh sách phòng trọ</NavLink>
                     <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" />Tạo phòng trọ</NavLink>
                     <OwnerRentalRequestNavLink icon={<AccountMenuIcon name="requests" />} />
-                    <a href="#contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</a>
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" />Trò chuyện</NavLink>
-                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" />Thông báo</NavLink>
+                    <NavLink to="/owner/contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</NavLink>
+                    <ChatNavLink />
+                    <NotificationNavLink />
                 </nav>
             </aside>
 
@@ -67,6 +138,8 @@ function OwnerPropertyDetail() {
                 <div className="owner-detail-heading">
                     <div><p>QUẢN LÝ NHÀ TRỌ</p><h1>Chi tiết nhà trọ</h1></div>
                     <div><NavLink to="/owner/properties">← Danh sách</NavLink>
+                        <button type="button" className="owner-tenant-list-button"
+                            onClick={openTenantList}>♙ Danh sách người thuê</button>
                         <NavLink to={`/owner/properties/${propertyId}/edit`}>✎ Chỉnh sửa</NavLink></div>
                 </div>
                 {error && <div className="profile-alert is-error">{error}</div>}
@@ -148,6 +221,131 @@ function OwnerPropertyDetail() {
                         </>
                     )}
             </main>
+            {showTenants && (
+                <div className="owner-tenant-modal-backdrop"
+                    onMouseDown={() => setShowTenants(false)}>
+                    <section className="owner-tenant-modal" role="dialog" aria-modal="true"
+                        aria-labelledby="tenant-list-title"
+                        onMouseDown={(event) => event.stopPropagation()}>
+                        <header>
+                            <div>
+                                <span>QUẢN LÝ NGƯỜI THUÊ</span>
+                                <h2 id="tenant-list-title">Danh sách người thuê</h2>
+                                <p>{property?.name || 'Nhà trọ'}</p>
+                            </div>
+                            <div className="owner-tenant-modal-actions">
+                                <NavLink to="/owner/contracts">
+                                    Xem hợp đồng thuê
+                                </NavLink>
+                                <button type="button" aria-label="Đóng"
+                                    onClick={() => setShowTenants(false)}>×</button>
+                            </div>
+                        </header>
+
+                        {tenantsLoading ? (
+                            <div className="owner-tenant-state">Đang tải danh sách người thuê...</div>
+                        ) : tenantsError ? (
+                            <div className="owner-tenant-state is-error">{tenantsError}</div>
+                        ) : tenants.length === 0 ? (
+                            <div className="owner-tenant-state">
+                                Nhà trọ này chưa có người thuê.
+                            </div>
+                        ) : (
+                            <>
+                                {notificationMessage && (
+                                    <div className="owner-tenant-notification-success">
+                                        {notificationMessage}
+                                    </div>
+                                )}
+                                <div className="owner-tenant-table-wrap">
+                                    <table className="owner-tenant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Phòng</th>
+                                                <th>Tên người thuê</th>
+                                                <th>Thời gian bắt đầu</th>
+                                                <th>Thời gian kết thúc</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {tenants.map((tenant) => (
+                                                <tr key={tenant.id}>
+                                                    <td><strong>{tenant.roomName || `Phòng #${tenant.roomId}`}</strong></td>
+                                                    <td>{tenant.tenantName || `Người thuê #${tenant.tenantId}`}</td>
+                                                    <td>{formatDate(tenant.startDate)}</td>
+                                                    <td>{formatDate(tenant.endDate)}</td>
+                                                    <td>
+                                                        <button type="button"
+                                                            className="owner-write-notification-button"
+                                                            onClick={() => openNotificationForm(tenant)}>
+                                                            Viết thông báo
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
+                        )}
+
+                        {notificationRecipient && (
+                            <div className="owner-tenant-compose-layer">
+                                <form className="owner-tenant-compose-form"
+                                    onSubmit={submitNotification}>
+                                    <header>
+                                        <div>
+                                            <span>GỬI ĐẾN NGƯỜI THUÊ</span>
+                                            <h3>Viết thông báo</h3>
+                                            <p>{notificationRecipient.tenantName
+                                                || `Người thuê #${notificationRecipient.tenantId}`}
+                                                {' · '}
+                                                {notificationRecipient.roomName
+                                                    || `Phòng #${notificationRecipient.roomId}`}
+                                            </p>
+                                        </div>
+                                        <button type="button" aria-label="Đóng"
+                                            onClick={() => setNotificationRecipient(null)}>×</button>
+                                    </header>
+
+                                    {notificationError && (
+                                        <div className="owner-tenant-compose-error">
+                                            {notificationError}
+                                        </div>
+                                    )}
+                                    <label>
+                                        Tiêu đề
+                                        <input value={notificationTitle}
+                                            onChange={(event) => setNotificationTitle(event.target.value)}
+                                            maxLength={150} required autoFocus
+                                            placeholder="Nhập tiêu đề thông báo" />
+                                    </label>
+                                    <label>
+                                        Nội dung
+                                        <textarea value={notificationContent}
+                                            onChange={(event) => setNotificationContent(event.target.value)}
+                                            maxLength={2000} rows={7} required
+                                            placeholder="Nhập nội dung gửi đến người thuê" />
+                                    </label>
+                                    <footer>
+                                        <button type="button"
+                                            onClick={() => setNotificationRecipient(null)}>
+                                            Hủy
+                                        </button>
+                                        <button type="submit"
+                                            disabled={notificationSending
+                                                || !notificationTitle.trim()
+                                                || !notificationContent.trim()}>
+                                            {notificationSending ? 'Đang gửi...' : 'Gửi thông báo'}
+                                        </button>
+                                    </footer>
+                                </form>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            )}
         </div>
     );
 }

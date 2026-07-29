@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import OwnerRentalRequestNavLink from '../components/OwnerRentalRequestNavLink';
 import AccountMenuIcon from '../components/AccountMenuIcon';
+import ChatNavLink from '../components/ChatNavLink';
+import NotificationNavLink from '../components/NotificationNavLink';
 import useAuth from '../hooks/useAuth';
 import { createOwnerProperty, uploadPropertyImage } from '../services/ownerService';
 import { getMyProfile } from '../services/userService';
@@ -131,7 +133,6 @@ function OwnerPropertyCreate() {
     return (
         <div className="owner-dashboard owner-create-page">
             <aside className="owner-sidebar">
-                <NavLink className="owner-brand" to="/owner/dashboard">⌂ <span>RentalRoom</span></NavLink>
                 <NavLink className="owner-profile" to="/profile">
                     <span className="owner-avatar">{profile?.avatarUrl
                         ? <img src={profile.avatarUrl} alt="" /> : initials}</span>
@@ -143,9 +144,9 @@ function OwnerPropertyCreate() {
                     <NavLink to="/owner/properties"><AccountMenuIcon name="properties" />Danh sách phòng trọ</NavLink>
                     <NavLink to="/owner/properties/new" end><AccountMenuIcon name="add" />Tạo phòng trọ</NavLink>
                     <OwnerRentalRequestNavLink icon={<AccountMenuIcon name="requests" />} />
-                    <a href="#contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</a>
-                    <NavLink to="/chats"><AccountMenuIcon name="chat" />Trò chuyện</NavLink>
-                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" />Thông báo</NavLink>
+                    <NavLink to="/owner/contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</NavLink>
+                    <ChatNavLink />
+                    <NotificationNavLink />
                 </nav>
             </aside>
 

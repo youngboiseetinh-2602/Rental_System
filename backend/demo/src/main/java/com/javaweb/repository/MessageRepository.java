@@ -1,6 +1,7 @@
 package com.javaweb.repository;
 
 import com.javaweb.entity.MessageEntity;
+import com.javaweb.enums.MessageStatus;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -11,7 +12,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
-    Slice<MessageEntity> findAllByConversation_IdAndHiddenFalseOrderByIdDesc(
+    long countByConversation_IdAndSender_IdNotAndStatusAndHiddenFalse(
+            Long conversationId,
+            Long readerId,
+            MessageStatus status
+    );
+
+    Slice<MessageEntity> findAllByConversation_IdOrderByIdDesc(
             Long conversationId,
             Pageable pageable
     );
@@ -20,7 +27,7 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             Long conversationId
     );
 
-    Slice<MessageEntity> findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
+    Slice<MessageEntity> findAllByConversation_IdAndIdLessThanOrderByIdDesc(
             Long conversationId,
             Long beforeId,
             Pageable pageable

@@ -10,6 +10,23 @@ import {
     restoreAuthenticatedUser,
 } from '../services/authService';
 import { postLoginRoute } from '../utils/authRouting';
+import { getMyProfile } from '../services/userService';
+
+async function enrichAuthenticatedUser(tokenUser) {
+    if (!tokenUser) return null;
+    try {
+        const profile = await getMyProfile();
+        return {
+            ...tokenUser,
+            ...profile,
+            roles: tokenUser.roles,
+            scopes: tokenUser.scopes,
+            expiresAt: tokenUser.expiresAt,
+        };
+    } catch (error) {
+        return tokenUser;
+    }
+}
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -24,7 +41,8 @@ export function AuthProvider({ children }) {
         setError(null);
 
         try {
-            const currentUser = await restoreAuthenticatedUser();
+            const tokenUser = await restoreAuthenticatedUser();
+            const currentUser = await enrichAuthenticatedUser(tokenUser);
             setUser(currentUser);
             return currentUser;
         } catch (requestError) {
@@ -107,7 +125,6 @@ export function AuthProvider({ children }) {
         setError(null);
 
         try {
-            setUser(null);
             logoutRequest();
         } catch (requestError) {
             setError(requestError);
@@ -123,8 +140,9 @@ export function AuthProvider({ children }) {
 
         try {
             const result = await completeAuthorization(search);
-            setUser(result.user);
-            return postLoginRoute(result.user, result.returnTo);
+            const currentUser = await enrichAuthenticatedUser(result.user);
+            setUser(currentUser);
+            return postLoginRoute(currentUser, result.returnTo);
         } catch (requestError) {
             setUser(null);
             setError(requestError);

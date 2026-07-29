@@ -10,6 +10,7 @@ import com.javaweb.model.request.ChangePassword;
 import com.javaweb.model.request.Register;
 import com.javaweb.model.request.UpdateUserInfo;
 import com.javaweb.model.response.UserResponse;
+import com.javaweb.model.response.AdminContactResponse;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
@@ -33,6 +34,23 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final UserConverter userConverter;
     private final CurrentUserContext currentUserContext;
+
+    @Override
+    @PreAuthorize(AuthorizationRules.PUBLIC)
+    @Transactional(readOnly = true)
+    public AdminContactResponse getAdminContact() {
+        UserEntity admin = userRepository
+                .findFirstByRoleAndStatusOrderByIdAsc(
+                        UserRole.ADMIN,
+                        UserStatus.ACTIVE)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy quản trị viên đang hoạt động"));
+        return new AdminContactResponse(
+                admin.getId(),
+                admin.getFullName(),
+                admin.getPhoneNumber(),
+                admin.getAvatarUrl());
+    }
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)

@@ -4,6 +4,7 @@ import com.javaweb.model.request.Register;
 import com.javaweb.model.response.RentalPropertyDetailResponse;
 import com.javaweb.model.response.RentalPropertyResponse;
 import com.javaweb.model.response.ReviewResponse;
+import com.javaweb.model.response.AdminContactResponse;
 import com.javaweb.service.RentalPropertyService;
 import com.javaweb.service.ReviewService;
 import com.javaweb.service.UserService;
@@ -41,6 +42,11 @@ public class PublicController {
         ));
     }
 
+    @GetMapping("/public/admin-contact")
+    public ResponseEntity<AdminContactResponse> getAdminContact() {
+        return ResponseEntity.ok(userService.getAdminContact());
+    }
+
     // Dang ky tai khoan moi va ma hoa mat khau truoc khi luu.
     @PostMapping("/auth/register")
     public ResponseEntity<String> register(@Valid @RequestBody Register request) {
@@ -51,7 +57,7 @@ public class PublicController {
     @GetMapping("/rental-properties")
     public ResponseEntity<Page<RentalPropertyResponse>> searchRentalProperties(
             @RequestParam Map<String, Object> params,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC)
             Pageable pageable) {
         return ResponseEntity.ok(rentalPropertyService.searchRentalProperties(params, pageable));
     }

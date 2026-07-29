@@ -37,3 +37,40 @@ export async function createConversation(otherUserId) {
     });
     return readResponse(response, 'Không thể bắt đầu cuộc trò chuyện.');
 }
+
+export async function getConversationMessages(conversationId) {
+    const response = await apiFetch(`/api/conversations/${conversationId}`);
+    const body = await readResponse(
+        response,
+        'Không thể tải nội dung cuộc trò chuyện.',
+    );
+    return Array.isArray(body?.content) ? body.content : [];
+}
+
+export async function sendConversationMessage(conversationId, content) {
+    const response = await apiFetch(
+        `/api/conversations/${conversationId}/messages`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content }),
+        },
+    );
+    return readResponse(response, 'Không thể gửi tin nhắn.');
+}
+
+export async function editConversationMessage(messageId, content) {
+    const response = await apiFetch(`/api/messages/${messageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+    });
+    return readResponse(response, 'Không thể chỉnh sửa tin nhắn.');
+}
+
+export async function deleteConversationMessage(messageId) {
+    const response = await apiFetch(`/api/messages/${messageId}`, {
+        method: 'DELETE',
+    });
+    return readResponse(response, 'Không thể xóa tin nhắn.');
+}

@@ -8,5 +8,7 @@ public interface RentalTypeRepository extends JpaRepository<RentalTypeEntity, Lo
 
     Optional<RentalTypeEntity> findFirstByNameIgnoreCase(String name);
 
+    boolean existsByNameIgnoreCase(String name);
+
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 }

@@ -30,7 +30,7 @@ function Header() {
         logout,
     } = useAuth();
 
-    const username = user?.username || user?.name || user?.email;
+    const username = user?.fullName || user?.name || user?.username || user?.email;
     const roles = Array.isArray(user?.roles)
         ? user.roles
         : user?.role

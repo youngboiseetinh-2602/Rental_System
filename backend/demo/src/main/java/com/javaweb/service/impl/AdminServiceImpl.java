@@ -12,6 +12,7 @@ import com.javaweb.model.response.UserResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.repository.RentalTypeRepository;
+import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.service.AdminService;
@@ -36,6 +37,7 @@ public class AdminServiceImpl implements AdminService {
     private final UserConverter userConverter;
     private final UserSearchBuilderConverter userSearchBuilderConverter;
     private final RentalTypeRepository rentalTypeRepository;
+    private final RentalPropertyRepository rentalPropertyRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -98,6 +100,21 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
+    public String createRentalType(UpdateRentalType request) {
+        String normalizedName = request.getName().trim().toLowerCase(Locale.ROOT);
+        if (rentalTypeRepository.existsByNameIgnoreCase(normalizedName)) {
+            throw new ConflictException("Tên loại hình cho thuê đã tồn tại");
+        }
+        RentalTypeEntity rentalType = new RentalTypeEntity();
+        rentalType.setName(normalizedName);
+        rentalType.setDescription(normalizeNullableText(request.getDescription()));
+        rentalTypeRepository.save(rentalType);
+        return "Thêm loại hình cho thuê thành công";
+    }
+
+    @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional
     public String updateRentalType(Long rentalTypeId, UpdateRentalType request) {
         RentalTypeEntity rentalType = rentalTypeRepository.findById(rentalTypeId)
                 .orElseThrow(() -> new DataNotFoundException(
@@ -112,6 +129,21 @@ public class AdminServiceImpl implements AdminService {
         rentalType.setDescription(normalizeNullableText(request.getDescription()));
         rentalTypeRepository.save(rentalType);
         return "Cập nhật loại hình cho thuê thành công";
+    }
+
+    @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional
+    public String deleteRentalType(Long rentalTypeId) {
+        RentalTypeEntity rentalType = rentalTypeRepository.findById(rentalTypeId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy loại hình cho thuê"));
+        if (rentalPropertyRepository.existsByRentalType_Id(rentalTypeId)) {
+            throw new ConflictException(
+                    "Không thể xóa loại hình đang được nhà trọ sử dụng");
+        }
+        rentalTypeRepository.delete(rentalType);
+        return "Xóa loại hình cho thuê thành công";
     }
 
     private String normalizeNullableText(String value) {

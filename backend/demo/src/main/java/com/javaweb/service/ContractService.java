@@ -18,6 +18,8 @@ public interface ContractService {
 
     List<ContractResponse> getUserRentalRequests();
 
+    List<ContractResponse> getOwnerContracts();
+
     void notifyContractsExpiringInOneWeek();
 
     void expireContracts();
