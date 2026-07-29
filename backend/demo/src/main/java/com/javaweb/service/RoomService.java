@@ -4,9 +4,13 @@ import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRoomType;
+import com.javaweb.model.response.ContractResponse;
+
 import java.util.List;
 
 public interface RoomService {
+
+    List<ContractResponse> getCustomerByRental(Long id);
 
     String addRoomType(Long rentalPropertyId, RoomType request);
 

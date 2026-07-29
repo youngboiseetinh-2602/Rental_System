@@ -43,7 +43,7 @@ public class ConversationServiceImpl implements ConversationService {
                        userId, PageRequest.of(page, 20));
 
        if(conversations.isEmpty()){
-           throw new DataNotFoundException("No conversation found");
+           throw new DataNotFoundException("Không tìm thấy cuộc trò chuyện nào");
        }
 
        return conversations.map(conversation -> conversationConverter
@@ -62,12 +62,14 @@ public class ConversationServiceImpl implements ConversationService {
        Long currentUserId = currentUserContext.getCurrentUserId();
        if (currentUserId.equals(otherUserId)) {
            throw new IllegalArgumentException(
-                   "Cannot create a conversation with yourself");
+                   "Không thể tạo cuộc trò chuyện với chính mình");
        }
-
-       UserEntity currentUser = getUser(currentUserId);
-       UserEntity otherUser = getUser(otherUserId);
-
+       UserEntity currentUser = userRepository.findById(currentUserId)
+               .orElseThrow(() -> new DataNotFoundException(
+                       "Không tìm thấy người dùng: " + currentUserId));
+       UserEntity otherUser = userRepository.findById(otherUserId)
+               .orElseThrow(() -> new DataNotFoundException(
+                       "Không tìm thấy người dùng: " + otherUserId));
        UserEntity participantOne = currentUserId < otherUserId
                ? currentUser
                : otherUser;
@@ -96,19 +98,17 @@ public class ConversationServiceImpl implements ConversationService {
        Long userId = currentUserContext.getCurrentUserId();
        ConversationEntity conversation = conversationRepository.findById(conversationId)
                .orElseThrow(() -> new DataNotFoundException(
-                       "Conversation not found: " + conversationId));
+                       "Không tìm thấy cuộc trò chuyện"));
 
        if (!isParticipant(conversation, userId)) {
            throw new ForbiddenException(
-                   "You are not allowed to view this conversation");
+                   "Bạn không có quyền xem cuộc trò chuyện này");
        }
 
        if (beforeId != null && beforeId <= 0) {
-           throw new IllegalArgumentException("beforeId must be positive");
+           throw new IllegalArgumentException("Mã tin nhắn trước đó phải là số dương");
        }
-
        messageRepository.markReceivedMessagesAsRead(conversationId, userId);
-
        PageRequest limit = PageRequest.of(0, MESSAGE_PAGE_SIZE);
        Slice<MessageEntity> messages = beforeId == null
                ? messageRepository
@@ -117,37 +117,29 @@ public class ConversationServiceImpl implements ConversationService {
                : messageRepository
                        .findAllByConversation_IdAndHiddenFalseAndIdLessThanOrderByIdDesc(
                                conversationId, beforeId, limit);
-
        return messages.map(conversationConverter::toMessageResponse);
    }
-
-   private UserEntity getUser(Long userId) {
-       return userRepository.findById(userId)
-               .orElseThrow(() -> new DataNotFoundException(
-                       "User not found: " + userId));
-   }
-
    @Override
    @Transactional
    public String blockConversation(Long conversationId){
        Long currentUserId = currentUserContext.getCurrentUserId();
        ConversationEntity conversation = conversationRepository.findById(conversationId)
                .orElseThrow(() -> new DataNotFoundException(
-                       "Conversation not found."));
+                       "Không tìm thấy cuộc trò chuyện."));
 
        UserEntity blocker = findParticipant(conversation, currentUserId);
        if (blocker == null) {
            throw new ForbiddenException(
-                   "You are not allowed to block this conversation");
+                   "Bạn không có quyền chặn cuộc trò chuyện này");
        }
 
        if (conversation.getStatus() == ConversationStatus.BLOCKED) {
-           throw new ConflictException("Conversation is already blocked");
+           throw new ConflictException("Cuộc trò chuyện đã bị chặn");
        }
 
        conversation.setStatus(ConversationStatus.BLOCKED);
        conversation.setBlockedBy(blocker);
-       return "Conversation blocked successfully";
+       return "cuộc trò chuyện đã bị chặn";
    }
 
    @Override
@@ -156,21 +148,21 @@ public class ConversationServiceImpl implements ConversationService {
        Long currentUserId = currentUserContext.getCurrentUserId();
        ConversationEntity conversation = conversationRepository.findById(conversationId)
                .orElseThrow(() -> new DataNotFoundException(
-                       "Conversation not found: " + conversationId));
+                       "Không tìm thấy cuộc trò chuyện"));
 
        if (conversation.getStatus() != ConversationStatus.BLOCKED) {
-           throw new ConflictException("Conversation is not blocked");
+           throw new ConflictException("Cuộc trò chuyện chưa bị chặn");
        }
 
        if (conversation.getBlockedBy() == null
                || !conversation.getBlockedBy().getId().equals(currentUserId)) {
            throw new ForbiddenException(
-                   "Only the user who blocked this conversation can unblock it");
+                   "Chỉ người đã chặn cuộc trò chuyện mới có thể bỏ chặn");
        }
 
        conversation.setStatus(ConversationStatus.ACTIVE);
        conversation.setBlockedBy(null);
-       return "Conversation unblocked successfully";
+       return "đã gỡ  chặn cuộc trò chuyện";
    }
 
    private boolean isParticipant(

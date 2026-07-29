@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { cancelMyRentalRequest, getMyRentalRequests } from '../services/rentalService';
 import { getMyProfile } from '../services/userService';
+import AccountMenuIcon from '../components/AccountMenuIcon';
 
 const statusLabels = {
     PENDING: 'Đang chờ duyệt',
@@ -82,11 +83,11 @@ function CustomerRentalRequests() {
                     <div><strong>{displayName}</strong><span>Khách hàng</span></div>
                 </div>
                 <nav aria-label="Menu tài khoản">
-                    <NavLink to="/dashboard">⌂ Trang chủ</NavLink>
-                    <NavLink to="/profile">♙ Thông tin cá nhân</NavLink>
-                    <NavLink to="/yeu-cau-thue-tro" className="active">▣ Yêu cầu thuê trọ</NavLink>
-                    <a href="#messages">◌ Trò chuyện</a>
-                    <NavLink to="/notifications">♢ Thông báo</NavLink>
+                    <NavLink to="/dashboard"><AccountMenuIcon name="home" /> Trang chủ</NavLink>
+                    <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
+                    <NavLink to="/yeu-cau-thue-tro" className="active"><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
+                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
+                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" /> Thông báo</NavLink>
                 </nav>
             </aside>
 

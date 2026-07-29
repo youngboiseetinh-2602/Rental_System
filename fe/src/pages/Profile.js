@@ -7,6 +7,7 @@ import {
     uploadAvatarImage,
     updateMyProfile,
 } from '../services/userService';
+import AccountMenuIcon from '../components/AccountMenuIcon';
 
 function Icon({ name, size = 21 }) {
     const paths = {
@@ -219,13 +220,16 @@ function Profile() {
                     <div><strong>{profile.fullName || user?.username || 'Người dùng'}</strong><span>{roleLabel}</span></div>
                 </div>
                 <nav aria-label="Menu tài khoản">
-                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}><Icon name="home" /> Trang chủ</NavLink>
-                    <NavLink to="/profile" className="active"><Icon name="user" /> Thông tin cá nhân</NavLink>
-                    {isOwner && <a href="/owner/properties"><Icon name="bookmark" /> Danh sách phòng trọ</a>}
-                    {isOwner && <a href="/owner/properties/new"><Icon name="clipboard" /> Tạo phòng trọ</a>}
-                    <a href={isOwner ? '/owner/rental-requests' : '/yeu-cau-thue-tro'}><Icon name="clipboard" /> Yêu cầu thuê trọ</a>
-                    <a href="#messages"><Icon name="chat" /> Trò chuyện</a>
-                    <NavLink to="/notifications"><Icon name="bell" /> Thông báo</NavLink>
+                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}>
+                        <AccountMenuIcon name="home" /> {isOwner ? 'Tổng quan' : 'Trang chủ'}
+                    </NavLink>
+                    <NavLink to="/profile" className="active"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
+                    {isOwner && <NavLink to="/owner/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>}
+                    {isOwner && <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>}
+                    <NavLink to={isOwner ? '/owner/rental-requests' : '/yeu-cau-thue-tro'}><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
+                    {isOwner && <a href="#contracts"><AccountMenuIcon name="contract" /> Hợp đồng thuê</a>}
+                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
+                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" /> Thông báo</NavLink>
                 </nav>
             </aside>
 

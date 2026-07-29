@@ -39,11 +39,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponse> reviewList(Long id) {
         RentalPropertyEntity rental = rentalPropertyRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("khong tim thay nha tro"));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy nhà trọ"));
         List<ReviewEntity> reviews = rental.getReviews();
 
         if (reviews.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay du lieu");
+            throw new DataNotFoundException("Không tìm thấy dữ liệu");
         }
 
         List<ReviewResponse> responses = new ArrayList<>();
@@ -58,58 +58,55 @@ public class ReviewServiceImpl implements ReviewService {
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String createReview(Long rentalPropertyId, Review request) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy người dùng có mã: " + userId));
         RentalPropertyEntity rentalProperty = rentalPropertyRepository.findById(rentalPropertyId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Rental property not found with id: " + rentalPropertyId));
+                        "Không tìm thấy nhà trọ có mã: " + rentalPropertyId));
 
         if (reviewRepository.existsByUserIdAndRentalPropertyId(userId, rentalPropertyId)) {
-            throw new ConflictException("User already reviewed this rental property");
+            throw new ConflictException("Bạn đã đánh giá nhà trọ này");
         }
 
         ReviewEntity review = modelMapper.map(request, ReviewEntity.class);
         review.setUser(user);
         review.setRentalProperty(rentalProperty);
         reviewRepository.save(review);
-        return "them danh gia thanh cong";
+        return "Thêm đánh giá thành công";
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String updateReview(Long reviewId, Review request) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         ReviewEntity review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new DataNotFoundException("Review not found with id: " + reviewId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy đánh giá có mã: " + reviewId));
 
         if (!review.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to update this review");
+            throw new ForbiddenException("Bạn không có quyền cập nhật đánh giá này");
         }
 
         modelMapper.map(request, review);
         reviewRepository.save(review);
-        return "cap nhat danh gia thanh cong";
+        return "Cập nhật đánh giá thành công";
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String deleteReview(Long reviewId) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         ReviewEntity review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new DataNotFoundException("Review not found with id: " + reviewId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy đánh giá có mã: " + reviewId));
 
         if (!review.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to delete this review");
+            throw new ForbiddenException("Bạn không có quyền xóa đánh giá này");
         }
 
         reviewRepository.delete(review);
-        return "xoa danh gia thanh cong";
+        return "Xóa đánh giá thành công";
     }
 
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
-    }
 }

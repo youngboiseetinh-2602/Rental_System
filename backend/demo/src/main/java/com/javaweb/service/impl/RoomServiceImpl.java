@@ -1,8 +1,10 @@
 package com.javaweb.service.impl;
 
+import com.javaweb.converter.ContractConverter;
 import com.javaweb.customException.ConflictException;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.customException.ForbiddenException;
+import com.javaweb.entity.ContractEntity;
 import com.javaweb.entity.FacilityEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.entity.RoomEntity;
@@ -11,6 +13,8 @@ import com.javaweb.model.request.Room;
 import com.javaweb.model.request.RoomType;
 import com.javaweb.model.request.FacilityInfo;
 import com.javaweb.model.request.UpdateRoomType;
+import com.javaweb.model.response.ContractResponse;
+import com.javaweb.repository.ContractRepository;
 import com.javaweb.repository.FacilityRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.RoomRepository;
@@ -18,10 +22,9 @@ import com.javaweb.repository.RoomTypeRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.RoomService;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,11 +36,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoomServiceImpl implements RoomService {
 
     private final RentalPropertyRepository rentalPropertyRepository;
+    private final ContractConverter contractConverter;
     private final RoomTypeRepository roomTypeRepository;
     private final FacilityRepository facilityRepository;
     private final RoomRepository roomRepository;
+    private final ContractRepository contractRepository;
     private final ModelMapper modelMapper;
     private final CurrentUserContext currentUserContext;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContractResponse> getCustomerByRental(Long id) {
+        List<ContractEntity> contractEntities =
+                contractRepository.findAllByRoom_RoomType_RentalProperty_Id(id);
+
+        if (contractEntities.isEmpty()) {
+            throw new DataNotFoundException("Nhà trọ chưa có người thuê");
+        }
+
+        List<ContractResponse> results = new ArrayList<>();
+
+        for (ContractEntity contractEntity : contractEntities) {
+            results.add(contractConverter.toContractResponse(contractEntity));
+        }
+
+        return results;
+    }
+
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
@@ -47,7 +72,7 @@ public class RoomServiceImpl implements RoomService {
         RoomTypeEntity roomType = toRoomType(request, rentalProperty);
 
         roomTypeRepository.save(roomType);
-        return "them loai phong thanh cong";
+        return "Thêm loại phòng thành công";
     }
 
     @Override
@@ -63,13 +88,13 @@ public class RoomServiceImpl implements RoomService {
                 normalizedName,
                 roomTypeId
         )) {
-            throw new ConflictException("Room type name already exists in this rental property");
+            throw new ConflictException("Tên loại phòng đã tồn tại trong nhà trọ này");
         }
 
         modelMapper.map(request, roomType);
         roomType.setName(normalizedName);
         roomTypeRepository.save(roomType);
-        return "cap nhat loai phong thanh cong";
+        return "Cập nhật loại phòng thành công";
     }
 
     @Override
@@ -79,16 +104,14 @@ public class RoomServiceImpl implements RoomService {
         RoomTypeEntity roomType = getRoomTypeById(roomTypeId);
         List<RoomEntity> rooms = lockRooms(
                 roomRepository.findIdsByRoomTypeId(roomTypeId));
-
         boolean hasCurrentTenant = rooms.stream()
                 .anyMatch(room -> room.getCurrentTenant() != null);
         if (hasCurrentTenant) {
             throw new IllegalArgumentException(
-                    "Cannot delete room type because one or more rooms are occupied");
+                    "Không thể xóa loại phòng vì có một hoặc nhiều phòng đang được thuê");
         }
-
         roomTypeRepository.delete(roomType);
-        return "xoa loai phong thanh cong";
+        return "Xóa loại phòng thành công";
     }
 
     @Override
@@ -105,7 +128,7 @@ public class RoomServiceImpl implements RoomService {
                 .toList();
 
         facilityRepository.saveAll(facilities);
-        return "them danh sach co so vat chat thanh cong";
+        return "Thêm danh sách cơ sở vật chất thành công";
     }
 
     @Override
@@ -116,7 +139,7 @@ public class RoomServiceImpl implements RoomService {
 
         modelMapper.map(request, facility);
         facilityRepository.save(facility);
-        return "cap nhat co so vat chat thanh cong";
+        return "Cập nhật cơ sở vật chất thành công";
     }
 
     @Override
@@ -124,9 +147,8 @@ public class RoomServiceImpl implements RoomService {
     @Transactional
     public String deleteFacility(Long facilityId) {
         FacilityEntity facility = getFacilityById(facilityId);
-
         facilityRepository.delete(facility);
-        return "xoa co so vat chat thanh cong";
+        return "Xóa cơ sở vật chất thành công";
     }
 
     @Override
@@ -146,7 +168,7 @@ public class RoomServiceImpl implements RoomService {
                                     rentalPropertyId,
                                     normalizedRoomName)) {
                         throw new ConflictException(
-                                "Room name already exists in this rental property: " + normalizedRoomName);
+                                "Tên phòng đã tồn tại trong nhà trọ này: " + normalizedRoomName);
                     }
 
                     RoomEntity room = modelMapper.map(request, RoomEntity.class);
@@ -157,7 +179,7 @@ public class RoomServiceImpl implements RoomService {
                 .toList();
 
         roomRepository.saveAll(rooms);
-        return "them danh sach phong thanh cong";
+        return "Thêm danh sách phòng thành công";
     }
 
     @Override
@@ -167,38 +189,38 @@ public class RoomServiceImpl implements RoomService {
         RoomEntity room = getRoomById(roomId);
 
         if (room.getCurrentTenant() != null) {
-            throw new IllegalArgumentException("Cannot delete room because it is currently rented");
+            throw new IllegalArgumentException("Không thể xóa phòng vì phòng hiện đang được thuê");
         }
 
         roomRepository.delete(room);
-        return "xoa phong thanh cong";
+        return "Xóa phòng thành công";
     }
 
     private RentalPropertyEntity getRentalPropertyById(Long rentalPropertyId) {
         RentalPropertyEntity rentalProperty = rentalPropertyRepository.findById(rentalPropertyId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Rental property not found with id: " + rentalPropertyId));
+                        "Không tìm thấy nhà trọ có mã: " + rentalPropertyId));
         checkManageAccess(rentalProperty);
         return rentalProperty;
     }
 
     private RoomTypeEntity getRoomTypeById(Long roomTypeId) {
         RoomTypeEntity roomType = roomTypeRepository.findById(roomTypeId)
-                .orElseThrow(() -> new DataNotFoundException("Room type not found with id: " + roomTypeId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy loại phòng có mã: " + roomTypeId));
         checkManageAccess(roomType.getRentalProperty());
         return roomType;
     }
 
     private FacilityEntity getFacilityById(Long facilityId) {
         FacilityEntity facility = facilityRepository.findById(facilityId)
-                .orElseThrow(() -> new DataNotFoundException("Facility not found with id: " + facilityId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy tiện nghi có mã: " + facilityId));
         checkManageAccess(facility.getRoomType().getRentalProperty());
         return facility;
     }
 
     private RoomEntity getRoomById(Long roomId) {
         RoomEntity room = roomRepository.findByIdForUpdate(roomId)
-                .orElseThrow(() -> new DataNotFoundException("Room not found with id: " + roomId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phòng có mã: " + roomId));
         checkManageAccess(room.getRoomType().getRentalProperty());
         return room;
     }
@@ -208,19 +230,16 @@ public class RoomServiceImpl implements RoomService {
         return roomIds.stream()
                 .map(roomId -> roomRepository.findByIdForUpdate(roomId)
                         .orElseThrow(() -> new DataNotFoundException(
-                                "Room not found with id: " + roomId)))
+                                "Không tìm thấy phòng có mã: " + roomId)))
                 .toList();
     }
 
     private void checkManageAccess(RentalPropertyEntity rentalProperty) {
-        if (!rentalProperty.getOwner().getId().equals(getCurrentUserId())
+        if (!rentalProperty.getOwner().getId().equals(
+                currentUserContext.getCurrentUserId())
                 && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
-            throw new ForbiddenException("You are not allowed to manage this rental property");
+            throw new ForbiddenException("Bạn không có quyền quản lý nhà trọ này");
         }
-    }
-
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
     }
 
     private RoomTypeEntity toRoomType(RoomType request, RentalPropertyEntity rentalProperty) {

@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request body");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nội dung yêu cầu không hợp lệ");
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex
     ) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Invalid value for parameter: " + ex.getName());
+                .body("Giá trị không hợp lệ cho tham số: " + ex.getName());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

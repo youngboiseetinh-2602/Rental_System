@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { createConversation } from '../services/conversationService';
 import { createRentalRequest, getRentalPropertyDetail } from '../services/rentalService';
 import useAuth from '../hooks/useAuth';
 import { userHasRole } from '../utils/authRouting';
@@ -10,6 +11,7 @@ const formatPrice = new Intl.NumberFormat('vi-VN', {
 
 function RentalDetail() {
     const { rentalPropertyId } = useParams();
+    const navigate = useNavigate();
     const { isAuthenticated, user } = useAuth();
     const [rental, setRental] = useState(null);
     const [selectedImage, setSelectedImage] = useState('');
@@ -19,6 +21,8 @@ function RentalDetail() {
     const [requestForm, setRequestForm] = useState({ startDate: '', endDate: '' });
     const [requesting, setRequesting] = useState(false);
     const [requestMessage, setRequestMessage] = useState('');
+    const [startingChat, setStartingChat] = useState(false);
+    const [chatError, setChatError] = useState('');
 
     useEffect(() => {
         let active = true;
@@ -84,6 +88,28 @@ function RentalDetail() {
         }
     };
 
+    const startConversation = async () => {
+        if (!isAuthenticated) {
+            navigate(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
+            return;
+        }
+        if (!rental.ownerId) {
+            setChatError('Không tìm thấy thông tin chủ trọ.');
+            return;
+        }
+
+        setStartingChat(true);
+        setChatError('');
+        try {
+            await createConversation(rental.ownerId);
+            navigate('/chats', { state: { otherUserId: rental.ownerId } });
+        } catch (requestError) {
+            setChatError(requestError.message);
+        } finally {
+            setStartingChat(false);
+        }
+    };
+
     if (loading) {
         return <div className="rental-detail-status">Đang tải chi tiết nhà trọ...</div>;
     }
@@ -115,7 +141,6 @@ function RentalDetail() {
                 <article className="rental-public-info">
                     <span className="rental-public-type">{rental.rentalTypeName || 'Nhà trọ'}</span>
                     <h1>{rental.name}</h1>
-                    <p className="rental-public-address">⌖ {address || 'Chưa cập nhật địa chỉ'}</p>
                     <p className="rental-public-description">{rental.description || 'Chưa có mô tả.'}</p>
                     <div className="rental-owner-box">
                         <span className="rental-owner-avatar">{rental.ownerAvatarUrl
@@ -123,7 +148,30 @@ function RentalDetail() {
                         <div><small>Chủ trọ</small><strong>{rental.ownerName || 'Chưa cập nhật'}</strong>
                             <b>{rental.ownerPhoneNumber || 'Chưa cập nhật số điện thoại'}</b></div>
                     </div>
-                    <button type="button" className="rental-contact-button">Gửi yêu cầu thuê trọ</button>
+                    <div className="rental-contact-panel">
+                        <a
+                            className="rental-location-focus"
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <span className="rental-location-icon" aria-hidden="true">⌖</span>
+                            <span>
+                                <small>Địa chỉ nhà trọ</small>
+                                <strong>{address || 'Chưa cập nhật địa chỉ'}</strong>
+                            </span>
+                        </a>
+                        <button
+                            type="button"
+                            className="rental-chat-button"
+                            disabled={startingChat || String(user?.userId) === String(rental.ownerId)}
+                            onClick={startConversation}
+                        >
+                            <span aria-hidden="true">◌</span>
+                            {startingChat ? 'Đang mở...' : 'Trò chuyện'}
+                        </button>
+                    </div>
+                    {chatError && <p className="rental-chat-error" role="alert">{chatError}</p>}
                 </article>
             </section>
 

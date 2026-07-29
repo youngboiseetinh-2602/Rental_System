@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
         validateRegistrationRole(request.getRole());
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username already exists");
+            throw new ConflictException("Tên đăng nhập đã tồn tại");
         }
 
         if (!StringUtils.hasText(request.getCitizenCode())) {
@@ -49,12 +49,12 @@ public class UserServiceImpl implements UserService {
         }
 
         if (userRepository.existsByCitizenCode(request.getCitizenCode())) {
-            throw new ConflictException("Citizen id already exists");
+            throw new ConflictException("Số căn cước công dân đã tồn tại");
         }
 
         if (StringUtils.hasText(request.getPhoneNumber())
                 && userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new ConflictException("Phone number already exists");
+            throw new ConflictException("Số điện thoại đã tồn tại");
         }
 
         UserEntity user = modelMapper.map(request, UserEntity.class);
@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
         user.setStatus(UserStatus.ACTIVE);
 
         userRepository.save(user);
-        return "dang ki thanh cong";
+        return "Đăng ký thành công";
     }
 
     private void validateRegistrationRole(UserRole role) {
@@ -78,7 +78,11 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize(AuthorizationRules.USER)
     @Transactional(readOnly = true)
     public UserResponse getUserInfo() {
-        UserEntity user = getUserById(getCurrentUserId());
+        Long userId = currentUserContext.getCurrentUserId();
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người dùng có mã: " + userId));
+
         return userConverter.toUserResponse(user);
     }
 
@@ -86,8 +90,10 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String updateUserInfo(UpdateUserInfo request) {
-        Long userId = getCurrentUserId();
-        UserEntity user = getUserById(userId);
+        Long userId = currentUserContext.getCurrentUserId();
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người dùng có mã: " + userId));
 
         if (request.getUsername() != null) {
             String username = request.getUsername().trim();
@@ -98,7 +104,7 @@ public class UserServiceImpl implements UserService {
                 userRepository.findByUsername(username)
                         .filter(existingUser -> !existingUser.getId().equals(userId))
                         .ifPresent(existingUser -> {
-                            throw new ConflictException("Username already exists");
+                            throw new ConflictException("Tên đăng nhập đã tồn tại");
                         });
                 user.setUsername(username);
             }
@@ -118,7 +124,7 @@ public class UserServiceImpl implements UserService {
                 user.setPhoneNumber(null);
             } else {
                 if (userRepository.existsByPhoneNumberAndIdNot(phoneNumber, userId)) {
-                    throw new ConflictException("Phone number already exists");
+                    throw new ConflictException("Số điện thoại đã tồn tại");
                 }
                 user.setPhoneNumber(phoneNumber);
             }
@@ -133,14 +139,17 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
-        return "cap nhat thong tin thanh cong";
+        return "Cập nhật thông tin thành công";
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String changePassword(ChangePassword request) {
-        UserEntity user = getUserById(getCurrentUserId());
+        Long userId = currentUserContext.getCurrentUserId();
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người dùng có mã: " + userId));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new BadCredentialsException("Current password is incorrect");
@@ -156,16 +165,7 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-        return "doi mat khau thanh cong";
-    }
-
-    private UserEntity getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found with id: " + userId));
-    }
-
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
+        return "Đổi mật khẩu thành công";
     }
 
 }

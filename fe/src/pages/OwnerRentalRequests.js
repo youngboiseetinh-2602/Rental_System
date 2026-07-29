@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useSearchParams } from 'react-router-dom';
 import OwnerRentalRequestNavLink from '../components/OwnerRentalRequestNavLink';
+import AccountMenuIcon from '../components/AccountMenuIcon';
 import useAuth from '../hooks/useAuth';
 import { getOwnerRentalRequests, processOwnerRentalRequest } from '../services/ownerService';
 import { getMyProfile } from '../services/userService';
@@ -84,14 +85,14 @@ function OwnerRentalRequests() {
                     <span><strong>{displayName}</strong><small>Chủ trọ</small></span>
                 </NavLink>
                 <nav>
-                    <NavLink to="/owner/dashboard"><span className="owner-menu-icon">⌂</span>Tổng quan</NavLink>
-                    <NavLink to="/profile"><span className="owner-menu-icon">♙</span>Thông tin cá nhân</NavLink>
-                    <NavLink to="/owner/properties"><span className="owner-menu-icon">▤</span>Danh sách phòng trọ</NavLink>
-                    <NavLink to="/owner/properties/new"><span className="owner-menu-icon">＋</span>Tạo phòng trọ</NavLink>
-                    <OwnerRentalRequestNavLink icon={<span className="owner-menu-icon">□</span>} />
-                    <a href="#contracts"><span className="owner-menu-icon">▣</span>Hợp đồng thuê</a>
-                    <a href="#messages"><span className="owner-menu-icon">◌</span>Trò chuyện</a>
-                    <NavLink to="/notifications"><span className="owner-menu-icon">♢</span>Thông báo</NavLink>
+                    <NavLink to="/owner/dashboard"><AccountMenuIcon name="home" />Tổng quan</NavLink>
+                    <NavLink to="/profile"><AccountMenuIcon name="profile" />Thông tin cá nhân</NavLink>
+                    <NavLink to="/owner/properties"><AccountMenuIcon name="properties" />Danh sách phòng trọ</NavLink>
+                    <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" />Tạo phòng trọ</NavLink>
+                    <OwnerRentalRequestNavLink icon={<AccountMenuIcon name="requests" />} />
+                    <a href="#contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</a>
+                    <NavLink to="/chats"><AccountMenuIcon name="chat" />Trò chuyện</NavLink>
+                    <NavLink to="/notifications"><AccountMenuIcon name="notifications" />Thông báo</NavLink>
                 </nav>
             </aside>
 

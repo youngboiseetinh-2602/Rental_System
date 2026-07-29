@@ -16,10 +16,12 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import OwnerProperties from './pages/OwnerProperties';
 import OwnerPropertyCreate from './pages/OwnerPropertyCreate';
 import OwnerPropertyDetail from './pages/OwnerPropertyDetail';
+import OwnerPropertyEdit from './pages/OwnerPropertyEdit';
 import RentalDetail from './pages/RentalDetail';
 import CustomerRentalRequests from './pages/CustomerRentalRequests';
 import OwnerRentalRequests from './pages/OwnerRentalRequests';
 import Notifications from './pages/Notifications';
+import Chats from './pages/Chats';
 import { AuthProvider } from './contexts/AuthProvider';
 import './styles/global.css';
 
@@ -78,6 +80,14 @@ function App() {
                             )}
                         />
                         <Route
+                            path="/chats"
+                            element={(
+                                <AuthenticatedRoute>
+                                    <Chats />
+                                </AuthenticatedRoute>
+                            )}
+                        />
+                        <Route
                             path="/owner/dashboard"
                             element={(
                                 <OwnerRoute>
@@ -106,6 +116,14 @@ function App() {
                             element={(
                                 <OwnerRoute>
                                     <OwnerPropertyCreate />
+                                </OwnerRoute>
+                            )}
+                        />
+                        <Route
+                            path="/owner/properties/:propertyId/edit"
+                            element={(
+                                <OwnerRoute>
+                                    <OwnerPropertyEdit />
                                 </OwnerRoute>
                             )}
                         />

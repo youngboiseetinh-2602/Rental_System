@@ -56,6 +56,94 @@ export async function createOwnerProperty(payload) {
     return text;
 }
 
+export async function updateOwnerProperty(propertyId, payload) {
+    const response = await apiFetch(`/api/rental-properties/${propertyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+        let message = text;
+        try {
+            const body = text ? JSON.parse(text) : null;
+            message = body?.message || Object.values(body || {}).join('. ');
+        } catch (error) {
+            // Backend có thể trả về thông báo nghiệp vụ dạng văn bản.
+        }
+        throw new Error(message || 'Không thể cập nhật nhà trọ.');
+    }
+    return text;
+}
+
+async function mutateRoomConfiguration(path, method, payload, fallback) {
+    const response = await apiFetch(path, {
+        method,
+        headers: payload ? { 'Content-Type': 'application/json' } : undefined,
+        body: payload ? JSON.stringify(payload) : undefined,
+    });
+    const text = await response.text();
+    if (!response.ok) {
+        let message = text;
+        try {
+            const body = text ? JSON.parse(text) : null;
+            message = body?.message || Object.values(body || {}).join('. ');
+        } catch (error) {
+            // Backend có thể trả về thông báo nghiệp vụ dạng văn bản.
+        }
+        throw new Error(message || fallback);
+    }
+    return text;
+}
+
+export const addOwnerRoomType = (propertyId, payload) =>
+    mutateRoomConfiguration(
+        `/api/rental-properties/${propertyId}/room-types`,
+        'POST', payload, 'Không thể thêm loại phòng.',
+    );
+
+export const updateOwnerRoomType = (roomTypeId, payload) =>
+    mutateRoomConfiguration(
+        `/api/room-types/${roomTypeId}`,
+        'PUT', payload, 'Không thể cập nhật loại phòng.',
+    );
+
+export const deleteOwnerRoomType = (roomTypeId) =>
+    mutateRoomConfiguration(
+        `/api/room-types/${roomTypeId}`,
+        'DELETE', null, 'Không thể xóa loại phòng.',
+    );
+
+export const addOwnerFacilities = (roomTypeId, payload) =>
+    mutateRoomConfiguration(
+        `/api/room-types/${roomTypeId}/facilities`,
+        'POST', payload, 'Không thể thêm tiện nghi.',
+    );
+
+export const updateOwnerFacility = (facilityId, payload) =>
+    mutateRoomConfiguration(
+        `/api/facilities/${facilityId}`,
+        'PUT', payload, 'Không thể cập nhật tiện nghi.',
+    );
+
+export const deleteOwnerFacility = (facilityId) =>
+    mutateRoomConfiguration(
+        `/api/facilities/${facilityId}`,
+        'DELETE', null, 'Không thể xóa tiện nghi.',
+    );
+
+export const addOwnerRooms = (roomTypeId, payload) =>
+    mutateRoomConfiguration(
+        `/api/room-types/${roomTypeId}/rooms`,
+        'POST', payload, 'Không thể thêm phòng.',
+    );
+
+export const deleteOwnerRoom = (roomId) =>
+    mutateRoomConfiguration(
+        `/api/rooms/${roomId}`,
+        'DELETE', null, 'Không thể xóa phòng.',
+    );
+
 export async function uploadPropertyImage(file) {
     const formData = new FormData();
     formData.append('file', file);

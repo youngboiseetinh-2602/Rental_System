@@ -20,6 +20,8 @@ public class ContractResponse {
 
     private String roomName;
 
+    private Long rentalPropertyId;
+
     private Long tenantId;
 
     private String tenantName;

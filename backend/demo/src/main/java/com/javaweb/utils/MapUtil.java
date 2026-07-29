@@ -29,7 +29,7 @@ public final class MapUtil {
             return convert(value, text, targetType);
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException(
-                    "Invalid value for parameter '" + key + "': " + value, ex);
+                    "Giá trị không hợp lệ cho tham số '" + key + "': " + value, ex);
         }
     }
 

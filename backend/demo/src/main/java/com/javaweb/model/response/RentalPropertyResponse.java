@@ -27,6 +27,8 @@ public class RentalPropertyResponse {
 
     private String houseRules;
 
+    private Long ownerId;
+
     private String ownerName;
 
     private String ownerPhoneNumber;

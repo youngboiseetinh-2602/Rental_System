@@ -58,29 +58,25 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     public Page<RentalPropertyResponse> getRentalProperties(Pageable pageable) {
         Page<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll(pageable);
         if (rentalProperties.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay du lieu");
+            throw new DataNotFoundException("Không tìm thấy dữ liệu");
         }
         return rentalProperties.map(rentalPropertyConverter::toRentalPropertyResponse);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.PUBLIC)
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<RentalPropertyResponse> searchRentalProperties(Map<String, Object> params, Pageable pageable) {
         RentalSearchBuilder searchBuilder =
                 rentalSearchBuilderConverter.toRentalSearchBuilder(params);
-
         if (searchBuilder == null || searchBuilder.isEmpty()) {
             return getRentalProperties(pageable);
         }
-
         Page<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findAll(
                 RentalPropertySpecification.search(searchBuilder), pageable);
-
         if (rentalProperties.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay nha tro phu hop");
+            throw new DataNotFoundException("Không tìm thấy nhà trọ phù hợp");
         }
-
         return rentalProperties.map(rentalPropertyConverter::toRentalPropertyResponse);
     }
 
@@ -88,7 +84,12 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @PreAuthorize(AuthorizationRules.PUBLIC)
     @Transactional(readOnly = true)
     public RentalPropertyDetailResponse getRentalPropertyDetail(Long rentalPropertyId) {
-        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        RentalPropertyEntity rentalProperty =
+                rentalPropertyRepository.findById(rentalPropertyId)
+                        .orElseThrow(() -> new DataNotFoundException(
+                                "Không tìm thấy nhà trọ có mã: "
+                                        + rentalPropertyId));
+
         return rentalPropertyConverter.toRentalPropertyDetailResponse(rentalProperty);
     }
 
@@ -96,14 +97,14 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional
     public String createRentalProperty(RentalPropertyRequest request) {
-        Long ownerId = getCurrentUserId();
+        Long ownerId = currentUserContext.getCurrentUserId();
         UserEntity owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new DataNotFoundException("Owner not found with id: " + ownerId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy chủ trọ có mã: " + ownerId));
         RentalTypeEntity rentalType = getOrCreateRentalType(request.getRentalTypeName());
         RentalPropertyEntity rentalProperty = buildRentalProperty(request, owner, rentalType);
 
         rentalPropertyRepository.save(rentalProperty);
-        return "tao nha tro thanh cong";
+        return "Tạo nhà trọ thành công";
     }
 
     @Override
@@ -117,7 +118,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         rentalProperty.setRentalType(rentalType);
 
         rentalPropertyRepository.save(rentalProperty);
-        return "cap nhat nha tro thanh cong";
+        return "Cập nhật nhà trọ thành công";
     }
 
     @Override
@@ -130,11 +131,11 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
 
         if (hasOccupiedRooms(rooms)) {
             throw new IllegalArgumentException(
-                    "Cannot delete rental property because one or more rooms are occupied");
+                    "Không thể xóa nhà trọ vì có một hoặc nhiều phòng đang được thuê");
         }
 
         rentalPropertyRepository.delete(rentalProperty);
-        return "xoa nha tro thanh cong";
+        return "Xóa nhà trọ thành công";
     }
 
     @Override
@@ -145,7 +146,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         rentalProperty.getImages().addAll(toImages(imageUrls, rentalProperty));
 
         rentalPropertyRepository.save(rentalProperty);
-        return "them anh nha tro thanh cong";
+        return "Thêm ảnh nhà trọ thành công";
     }
 
     @Override
@@ -154,34 +155,30 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
     public String deleteRentalPropertyImage(Long imageId) {
         ImageEntity image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Image not found with id: " + imageId));
+                        "Không tìm thấy ảnh có mã: " + imageId));
         checkManageAccess(image.getRentalProperty());
 
         imageRepository.delete(image);
-        return "xoa anh nha tro thanh cong";
-    }
-
-    private RentalPropertyEntity getRentalPropertyById(Long rentalPropertyId) {
-        return rentalPropertyRepository.findById(rentalPropertyId)
-                .orElseThrow(() -> new DataNotFoundException(
-                        "Rental property not found"));
+        return "Xóa ảnh nhà trọ thành công";
     }
 
     private RentalPropertyEntity getManageableRentalPropertyById(Long rentalPropertyId) {
-        RentalPropertyEntity rentalProperty = getRentalPropertyById(rentalPropertyId);
+        RentalPropertyEntity rentalProperty =
+                rentalPropertyRepository.findById(rentalPropertyId)
+                        .orElseThrow(() -> new DataNotFoundException(
+                                "Không tìm thấy nhà trọ có mã: "
+                                        + rentalPropertyId));
+
         checkManageAccess(rentalProperty);
         return rentalProperty;
     }
 
     private void checkManageAccess(RentalPropertyEntity rentalProperty) {
-        if (!rentalProperty.getOwner().getId().equals(getCurrentUserId())
+        if (!rentalProperty.getOwner().getId().equals(
+                currentUserContext.getCurrentUserId())
                 && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
-            throw new ForbiddenException("You are not allowed to manage this rental property");
+            throw new ForbiddenException("Bạn không có quyền quản lý nhà trọ này");
         }
-    }
-
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
     }
 
     private boolean hasOccupiedRooms(List<RoomEntity> rooms) {
@@ -194,7 +191,7 @@ public class RentalPropertyServiceImpl implements RentalPropertyService {
         return roomIds.stream()
                 .map(roomId -> roomRepository.findByIdForUpdate(roomId)
                         .orElseThrow(() -> new DataNotFoundException(
-                                "Room not found with id: " + roomId)))
+                                "Không tìm thấy phòng có mã: " + roomId)))
                 .toList();
     }
 

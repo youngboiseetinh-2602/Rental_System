@@ -58,7 +58,7 @@ class ConversationServiceImplTest {
 
         assertEquals(ConversationStatus.BLOCKED, conversation.getStatus());
         assertEquals(currentUserId, conversation.getBlockedBy().getId());
-        assertEquals("Conversation blocked successfully", result);
+        assertEquals("Chặn cuộc trò chuyện thành công", result);
     }
 
     @Test
@@ -116,7 +116,7 @@ class ConversationServiceImplTest {
 
         assertEquals(ConversationStatus.ACTIVE, conversation.getStatus());
         assertNull(conversation.getBlockedBy());
-        assertEquals("Conversation unblocked successfully", result);
+        assertEquals("Bỏ chặn cuộc trò chuyện thành công", result);
     }
 
     @Test

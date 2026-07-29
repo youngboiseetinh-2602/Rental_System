@@ -42,6 +42,9 @@ public interface ContractRepository extends JpaRepository<ContractEntity, Long> 
 
         List<ContractEntity> findAllByRoom_RoomType_RentalProperty_Owner_Id(Long ownerId);
 
+        List<ContractEntity> findAllByRoom_RoomType_RentalProperty_Id(
+                        Long rentalPropertyId);
+
         List<ContractEntity> findAllByTenant_Id(Long tenantId);
 
         List<ContractEntity> findAllByStatusAndEndDate(

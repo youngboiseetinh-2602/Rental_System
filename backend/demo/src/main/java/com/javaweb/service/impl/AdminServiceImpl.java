@@ -16,6 +16,7 @@ import com.javaweb.repository.UserRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.service.AdminService;
 import com.javaweb.specification.UserSpecification;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
@@ -43,7 +44,7 @@ public class AdminServiceImpl implements AdminService {
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         Page<UserEntity> users = userRepository.findAll(pageable);
         if (users.isEmpty()) {
-            throw new DataNotFoundException("Khong tim thay tai khoan nao");
+            throw new DataNotFoundException("Không tìm thấy tài khoản nào");
         }
         return users.map(userConverter::toUserResponse);
     }
@@ -54,18 +55,14 @@ public class AdminServiceImpl implements AdminService {
     public Page<UserResponse> searchUsers(Map<String, Object> params, Pageable pageable) {
         UserSearchBuilder searchBuilder =
                 userSearchBuilderConverter.toUserSearchBuilder(params);
-
         if (searchBuilder.isEmpty()) {
             return getAllUsers(pageable);
         }
-
         Page<UserEntity> users = userRepository.findAll(
                 UserSpecification.search(searchBuilder), pageable);
-
         if (users.isEmpty()) {
-            throw new DataNotFoundException("Khong tim thay tai khoan phu hop");
+            throw new DataNotFoundException("Không tìm thấy tài khoản phù hợp");
         }
-
         return users.map(userConverter::toUserResponse);
     }
 
@@ -75,28 +72,27 @@ public class AdminServiceImpl implements AdminService {
     public String updateUserStatus(Long userId, UserStatus status) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "User not found with id: " + userId));
-
+                        "Không tìm thấy người dùng"));
         user.setStatus(status);
         userRepository.save(user);
-        return "cap nhat trang thai tai khoan thanh cong";
+        return "Cập nhật trạng thái tài khoản thành công";
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional(readOnly = true)
     public List<RentalTypeResponse> getRentalTypes() {
-        List<RentalTypeEntity> rentalTypes = rentalTypeRepository.findAll();
-
-        if (rentalTypes.isEmpty()) {
-            throw new DataNotFoundException("Khong tim thay loai hinh cho thue");
+        List<RentalTypeEntity> rentalTypeEntities =
+                rentalTypeRepository.findAll();
+        if (rentalTypeEntities.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy loại hình cho thuê");
         }
-
-        List<RentalTypeResponse> responses = rentalTypes.stream()
-                .map(rentalType -> modelMapper.map(rentalType, RentalTypeResponse.class))
-                .toList();
-
-        return responses;
+        List<RentalTypeResponse> results = new ArrayList<>();
+        for (RentalTypeEntity rentalTypeEntity : rentalTypeEntities) {
+            results.add(modelMapper.map(
+                    rentalTypeEntity, RentalTypeResponse.class));
+        }
+        return results;
     }
 
     @Override
@@ -105,17 +101,17 @@ public class AdminServiceImpl implements AdminService {
     public String updateRentalType(Long rentalTypeId, UpdateRentalType request) {
         RentalTypeEntity rentalType = rentalTypeRepository.findById(rentalTypeId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Rental type not found with id: " + rentalTypeId));
+                        "Không tìm thấy loại hình cho thuê"));
 
         String normalizedName = request.getName().trim().toLowerCase(Locale.ROOT);
         if (rentalTypeRepository.existsByNameIgnoreCaseAndIdNot(normalizedName, rentalTypeId)) {
-            throw new ConflictException("Rental type name already exists");
+            throw new ConflictException("Tên loại hình cho thuê đã tồn tại");
         }
 
         rentalType.setName(normalizedName);
         rentalType.setDescription(normalizeNullableText(request.getDescription()));
         rentalTypeRepository.save(rentalType);
-        return "cap nhat loai hinh cho thue thanh cong";
+        return "Cập nhật loại hình cho thuê thành công";
     }
 
     private String normalizeNullableText(String value) {

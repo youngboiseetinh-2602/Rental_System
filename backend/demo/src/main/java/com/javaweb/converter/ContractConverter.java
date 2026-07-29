@@ -17,6 +17,10 @@ public class ContractConverter {
                 contract, ContractResponse.class);
         response.setRoomId(contract.getRoom().getId());
         response.setRoomName(contract.getRoom().getName());
+        response.setRentalPropertyId(contract.getRoom()
+                .getRoomType()
+                .getRentalProperty()
+                .getId());
         response.setTenantId(contract.getTenant().getId());
         response.setTenantName(contract.getTenant().getFullName());
         return response;

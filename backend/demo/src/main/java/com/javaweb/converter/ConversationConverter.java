@@ -31,7 +31,9 @@ public class ConversationConverter {
             throw new IllegalArgumentException(
                     "Current user is not a conversation participant");
         }
+        response.setOtherUserId(otherUser.getId());
         response.setName(otherUser.getFullName());
+        response.setAvatarUrl(otherUser.getAvatarUrl());
 
         if (latestMessage != null) {
             response.setLatestMessage(latestMessage.getContent());

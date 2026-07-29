@@ -31,6 +31,7 @@ public class RentalPropertyConverter {
 
     private void setExtraInfo(RentalPropertyEntity rentalProperty, RentalPropertyResponse response) {
         UserEntity owner = rentalProperty.getOwner();
+        response.setOwnerId(owner.getId());
         response.setOwnerName(owner.getFullName());
         response.setOwnerPhoneNumber(owner.getPhoneNumber());
         response.setOwnerAvatarUrl(owner.getAvatarUrl());

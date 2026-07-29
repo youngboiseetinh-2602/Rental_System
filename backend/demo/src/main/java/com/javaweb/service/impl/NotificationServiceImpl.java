@@ -35,7 +35,10 @@ public class NotificationServiceImpl implements NotificationService {
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public NotificationResponse createNotification(Long senderId, NotificationRequest request) {
-        UserEntity sender = getUser(senderId, "Sender");
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người gửi: " + senderId));
+
         return saveNotification(sender, request);
     }
 
@@ -47,7 +50,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationResponse saveNotification(
             UserEntity sender, NotificationRequest request) {
-        UserEntity receiver = getUser(request.getReceiverId(), "Receiver");
+        Long receiverId = request.getReceiverId();
+        UserEntity receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người nhận: " + receiverId));
 
         NotificationEntity notification = new NotificationEntity();
         notification.setSender(sender);
@@ -64,54 +70,43 @@ public class NotificationServiceImpl implements NotificationService {
     @PreAuthorize(AuthorizationRules.USER)
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications() {
-        Long userId = getCurrentUserId();
-        getUser(userId, "User");
-        List<NotificationEntity> notifications =
+        Long userId = currentUserContext.getCurrentUserId();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException(
+                        "Không tìm thấy người dùng: " + userId));
+        List<NotificationEntity> notificationEntities =
                 notificationRepository.findAllByReceiver_Id(userId);
 
-        if (notifications.isEmpty()) {
+        if (notificationEntities.isEmpty()) {
             throw new DataNotFoundException("No notifications found " );
         }
 
-        List<NotificationResponse> responses = new ArrayList<>();
+        List<NotificationResponse> results = new ArrayList<>();
 
-        for (NotificationEntity notification : notifications) {
-            responses.add(notificationConverter.toResponse(notification));
+        for (NotificationEntity notificationEntity : notificationEntities) {
+            results.add(notificationConverter.toResponse(notificationEntity));
         }
 
-        return responses;
+        return results;
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.USER)
     @Transactional
     public String readNotification(Long notificationId) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         NotificationEntity notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new DataNotFoundException(
-                        "Notification not found: " + notificationId));
-
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thông báo"));
         if (!notification.getReceiver().getId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to read this notification");
+            throw new ForbiddenException("Bạn không có quyền đọc thông báo này");
         }
-
         if (notification.getStatus() == NotificationStatus.UNREAD) {
             notification.setStatus(NotificationStatus.READ);
             notification.setReadAt(
                     LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
             notificationRepository.save(notification);
         }
-
-        return "read";
+        return "đã đọc";
     }
 
-    private UserEntity getUser(Long userId, String type) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException(
-                        type + " not found: " + userId));
-    }
-
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
-    }
 }

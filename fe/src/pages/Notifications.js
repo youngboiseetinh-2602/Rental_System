@@ -7,6 +7,7 @@ import {
     markNotificationAsRead,
 } from '../services/notificationService';
 import { userHasRole } from '../utils/authRouting';
+import AccountMenuIcon from '../components/AccountMenuIcon';
 
 function formatDate(value) {
     if (!value) return '';
@@ -85,15 +86,15 @@ function Notifications() {
                         <span>{isOwner ? 'Chủ trọ' : 'Khách hàng'}</span></div>
                 </div>
                 <nav aria-label="Menu tài khoản">
-                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}>⌂ Trang chủ</NavLink>
-                    <NavLink to="/profile">♙ Thông tin cá nhân</NavLink>
-                    {isOwner && <NavLink to="/owner/properties">▤ Danh sách phòng trọ</NavLink>}
-                    {isOwner && <NavLink to="/owner/properties/new">＋ Tạo phòng trọ</NavLink>}
+                    <NavLink to={isOwner ? '/owner/dashboard' : '/dashboard'}><AccountMenuIcon name="home" /> Trang chủ</NavLink>
+                    <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
+                    {isOwner && <NavLink to="/owner/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>}
+                    {isOwner && <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>}
                     <NavLink to={isOwner ? '/owner/rental-requests' : '/yeu-cau-thue-tro'}>
-                        ▣ Yêu cầu thuê trọ
+                        <AccountMenuIcon name="requests" /> Yêu cầu thuê trọ
                     </NavLink>
-                    <a href="#messages">◌ Trò chuyện</a>
-                    <NavLink to="/notifications" className="active">♢ Thông báo
+                    <NavLink to="/chats"><AccountMenuIcon name="chat" /> Trò chuyện</NavLink>
+                    <NavLink to="/notifications" className="active"><AccountMenuIcon name="notifications" /> Thông báo
                         {unreadCount > 0 && <b className="notification-menu-badge">{unreadCount}</b>}
                     </NavLink>
                 </nav>

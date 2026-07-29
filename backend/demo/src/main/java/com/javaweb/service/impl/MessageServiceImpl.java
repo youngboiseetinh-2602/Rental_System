@@ -36,7 +36,7 @@ public class MessageServiceImpl implements MessageService {
         Long userId = currentUserContext.getCurrentUserId();
         ConversationEntity conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Conversation not found: " + conversationId));
+                        "Không tìm thấy cuộc trò chuyện"));
 
         UserEntity sender;
         if (conversation.getParticipantOne().getId().equals(userId)) {
@@ -45,12 +45,12 @@ public class MessageServiceImpl implements MessageService {
             sender = conversation.getParticipantTwo();
         } else {
             throw new ForbiddenException(
-                    "You are not allowed to send messages in this conversation");
+                    "Bạn không có quyền gửi tin nhắn trong cuộc trò chuyện này");
         }
 
         if (conversation.getStatus() == ConversationStatus.BLOCKED) {
             throw new ForbiddenException(
-                    "Cannot send messages in a blocked conversation");
+                    "Không thể gửi tin nhắn trong cuộc trò chuyện đã bị chặn");
         }
 
         MessageEntity message = new MessageEntity();
@@ -72,16 +72,16 @@ public class MessageServiceImpl implements MessageService {
         Long userId = currentUserContext.getCurrentUserId();
         MessageEntity message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Message not found"));
+                        "Không tìm thấy tin nhắn"));
 
         if (!message.getSender().getId().equals(userId)) {
             throw new ForbiddenException(
-                    "You are not allowed to edit this message");
+                    "Bạn không có quyền chỉnh sửa tin nhắn này");
         }
 
         if (message.getConversation().getStatus() == ConversationStatus.BLOCKED) {
             throw new ForbiddenException(
-                    "Cannot edit messages in a blocked conversation");
+                    "Không thể chỉnh sửa tin nhắn trong cuộc trò chuyện đã bị chặn");
         }
 
         if (!Objects.equals(message.getContent(), request.getContent())) {
@@ -97,11 +97,11 @@ public class MessageServiceImpl implements MessageService {
         Long userId = currentUserContext.getCurrentUserId();
         MessageEntity message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Message not found"));
+                        "Không tìm thấy tin nhắn"));
 
         if (!message.getSender().getId().equals(userId)) {
             throw new ForbiddenException(
-                    "You are not allowed to delete this message");
+                    "Bạn không có quyền xóa tin nhắn này");
         }
 
         if (!message.isHidden()) {

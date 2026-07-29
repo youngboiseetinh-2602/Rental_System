@@ -81,6 +81,9 @@ class ContractServiceImplTest {
         assertEquals(startDate, savedContract.getStartDate());
         assertEquals(endDate, savedContract.getEndDate());
         assertEquals(ContractStatus.PENDING, savedContract.getStatus());
-        assertEquals("gui yeu cau thue thanh cong , cho thong bao tu chu tro", result);
+        assertEquals(
+                "Gửi yêu cầu thuê thành công, vui lòng chờ thông báo từ chủ trọ",
+                result);
     }
+
 }

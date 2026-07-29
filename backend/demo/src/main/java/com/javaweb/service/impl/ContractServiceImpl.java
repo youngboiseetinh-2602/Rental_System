@@ -47,14 +47,12 @@ public class ContractServiceImpl implements ContractService {
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String createRentalRequest(RentalRequest request) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         UserEntity customer = getCustomer(userId);
         RoomEntity room = getAvailableRoomForUpdate(request.getRoomId());
         checkDuplicateRequest(userId, room.getId());
-
         contractRepository.save(toPendingContract(customer, room, request));
-
-        return "gui yeu cau thue thanh cong , cho thong bao tu chu tro";
+        return "Gửi yêu cầu thuê thành công, vui lòng chờ thông báo từ chủ trọ";
     }
 
     @Override
@@ -63,21 +61,18 @@ public class ContractServiceImpl implements ContractService {
     public String processRentalRequest(
             Long contractId, ContractStatus status, String rejectionReason) {
         if (status != ContractStatus.APPROVED && status != ContractStatus.CANCELLED) {
-            throw new IllegalArgumentException("Status must be APPROVED or CANCELLED");
+            throw new IllegalArgumentException("Trạng thái phải là APPROVED hoặc CANCELLED");
         }
         String normalizedReason = normalizeRejectionReason(status, rejectionReason);
-
         Long roomId = getContractRoomId(contractId);
         RoomEntity room = getRoomForUpdate(roomId);
         ContractEntity contract = getPendingContractForUpdate(contractId);
         checkOwnerAccess(contract);
-
         if (status == ContractStatus.CANCELLED) {
             String result = cancelContract(contract);
             sendRejectedNotification(contract, normalizedReason);
             return result;
         }
-
         return approveContract(contract, room);
     }
 
@@ -85,15 +80,13 @@ public class ContractServiceImpl implements ContractService {
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional
     public String cancelRentalRequest(Long contractId) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         Long roomId = getContractRoomId(contractId);
         getRoomForUpdate(roomId);
         ContractEntity contract = getPendingContractForUpdate(contractId);
-
         if (!contract.getTenant().getId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to cancel this rental request");
+            throw new ForbiddenException("Bạn không có quyền hủy yêu cầu thuê này");
         }
-
         return cancelContract(contract);
     }
 
@@ -102,13 +95,11 @@ public class ContractServiceImpl implements ContractService {
     @Transactional
     public String terminateContract(Long contractId) {
         checkAdminAccess();
-
         Long roomId = getContractRoomId(contractId);
         RoomEntity room = getRoomForUpdate(roomId);
         ContractEntity contract = getContractForUpdate(contractId);
-
         if (contract.getStatus() != ContractStatus.APPROVED) {
-            throw new ConflictException("Only approved contracts can be terminated");
+            throw new ConflictException("Chỉ có thể kết thúc hợp đồng đã được chấp nhận");
         }
 
         contract.setStatus(ContractStatus.TERMINATED);
@@ -118,27 +109,29 @@ public class ContractServiceImpl implements ContractService {
 
         contractRepository.save(contract);
         roomRepository.save(room);
-        return "ket thuc hop dong thanh cong";
+        return "Kết thúc hợp đồng thành công";
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.CUSTOMER)
     @Transactional(readOnly = true)
     public List<ContractResponse> getUserRentalRequests() {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserContext.getCurrentUserId();
         getCustomer(userId);
-        List<ContractEntity> requests =
+        List<ContractEntity> contractEntities =
                 contractRepository.findAllByTenant_Id(userId);
 
-        if (requests.isEmpty()) {
-            throw new DataNotFoundException("khong tim thay yeu cau thue nao");
+        if (contractEntities.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy yêu cầu thuê nào");
         }
 
-        List<ContractResponse> responses = new ArrayList<>();
-        for (ContractEntity request : requests) {
-            responses.add(contractConverter.toContractResponse(request));
+        List<ContractResponse> results = new ArrayList<>();
+
+        for (ContractEntity contractEntity : contractEntities) {
+            results.add(contractConverter.toContractResponse(contractEntity));
         }
-        return responses;
+
+        return results;
     }
 
     @Override
@@ -188,9 +181,9 @@ public class ContractServiceImpl implements ContractService {
 
     private UserEntity getCustomer(Long userId) {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new DataNotFoundException("User not found: " + userId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy người dùng: " + userId));
         if (user.getRole() != UserRole.CUSTOMER) {
-            throw new ForbiddenException("Only customers can create rental requests");
+            throw new ForbiddenException("Chỉ khách hàng mới có thể tạo yêu cầu thuê");
         }
         return user;
     }
@@ -198,7 +191,7 @@ public class ContractServiceImpl implements ContractService {
     // Khoa phong lam mutex nghiep vu cho moi thay doi request cua phong do.
     private RoomEntity getRoomForUpdate(Long roomId) {
         RoomEntity room = roomRepository.findByIdForUpdate(roomId)
-                .orElseThrow(() -> new DataNotFoundException("Room not found: " + roomId));
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy phòng: " + roomId));
         return room;
     }
 
@@ -211,7 +204,7 @@ public class ContractServiceImpl implements ContractService {
 
     private void checkRoomAvailable(RoomEntity room) {
         if (room.getStatus() != RoomStatus.AVAILABLE || room.getCurrentTenant() != null) {
-            throw new ConflictException("Room is not available");
+            throw new ConflictException("Phòng hiện không còn trống");
         }
     }
 
@@ -219,7 +212,7 @@ public class ContractServiceImpl implements ContractService {
         boolean exists = contractRepository.existsByTenant_IdAndRoom_IdAndStatus(
                 userId, roomId, ContractStatus.PENDING);
         if (exists) {
-            throw new ConflictException("A pending request already exists for this room");
+            throw new ConflictException("Bạn đã có một yêu cầu đang chờ xử lý cho phòng này");
         }
     }
 
@@ -238,7 +231,7 @@ public class ContractServiceImpl implements ContractService {
     private String approveContract(ContractEntity selectedContract, RoomEntity room) {
         if (selectedContract.getEndDate() == null
                 || !selectedContract.getEndDate().isAfter(LocalDate.now(VIETNAM_ZONE))) {
-            throw new ConflictException("Rental request has expired");
+            throw new ConflictException("Yêu cầu thuê đã hết hạn");
         }
         checkRoomAvailable(room);
         List<ContractEntity> pendingContracts =
@@ -251,7 +244,7 @@ public class ContractServiceImpl implements ContractService {
                 .filter(item -> item.getId().equals(selectedContract.getId()))
                 .findFirst()
                 .orElseThrow(() -> new ConflictException(
-                        "Rental request is no longer pending"));
+                        "Yêu cầu thuê không còn ở trạng thái chờ xử lý"));
         checkOwnerAccess(contract);
 
         contract.setStatus(ContractStatus.APPROVED);
@@ -266,25 +259,25 @@ public class ContractServiceImpl implements ContractService {
         contractRepository.saveAll(pendingContracts);
         roomRepository.save(room);
         sendApprovedNotification(contract);
-        return "chap nhan yeu cau thue thanh cong";
+        return "Chấp nhận yêu cầu thuê thành công";
     }
 
     private String cancelContract(ContractEntity contract) {
         contract.setStatus(ContractStatus.CANCELLED);
         contractRepository.save(contract);
-        return "huy yeu cau thue thanh cong";
+        return "Hủy yêu cầu thuê thành công";
     }
 
     private Long getContractRoomId(Long contractId) {
         return contractRepository.findRoomIdByContractId(contractId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Contract not found with id: " + contractId));
+                        "Không tìm thấy hợp đồng có mã: " + contractId));
     }
 
     private ContractEntity getContractForUpdate(Long contractId) {
         return contractRepository.findByIdForUpdate(contractId)
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Contract not found with id: " + contractId));
+                        "Không tìm thấy hợp đồng có mã: " + contractId));
     }
 
     // Khoa request de viec huy va duyet khong the cap nhat cung luc.
@@ -292,7 +285,7 @@ public class ContractServiceImpl implements ContractService {
         ContractEntity contract = getContractForUpdate(contractId);
 
         if (contract.getStatus() != ContractStatus.PENDING) {
-            throw new ConflictException("Rental request is no longer pending");
+            throw new ConflictException("Yêu cầu thuê không còn ở trạng thái chờ xử lý");
         }
 
         return contract;
@@ -301,18 +294,18 @@ public class ContractServiceImpl implements ContractService {
     private void sendApprovedNotification(ContractEntity contract) {
         sendNotification(
                 contract,
-                "Yeu cau thue da duoc chap nhan",
-                "Yeu cau thue phong " + contract.getRoom().getName()
-                        + " da duoc chu tro chap nhan");
+                "Yêu cầu thuê đã được chấp nhận",
+                "Yêu cầu thuê phòng " + contract.getRoom().getName()
+                        + " đã được chủ trọ chấp nhận");
     }
 
     private void sendRejectedNotification(
             ContractEntity contract, String rejectionReason) {
         sendNotification(
                 contract,
-                "Yeu cau thue da bi tu choi",
-                "Yeu cau thue phong " + contract.getRoom().getName()
-                        + " da bi chu tro tu choi. Ly do: " + rejectionReason);
+                "Yêu cầu thuê đã bị từ chối",
+                "Yêu cầu thuê phòng " + contract.getRoom().getName()
+                        + " đã bị chủ trọ từ chối. Lý do: " + rejectionReason);
     }
 
     private String normalizeRejectionReason(
@@ -322,21 +315,21 @@ public class ContractServiceImpl implements ContractService {
         }
         if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "Rejection reason is required");
+                    "Vui lòng nhập lý do từ chối");
         }
         String normalizedReason = rejectionReason.trim();
         if (normalizedReason.length() > 500) {
             throw new IllegalArgumentException(
-                    "Rejection reason must not exceed 500 characters");
+                    "Lý do từ chối không được vượt quá 500 ký tự");
         }
         return normalizedReason;
     }
 
     private void sendContractExpiryNotification(ContractEntity contract) {
-        String title = "Hop dong sap het han";
-        String content = "Hop dong #" + contract.getId()
-                + " cua phong " + contract.getRoom().getName()
-                + " se het han vao ngay " + contract.getEndDate();
+        String title = "Hợp đồng sắp hết hạn";
+        String content = "Hợp đồng #" + contract.getId()
+                + " của phòng " + contract.getRoom().getName()
+                + " sẽ hết hạn vào ngày " + contract.getEndDate();
 
         sendSystemNotification(contract, title, content);
     }
@@ -365,19 +358,17 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private void checkOwnerAccess(ContractEntity contract) {
-        if (!getOwnerId(contract).equals(getCurrentUserId())
+        if (!getOwnerId(contract).equals(
+                currentUserContext.getCurrentUserId())
                 && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
-            throw new ForbiddenException("You are not allowed to process this rental request");
+            throw new ForbiddenException("Bạn không có quyền xử lý yêu cầu thuê này");
         }
     }
 
     private void checkAdminAccess() {
         if (!currentUserContext.hasAuthority("ROLE_ADMIN")) {
-            throw new ForbiddenException("Only administrators can terminate contracts");
+            throw new ForbiddenException("Chỉ quản trị viên mới có thể kết thúc hợp đồng");
         }
     }
 
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
-    }
 }

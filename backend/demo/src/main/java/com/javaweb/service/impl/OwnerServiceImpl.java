@@ -2,6 +2,7 @@ package com.javaweb.service.impl;
 
 import com.javaweb.converter.RentalPropertyConverter;
 import com.javaweb.converter.ContractConverter;
+import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.entity.ContractEntity;
 import com.javaweb.entity.RentalPropertyEntity;
 import com.javaweb.model.response.ContractResponse;
@@ -32,35 +33,41 @@ public class OwnerServiceImpl implements OwnerService {
     @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional(readOnly = true)
     public List<RentalPropertyResponse> getOwnerRentals() {
-        Long ownerId = getCurrentUserId();
-        List<RentalPropertyEntity> rentalProperties = rentalPropertyRepository.findByOwnerId(ownerId);
-
-        List<RentalPropertyResponse> responses = new ArrayList<>();
-
-        for (RentalPropertyEntity rentalProperty : rentalProperties) {
-            responses.add(rentalPropertyConverter.toRentalPropertyResponse(rentalProperty));
+        Long ownerId = currentUserContext.getCurrentUserId();
+        List<RentalPropertyEntity> rentalPropertyEntities =
+                rentalPropertyRepository.findByOwnerId(ownerId);
+        if (rentalPropertyEntities.isEmpty()) {
+            throw new DataNotFoundException("Chủ trọ chưa có nhà trọ");
+        }
+        List<RentalPropertyResponse> results = new ArrayList<>();
+        for (RentalPropertyEntity rentalPropertyEntity : rentalPropertyEntities) {
+            results.add(rentalPropertyConverter.toRentalPropertyResponse(
+                    rentalPropertyEntity));
         }
 
-        return responses;
+        return results;
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER)
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ContractResponse> getOwnerRentalRequests() {
-        Long ownerId = getCurrentUserId();
-        List<ContractEntity> requests =
+        Long ownerId = currentUserContext.getCurrentUserId();
+        List<ContractEntity> contractEntities =
                 contractRepository.findAllByRoom_RoomType_RentalProperty_Owner_Id(
                         ownerId);
 
-        List<ContractResponse> responses = new ArrayList<>();
-        for (ContractEntity request : requests) {
-            responses.add(contractConverter.toContractResponse(request));
+        if (contractEntities.isEmpty()) {
+            throw new DataNotFoundException("Không tìm thấy yêu cầu thuê trọ nào");
         }
-        return responses;
+
+        List<ContractResponse> results = new ArrayList<>();
+
+        for (ContractEntity contractEntity : contractEntities) {
+            results.add(contractConverter.toContractResponse(contractEntity));
+        }
+
+        return results;
     }
 
-    private Long getCurrentUserId() {
-        return currentUserContext.getCurrentUserId();
-    }
 }
