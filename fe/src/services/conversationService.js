@@ -47,6 +47,8 @@ export async function getConversationMessages(conversationId) {
     return Array.isArray(body?.content) ? body.content : [];
 }
 
+import { getStompClient } from './socketClient';
+
 export async function sendConversationMessage(conversationId, content) {
     const response = await apiFetch(
         `/api/conversations/${conversationId}/messages`,
@@ -57,6 +59,14 @@ export async function sendConversationMessage(conversationId, content) {
         },
     );
     return readResponse(response, 'Không thể gửi tin nhắn.');
+}
+
+export async function sendConversationMessageViaSocket(conversationId, content) {
+    const client = await getStompClient();
+    client.publish({
+        destination: '/app/chat.sendMessage',
+        body: JSON.stringify({ conversationId, content })
+    });
 }
 
 export async function editConversationMessage(messageId, content) {

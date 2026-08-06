@@ -31,3 +31,4 @@ export const OAUTH_SCOPES = [
 ];
 
 export const API_BASE_URL = `${RESOURCE_SERVER_URL}/api`;
+export const WEBSOCKET_URL = `${RESOURCE_SERVER_URL.replace(/^http/, 'ws')}/ws`;

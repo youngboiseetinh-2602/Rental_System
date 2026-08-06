@@ -8,7 +8,9 @@ import {
     getConversationMessages,
     getMyConversations,
     sendConversationMessage,
+    sendConversationMessageViaSocket,
 } from '../services/conversationService';
+import { getStompClient } from '../services/socketClient';
 import { getMyProfile } from '../services/userService';
 import { getAdminContact } from '../services/contactService';
 import { userHasRole } from '../utils/authRouting';
@@ -135,8 +137,30 @@ function Chats() {
         }
 
         let active = true;
+        let subscription = null;
         setMessagesLoading(true);
         setMessageError('');
+
+        getStompClient().then(client => {
+            if (!active) return;
+            subscription = client.subscribe(`/topic/conversations/${selectedId}`, (msg) => {
+                const newMessage = JSON.parse(msg.body);
+                setMessages((current) => {
+                    if (current.some(m => m.id === newMessage.id)) return current;
+                    return [...current, newMessage];
+                });
+                setConversations((current) => current.map((conversation) => (
+                    String(conversation.id) === String(selectedId)
+                        ? {
+                            ...conversation,
+                            latestMessage: newMessage.content,
+                            latestMessageSentAt: newMessage.sentAt,
+                        }
+                        : conversation
+                )));
+            });
+        }).catch(err => console.error("Lỗi STOMP:", err));
+
         getConversationMessages(selectedId)
             .then((data) => {
                 if (!active) return;
@@ -152,7 +176,10 @@ function Chats() {
             })
             .catch((requestError) => active && setMessageError(requestError.message))
             .finally(() => active && setMessagesLoading(false));
-        return () => { active = false; };
+        return () => {
+            active = false;
+            if (subscription) subscription.unsubscribe();
+        };
     }, [selectedId]);
 
     useEffect(() => {
@@ -181,20 +208,10 @@ function Chats() {
         setSending(true);
         setMessageError('');
         try {
-            const sentMessage = await sendConversationMessage(selectedId, content);
-            setMessages((current) => [...current, sentMessage]);
+            await sendConversationMessageViaSocket(selectedId, content);
             setDraft('');
-            setConversations((current) => current.map((conversation) => (
-                String(conversation.id) === String(selectedId)
-                    ? {
-                        ...conversation,
-                        latestMessage: sentMessage.content,
-                        latestMessageSentAt: sentMessage.sentAt,
-                    }
-                    : conversation
-            )));
         } catch (requestError) {
-            setMessageError(requestError.message);
+            setMessageError(requestError.message || 'Không thể gửi tin nhắn.');
         } finally {
             setSending(false);
         }
