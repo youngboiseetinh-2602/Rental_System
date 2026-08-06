@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,21 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
 @RequiredArgsConstructor
 public class MessageController {
 
     private final MessageService messageService;
 
-    @PostMapping("/conversations/{conversationId}/messages")
-    public ResponseEntity<MessageResponse> sendMessage(
-            @PathVariable Long conversationId,
-            @Valid @RequestBody MessageRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(messageService.sendMessage(request, conversationId));
-    }
 
-    @PatchMapping("/messages/{messageId}")
+    @PatchMapping("/api/messages/{messageId}")
     public ResponseEntity<Void> editMessage(
             @PathVariable Long messageId,
             @Valid @RequestBody MessageRequest request) {
@@ -38,7 +31,7 @@ public class MessageController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/messages/{messageId}")
+    @DeleteMapping("/api/messages/{messageId}")
     public ResponseEntity<Void> deleteMessage(
             @PathVariable Long messageId) {
         messageService.deleteMessage(messageId);

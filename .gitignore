@@ -14,3 +14,23 @@ fe/build/
 ### OS files
 Thumbs.db
 .DS_Store
+backend.zip
+fe.zip
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+### Test files
+*.test.*
+*.spec.*
+__tests__/
+__mocks__/
+src/test/
+**/src/test/
+*Test.java
+*Tests.java
+
+
+*.zip
+*.tar

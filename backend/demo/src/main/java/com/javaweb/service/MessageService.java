@@ -5,7 +5,7 @@ import com.javaweb.model.response.MessageResponse;
 
 public interface MessageService {
 
-    MessageResponse sendMessage(MessageRequest request, Long conversationId);
+    void sendMessage(MessageRequest request);
 
     void editMessage(Long messageId, MessageRequest request);
 

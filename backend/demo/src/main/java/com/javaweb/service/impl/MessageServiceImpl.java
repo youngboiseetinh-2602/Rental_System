@@ -16,6 +16,7 @@ import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.MessageService;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,12 +31,15 @@ public class MessageServiceImpl implements MessageService {
     private final ConversationRepository conversationRepository;
     private final ConversationConverter conversationConverter;
     private final CurrentUserContext currentUserContext;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    
 
     @Override
     @Transactional
-    public MessageResponse sendMessage(MessageRequest request, Long conversationId) {
+    public void sendMessage(MessageRequest request) {
         Long userId = currentUserContext.getCurrentUserId();
-        ConversationEntity conversation = conversationRepository.findById(conversationId)
+        ConversationEntity conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy cuộc trò chuyện"));
 
@@ -64,7 +68,10 @@ public class MessageServiceImpl implements MessageService {
         conversation.getMessages().add(savedMessage);
         conversationRepository.save(conversation);
 
-        return conversationConverter.toMessageResponse(savedMessage);
+        MessageResponse response = conversationConverter.toMessageResponse(savedMessage);
+        messagingTemplate.convertAndSend(
+                "/topic/conversations/" + conversation.getId(), response);
+
     }
 
     @Override
