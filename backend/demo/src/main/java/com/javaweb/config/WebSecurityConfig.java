@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
 /**
  * Cấu hình các chuỗi bộ lọc bảo mật cho máy chủ OAuth2, API sử dụng JWT và luồng đăng nhập React.
  */
@@ -205,7 +205,9 @@ public class WebSecurityConfig {
                                 "/favicon.ico",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/ws",
+                                "/ws/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
