@@ -14,7 +14,9 @@ public class ReviewConverter {
 
     public ReviewResponse toReviewResponse(ReviewEntity reviewEntity) {
         ReviewResponse response = modelMapper.map(reviewEntity, ReviewResponse.class);
+        response.setId(reviewEntity.getId());
         if (reviewEntity.getUser() != null) {
+            response.setReviewerId(reviewEntity.getUser().getId());
             response.setReviewerName(reviewEntity.getUser().getFullName());
         }
         return response;

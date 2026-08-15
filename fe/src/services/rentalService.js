@@ -111,6 +111,84 @@ export async function getRentalPropertyDetail(rentalPropertyId) {
     return body;
 }
 
+export async function getRentalPropertyReviews(rentalPropertyId) {
+    const response = await fetch(`${API_BASE_URL}/rental-properties/${rentalPropertyId}/reviews`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: { Accept: 'application/json' },
+    });
+    if (response.status === 404) {
+        return [];
+    }
+    const text = await response.text();
+    let body;
+    try {
+        body = text ? JSON.parse(text) : [];
+    } catch (error) {
+        body = [];
+    }
+    if (!response.ok) {
+        throw new Error(body?.message || text || 'Không thể tải đánh giá nhà trọ.');
+    }
+    return body;
+}
+
+export async function createRentalReview(rentalPropertyId, payload) {
+    const response = await apiFetch(`/api/users/me/rental-properties/${rentalPropertyId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const text = await response.text();
+    let body = text;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        // may return plain text message
+    }
+    if (!response.ok) {
+        const message = body && typeof body === 'object'
+            ? body.message || Object.values(body).join('. ')
+            : body;
+        throw new Error(message || 'Không thể gửi đánh giá.');
+    }
+    return typeof body === 'string' ? body : 'Gửi đánh giá thành công.';
+}
+
+export async function updateRentalReview(reviewId, payload) {
+    const response = await apiFetch(`/api/users/me/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const text = await response.text();
+    let body = text;
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (error) {
+        // may return plain text message
+    }
+    if (!response.ok) {
+        const message = body && typeof body === 'object'
+            ? body.message || Object.values(body).join('. ')
+            : body;
+        throw new Error(message || 'Không thể cập nhật đánh giá.');
+    }
+    return typeof body === 'string' ? body : 'Cập nhật đánh giá thành công.';
+}
+
+export async function deleteRentalReview(reviewId) {
+    const response = await apiFetch(`/api/users/me/reviews/${reviewId}`, {
+        method: 'DELETE',
+    });
+    const text = await response.text();
+    if (!response.ok) {
+        throw new Error(text || 'Không thể xóa đánh giá.');
+    }
+    return text;
+}
+
 export async function createRentalRequest(payload) {
     const response = await apiFetch('/api/users/me/rental-requests', {
         method: 'POST',

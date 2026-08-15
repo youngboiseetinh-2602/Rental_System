@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { createConversation } from '../services/conversationService';
-import { createRentalRequest, getRentalPropertyDetail } from '../services/rentalService';
+import { createRentalRequest, createRentalReview, getRentalPropertyDetail, getRentalPropertyReviews } from '../services/rentalService';
 import useAuth from '../hooks/useAuth';
 import { userHasRole } from '../utils/authRouting';
 
@@ -17,6 +17,13 @@ function RentalDetail() {
     const [selectedImage, setSelectedImage] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [reviewsError, setReviewsError] = useState('');
+    const [reviewComment, setReviewComment] = useState('');
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewSubmitError, setReviewSubmitError] = useState('');
+    const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState('');
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [requestForm, setRequestForm] = useState({ startDate: '', endDate: '' });
     const [requesting, setRequesting] = useState(false);
@@ -37,10 +44,64 @@ function RentalDetail() {
         return () => { active = false; };
     }, [rentalPropertyId]);
 
+    useEffect(() => {
+        let active = true;
+        setReviewsLoading(true);
+        setReviewsError('');
+        getRentalPropertyReviews(rentalPropertyId)
+            .then((data) => {
+                if (!active) return;
+                setReviews(data);
+            })
+            .catch((requestError) => {
+                if (!active) return;
+                setReviewsError(requestError.message || 'Không thể tải đánh giá.');
+            })
+            .finally(() => {
+                if (active) setReviewsLoading(false);
+            });
+        return () => { active = false; };
+    }, [rentalPropertyId]);
+
     const address = rental?.detailedAddress || [
         rental?.houseNumber, rental?.street, rental?.ward, rental?.city,
     ].filter(Boolean).join(', ');
+
+    const sortedReviews = useMemo(() => {
+        return [...reviews].sort((a, b) => {
+            const timeA = a?.createdAt ? Date.parse(a.createdAt) : 0;
+            const timeB = b?.createdAt ? Date.parse(b.createdAt) : 0;
+            return timeB - timeA;
+        });
+    }, [reviews]);
+    const previewReviews = sortedReviews.slice(0, 3);
     const today = new Date().toISOString().slice(0, 10);
+
+    const submitReview = async (event) => {
+        event.preventDefault();
+        if (!reviewComment.trim()) {
+            setReviewSubmitError('Bạn cần nhập nội dung đánh giá.');
+            return;
+        }
+        if (!isAuthenticated) {
+            navigate(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
+            return;
+        }
+        setReviewSubmitting(true);
+        setReviewSubmitError('');
+        setReviewSubmitSuccess('');
+        try {
+            const message = await createRentalReview(rentalPropertyId, { comment: reviewComment.trim() });
+            setReviewSubmitSuccess(message);
+            setReviewComment('');
+            const updatedReviews = await getRentalPropertyReviews(rentalPropertyId);
+            setReviews(updatedReviews);
+        } catch (requestError) {
+            setReviewSubmitError(requestError.message || 'Không thể gửi đánh giá.');
+        } finally {
+            setReviewSubmitting(false);
+        }
+    };
 
     const chooseRoom = (room, roomType) => {
         if (String(room.status).toUpperCase() !== 'AVAILABLE') return;
@@ -205,6 +266,75 @@ function RentalDetail() {
                 <p className="owner-house-rules">{rental.houseRules || 'Chưa cập nhật nội quy.'}</p>
             </section>
 
+            <section className="rental-public-section rental-review-section">
+                <div className="review-section-heading">
+                    <h2>Đánh giá</h2>
+                    <span>{reviews.length} nhận xét</span>
+                </div>
+
+                <div className="review-write-box">
+                    {isAuthenticated && userHasRole(user, 'CUSTOMER') ? (
+                        <form className="review-form" onSubmit={submitReview}>
+                            <label htmlFor="review-comment">Viết đánh giá của bạn</label>
+                            <textarea
+                                id="review-comment"
+                                rows="4"
+                                placeholder="Chia sẻ trải nghiệm của bạn về nhà trọ này..."
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                            />
+                            {reviewSubmitError && <p className="review-error" role="alert">{reviewSubmitError}</p>}
+                            {reviewSubmitSuccess && <p className="review-success" role="status">{reviewSubmitSuccess}</p>}
+                            <div className="review-form-actions">
+                                <button type="submit" disabled={reviewSubmitting}>
+                                    {reviewSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+                                </button>
+                            </div>
+                        </form>
+                    ) : isAuthenticated ? (
+                        <p className="review-disabled">Chỉ tài khoản khách thuê mới có thể viết đánh giá.</p>
+                    ) : (
+                        <p className="review-disabled">
+                            Vui lòng <button type="button" className="review-login-button" onClick={() => navigate(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`)}>đăng nhập</button> để viết đánh giá.
+                        </p>
+                    )}
+                </div>
+
+                <div className="review-preview-box">
+                    <h3>Những đánh giá gần nhất</h3>
+                    {reviewsLoading ? (
+                        <p className="review-loading">Đang tải đánh giá...</p>
+                    ) : reviewsError ? (
+                        <p className="review-error" role="alert">{reviewsError}</p>
+                    ) : reviews.length === 0 ? (
+                        <p className="review-empty">Chưa có đánh giá nào cho nhà trọ này.</p>
+                    ) : (
+                        <div className="review-list">
+                            {previewReviews.map((review, index) => (
+                                <article className="review-card" key={`${review.reviewerName || 'review'}-${index}`}>
+                                    <div className="review-card-header">
+                                        <span>{(review.reviewerName || 'Người dùng')[0].toUpperCase()}</span>
+                                        <div>
+                                            <strong>{review.reviewerName || 'Người dùng'}</strong>
+                                            <small>{review.createdAt ? new Date(review.createdAt).toLocaleDateString('vi-VN') : 'Mới đây'}</small>
+                                        </div>
+                                    </div>
+                                    <p>{review.comment || 'Không có nội dung đánh giá.'}</p>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {reviews.length > 0 && (
+                    <section className="review-detail-action">
+                        <h3>Xem chi tiết tất cả đánh giá</h3>
+                        <button type="button" className="review-show-more" onClick={() => navigate(`/phong-tro/${rentalPropertyId}/reviews`)}>
+                            Xem chi tiết
+                        </button>
+                    </section>
+                )}
+            </section>
             {selectedRoom && (
                 <div className="rental-request-modal" role="dialog" aria-modal="true" aria-labelledby="rental-request-title">
                     <button className="rental-modal-backdrop" type="button" aria-label="Đóng"
@@ -230,8 +360,7 @@ function RentalDetail() {
                                 min={requestForm.startDate || today} value={requestForm.endDate}
                                 onChange={(e) => setRequestForm((current) => ({ ...current, endDate: e.target.value }))} /></label>
                         </div>
-                        {requestMessage && <div className={`rental-request-message${
-                            requestMessage.startsWith('Gửi yêu cầu thuê thành công') ? ' success' : ''}`}>
+                        {requestMessage && <div className={`rental-request-message${requestMessage.startsWith('Gửi yêu cầu thuê thành công') ? ' success' : ''}`}>
                             {requestMessage}
                         </div>}
                         <p className="rental-request-note">Yêu cầu sẽ được gửi đến chủ trọ để xét duyệt. Phòng chỉ được xác nhận sau khi chủ trọ chấp thuận.</p>

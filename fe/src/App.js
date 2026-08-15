@@ -18,6 +18,7 @@ import OwnerPropertyCreate from './pages/OwnerPropertyCreate';
 import OwnerPropertyDetail from './pages/OwnerPropertyDetail';
 import OwnerPropertyEdit from './pages/OwnerPropertyEdit';
 import RentalDetail from './pages/RentalDetail';
+import ReviewDetail from './pages/ReviewDetail';
 import CustomerRentalRequests from './pages/CustomerRentalRequests';
 import OwnerRentalRequests from './pages/OwnerRentalRequests';
 import OwnerContracts from './pages/OwnerContracts';
@@ -41,6 +42,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/phong-tro" element={<PhongTro />} />
+                        <Route path="/phong-tro/:rentalPropertyId/reviews" element={<ReviewDetail />} />
                         <Route path="/phong-tro/:rentalPropertyId" element={<RentalDetail />} />
                         <Route path="/about-us" element={<AboutUs />} />
                         <Route path="/login" element={<Login />} />
@@ -139,6 +141,14 @@ function App() {
                             element={(
                                 <OwnerRoute>
                                     <OwnerPropertyEdit />
+                                </OwnerRoute>
+                            )}
+                        />
+                        <Route
+                            path="/owner/properties/:propertyId/reviews"
+                            element={(
+                                <OwnerRoute>
+                                    <ReviewDetail />
                                 </OwnerRoute>
                             )}
                         />

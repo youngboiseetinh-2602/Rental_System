@@ -60,12 +60,18 @@ export async function sendConversationMessage(conversationId, content) {
     );
     return readResponse(response, 'Không thể gửi tin nhắn.');
 }
-
-export async function sendConversationMessageViaSocket(conversationId, content) {
+export async function sendConversationMessageViaSocket(
+    conversationId,
+    content
+) {
     const client = await getStompClient();
+
     client.publish({
-        destination: '/app/chat.sendMessage',
-        body: JSON.stringify({ conversationId, content })
+        destination: '/app/chat.send',
+        body: JSON.stringify({
+            conversationId,
+            content
+        })
     });
 }
 

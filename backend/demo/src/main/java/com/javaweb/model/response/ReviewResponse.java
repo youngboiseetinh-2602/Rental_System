@@ -12,6 +12,10 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ReviewResponse {
 
+    private Long id;
+
+    private Long reviewerId;
+
     private String reviewerName;
 
     private String comment;

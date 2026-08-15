@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import OwnerRentalRequestNavLink from '../components/OwnerRentalRequestNavLink';
 import AccountMenuIcon from '../components/AccountMenuIcon';
 import ChatNavLink from '../components/ChatNavLink';
@@ -10,6 +10,7 @@ import {
     getOwnerPropertyTenants,
     sendOwnerNotification,
 } from '../services/ownerService';
+import { getRentalPropertyReviews } from '../services/rentalService';
 import { getMyProfile } from '../services/userService';
 
 const currency = new Intl.NumberFormat('vi-VN', {
@@ -26,6 +27,7 @@ function formatDate(value) {
 
 function OwnerPropertyDetail() {
     const { propertyId } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
     const [property, setProperty] = useState(null);
@@ -42,6 +44,9 @@ function OwnerPropertyDetail() {
     const [notificationSending, setNotificationSending] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState('');
     const [notificationError, setNotificationError] = useState('');
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [reviewsError, setReviewsError] = useState('');
 
     useEffect(() => {
         let active = true;
@@ -54,6 +59,25 @@ function OwnerPropertyDetail() {
             })
             .catch((requestError) => active && setError(requestError.message))
             .finally(() => active && setLoading(false));
+        return () => { active = false; };
+    }, [propertyId]);
+
+    useEffect(() => {
+        let active = true;
+        setReviewsLoading(true);
+        setReviewsError('');
+        getRentalPropertyReviews(propertyId)
+            .then((data) => {
+                if (!active) return;
+                setReviews(data);
+            })
+            .catch((requestError) => {
+                if (!active) return;
+                setReviewsError(requestError.message || 'Không thể tải đánh giá.');
+            })
+            .finally(() => {
+                if (active) setReviewsLoading(false);
+            });
         return () => { active = false; };
     }, [propertyId]);
 
@@ -212,6 +236,44 @@ function OwnerPropertyDetail() {
                                         </article>
                                     ))}
                                 </div>
+                            </section>
+
+                            <section className="owner-detail-section">
+                                <div className="owner-panel-title review-summary-header">
+                                    <div>
+                                        <h2>Đánh giá nhà trọ</h2>
+                                        <p>{reviews.length} nhận xét</p>
+                                    </div>
+                                </div>
+                                {reviewsLoading ? (
+                                    <p className="review-loading">Đang tải đánh giá...</p>
+                                ) : reviewsError ? (
+                                    <p className="review-error" role="alert">{reviewsError}</p>
+                                ) : reviews.length === 0 ? (
+                                    <p className="review-empty">Chưa có đánh giá nào.</p>
+                                ) : (
+                                    <>
+                                        <div className="review-list">
+                                            {reviews.map((review, index) => (
+                                                <article className="review-card" key={`${review.reviewerName || 'review'}-${index}`}>
+                                                    <div className="review-card-header">
+                                                        <span>{(review.reviewerName || 'Người dùng')[0].toUpperCase()}</span>
+                                                        <div>
+                                                            <strong>{review.reviewerName || 'Người dùng'}</strong>
+                                                            <small>Nhận xét về nhà trọ</small>
+                                                        </div>
+                                                    </div>
+                                                    <p>{review.comment || 'Không có nội dung đánh giá.'}</p>
+                                                </article>
+                                            ))}
+                                        </div>
+                                        <div className="review-show-more-wrapper">
+                                            <button type="button" className="review-show-more" onClick={() => navigate(`/owner/properties/${propertyId}/reviews`)}>
+                                                Xem chi tiết
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </section>
 
                             <section className="owner-detail-section">
