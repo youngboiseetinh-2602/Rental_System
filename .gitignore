@@ -20,17 +20,3 @@ fe.zip
 *.tar
 *.tar.gz
 *.tgz
-
-### Test files
-*.test.*
-*.spec.*
-__tests__/
-__mocks__/
-src/test/
-**/src/test/
-*Test.java
-*Tests.java
-
-
-*.zip
-*.tar

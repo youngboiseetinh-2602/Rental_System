@@ -336,6 +336,41 @@
     font-weight: 600;
 }
 
+.owner-panel-title>a {
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.owner-dashboard-properties .list-group-item {
+    border-color: #edf1ef;
+    color: #26352e;
+    background: transparent;
+}
+
+.owner-dashboard-properties .list-group-item:hover,
+.owner-dashboard-properties .list-group-item:focus-visible {
+    color: #163c2a;
+    background: #f3f9f6;
+}
+
+.owner-dashboard-properties .list-group-item small {
+    color: #75827c;
+}
+
+.owner-dashboard-property-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--green);
+    background: #e8f5ee;
+    font-size: 20px;
+    font-weight: 800;
+}
+
 .owner-line-chart {
     position: relative;
     height: 220px;
@@ -6331,12 +6366,20 @@ a {
 
 /* Trang trò chuyện */
 .chats-shell {
+    height: calc(100vh - 88px);
+    min-height: 0;
     background: #f4f7f5;
+}
+
+.chats-shell>.profile-sidebar {
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .chats-main {
     min-width: 0;
-    min-height: calc(100vh - 88px);
+    min-height: 0;
+    height: 100%;
     display: grid;
     grid-template-columns: minmax(380px, 32%) minmax(0, 1fr);
     gap: 22px;
@@ -6344,8 +6387,8 @@ a {
 }
 
 .conversation-panel {
-    min-height: 680px;
-    max-height: calc(100vh - 132px);
+    min-height: 0;
+    max-height: none;
     display: flex;
     overflow: hidden;
     flex-direction: column;
@@ -6486,6 +6529,40 @@ a {
     font-weight: 800;
 }
 
+.conversation-incoming-notice {
+    position: fixed;
+    z-index: 1200;
+    top: 24px;
+    right: 24px;
+    width: min(360px, calc(100vw - 48px));
+    display: grid;
+    gap: 4px;
+    padding: 14px 18px;
+    border: 1px solid #b8dfca;
+    border-radius: 14px;
+    color: #163c2a;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(22, 60, 42, 0.18);
+    text-align: left;
+    cursor: pointer;
+}
+
+.conversation-incoming-notice strong,
+.conversation-incoming-notice span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-incoming-notice strong {
+    font-size: 14px;
+}
+
+.conversation-incoming-notice span {
+    color: #607068;
+    font-size: 13px;
+}
+
 .conversation-avatar {
     position: relative;
     width: 52px;
@@ -6588,8 +6665,8 @@ a {
 
 .conversation-thread {
     min-width: 0;
-    min-height: 680px;
-    max-height: calc(100vh - 132px);
+    min-height: 0;
+    max-height: none;
     display: flex;
     overflow: hidden;
     flex-direction: column;
@@ -6836,17 +6913,27 @@ a {
     }
 
     .chats-main {
+        height: auto;
         grid-template-columns: 1fr;
+        overflow: visible !important;
+    }
+
+    .chats-shell {
+        height: auto;
+        min-height: calc(100vh - 88px);
+        overflow: visible !important;
     }
 
     .conversation-panel {
         min-height: 620px;
         max-height: none;
+        height: auto !important;
     }
 
     .conversation-thread {
         min-height: 620px;
         max-height: none;
+        height: auto !important;
     }
 
     .conversation-empty {

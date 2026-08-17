@@ -9,6 +9,8 @@ import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.ConversationStatus;
 import com.javaweb.enums.MessageStatus;
 import com.javaweb.model.request.MessageRequest;
+import com.javaweb.model.response.ChatMessageEventResponse;
+import com.javaweb.model.response.ConversationResponse;
 import com.javaweb.model.response.MessageResponse;
 import com.javaweb.repository.ConversationRepository;
 import com.javaweb.repository.MessageRepository;
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +36,6 @@ public class MessageServiceImpl implements MessageService {
     private final ConversationConverter conversationConverter;
     private final CurrentUserContext currentUserContext;
     private final SimpMessagingTemplate messagingTemplate;
-
-    
 
     @Override
     @Transactional
@@ -69,9 +71,55 @@ public class MessageServiceImpl implements MessageService {
         conversationRepository.save(conversation);
 
         MessageResponse response = conversationConverter.toMessageResponse(savedMessage);
-        messagingTemplate.convertAndSend(
-                "/topic/conversations/" + conversation.getId(), response);
+        ChatMessageEventResponse participantOneEvent = createChatMessageEvent(
+                conversation, conversation.getParticipantOne(), savedMessage, response);
+        ChatMessageEventResponse participantTwoEvent = createChatMessageEvent(
+                conversation, conversation.getParticipantTwo(), savedMessage, response);
 
+        publishAfterCommit(() -> {
+            messagingTemplate.convertAndSendToUser(
+                    conversation.getParticipantOne().getUsername(),
+                    "/queue/chat-messages",
+                    participantOneEvent);
+            messagingTemplate.convertAndSendToUser(
+                    conversation.getParticipantTwo().getUsername(),
+                    "/queue/chat-messages",
+                    participantTwoEvent);
+        });
+
+    }
+
+    private ChatMessageEventResponse createChatMessageEvent(
+            ConversationEntity conversation,
+            UserEntity participant,
+            MessageEntity latestMessage,
+            MessageResponse messageResponse) {
+        ConversationResponse conversationResponse = conversationConverter
+                .toConversationResponse(
+                        conversation,
+                        participant.getId(),
+                        latestMessage);
+        conversationResponse.setUnreadCount(messageRepository
+                .countByConversation_IdAndSender_IdNotAndStatusAndHiddenFalse(
+                        conversation.getId(),
+                        participant.getId(),
+                        MessageStatus.SENT));
+        return new ChatMessageEventResponse(conversationResponse, messageResponse);
+    }
+
+    private void publishAfterCommit(Runnable publisher) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            publisher.run();
+                        }
+                    });
+            return;
+        }
+        publisher.run();
     }
 
     @Override

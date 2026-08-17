@@ -31,6 +31,7 @@ function OwnerDashboard() {
     const pendingCount = requests.filter((item) => item.status === 'PENDING').length;
     const acceptedCount = requests.filter((item) => item.status === 'APPROVED').length;
     const recentRequests = useMemo(() => requests.slice(0, 5), [requests]);
+    const recentProperties = useMemo(() => properties.slice(0, 5), [properties]);
 
     return (
         <div className="owner-dashboard">
@@ -82,15 +83,42 @@ function OwnerDashboard() {
                 </section>
 
                 <section className="owner-dashboard-grid">
-                    <article className="owner-panel owner-chart-panel">
-                        <div className="owner-panel-title"><h2>Thống kê lượt quan tâm</h2><span>30 ngày qua</span></div>
-                        <div className="owner-line-chart">
-                            <div className="chart-grid-lines" />
-                            <svg viewBox="0 0 700 220" preserveAspectRatio="none" aria-label="Biểu đồ lượt quan tâm">
-                                <polyline points="0,190 70,145 140,160 210,90 280,115 350,70 420,125 490,80 560,95 630,35 700,60" />
-                                <polyline className="secondary" points="0,210 70,190 140,155 210,170 280,130 350,160 420,115 490,145 560,100 630,125 700,75" />
-                            </svg>
-                            <div className="chart-labels"><span>01/07</span><span>08/07</span><span>15/07</span><span>22/07</span><span>31/07</span></div>
+                    <article className="owner-panel owner-dashboard-properties">
+                        <div className="owner-panel-title">
+                            <h2>Danh sách nhà trọ</h2>
+                            <NavLink to="/owner/properties">Xem tất cả</NavLink>
+                        </div>
+                        <div className="list-group list-group-flush mt-3">
+                            {recentProperties.length ? recentProperties.map((property) => {
+                                const address = property.detailedAddress || [
+                                    property.houseNumber, property.street,
+                                    property.ward, property.city,
+                                ].filter(Boolean).join(', ');
+                                return (
+                                    <NavLink className="list-group-item list-group-item-action d-flex align-items-center gap-3 px-0"
+                                        to={`/owner/properties/${property.id}`} key={property.id}>
+                                        <span className="owner-dashboard-property-icon" aria-hidden="true">⌂</span>
+                                        <span className="flex-grow-1 overflow-hidden">
+                                            <strong className="d-block text-truncate">
+                                                {property.name || 'Nhà trọ chưa đặt tên'}
+                                            </strong>
+                                            <small className="d-block text-truncate">
+                                                {address || 'Chưa cập nhật địa chỉ'}
+                                            </small>
+                                        </span>
+                                        <span className="badge rounded-pill text-bg-success">
+                                            {property.rentalTypeName || 'Đang hiển thị'}
+                                        </span>
+                                    </NavLink>
+                                );
+                            }) : (
+                                <div className="owner-empty py-5 text-center">
+                                    <p>Bạn chưa có nhà trọ nào.</p>
+                                    <NavLink className="btn btn-success btn-sm" to="/owner/properties/new">
+                                        Tạo nhà trọ mới
+                                    </NavLink>
+                                </div>
+                            )}
                         </div>
                     </article>
 

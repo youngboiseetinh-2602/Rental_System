@@ -20,17 +20,19 @@ function AdminContactFooter() {
     const [error, setError] = useState('');
     const [startingChat, setStartingChat] = useState(false);
     const isAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+    const isChatPage = location.pathname === '/chats';
+    const isHiddenPage = isAdminPage || isChatPage;
 
     useEffect(() => {
-        if (isAdminPage) return undefined;
+        if (isHiddenPage) return undefined;
         let active = true;
         getAdminContact()
             .then((data) => active && setAdmin(data))
             .catch((requestError) => active && setError(requestError.message));
         return () => { active = false; };
-    }, [isAdminPage]);
+    }, [isHiddenPage]);
 
-    if (isAdminPage) return null;
+    if (isHiddenPage) return null;
 
     const startChat = async () => {
         if (!admin?.id) return;

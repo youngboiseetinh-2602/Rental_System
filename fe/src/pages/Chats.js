@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import {
@@ -7,14 +14,17 @@ import {
     editConversationMessage,
     getConversationMessages,
     getMyConversations,
-    sendConversationMessage,
     sendConversationMessageViaSocket,
 } from '../services/conversationService';
-import { getStompClient } from '../services/socketClient';
 import { getMyProfile } from '../services/userService';
 import { getAdminContact } from '../services/contactService';
 import { userHasRole } from '../utils/authRouting';
-import { CHAT_UNREAD_CHANGED_EVENT } from '../components/ChatNavLink';
+import {
+    mergeConversationLists,
+    mergeMessages,
+    upsertConversationSummary,
+} from '../utils/chatRealtime';
+import useChatRealtime from '../hooks/useChatRealtime';
 import AccountNavigation from '../components/AccountNavigation';
 
 function initialsOf(name) {
@@ -50,10 +60,15 @@ function pinAdminConversation(conversations, adminId) {
 
 function Chats() {
     const { user } = useAuth();
+    const {
+        setActiveConversationId,
+        subscribeToChatEvents,
+        subscribeToChatReconnects,
+    } = useChatRealtime();
     const location = useLocation();
     const [profile, setProfile] = useState(null);
     const [conversations, setConversations] = useState([]);
-    const [selectedId, setSelectedId] = useState(location.state?.otherUserId || null);
+    const [selectedId, setSelectedId] = useState(null);
     const [query, setQuery] = useState('');
     const [conversationFilter, setConversationFilter] = useState('ALL');
     const [loading, setLoading] = useState(true);
@@ -66,14 +81,79 @@ function Chats() {
     const [editingId, setEditingId] = useState(null);
     const [editingContent, setEditingContent] = useState('');
     const [messageActionId, setMessageActionId] = useState(null);
+    const [incomingMessageNotice, setIncomingMessageNotice] = useState(null);
     const messagesContainerRef = useRef(null);
     const previousMessageCountRef = useRef(0);
     const pendingInitialScrollRef = useRef(false);
+    const selectedIdRef = useRef(null);
+    const adminIdRef = useRef(null);
+    const liveConversationUpdatesRef = useRef(new Map());
+    const realtimeVersionRef = useRef(0);
+    const reconnectRequestRef = useRef(0);
     const isOwner = userHasRole(user, 'OWNER');
     const isAdmin = userHasRole(user, 'ADMIN');
+    const currentUserId = profile?.id || user?.id || user?.userId || user?.sub;
+
+    useLayoutEffect(() => {
+        selectedIdRef.current = selectedId;
+    }, [selectedId]);
+
+    const liveConversationsAfter = useCallback((version) => (
+        Array.from(liveConversationUpdatesRef.current.values())
+            .filter((update) => update.version > version)
+            .sort((left, right) => right.version - left.version)
+            .map((update) => update.conversation)
+    ), []);
+
+    useEffect(() => subscribeToChatEvents(({ conversation, message }) => {
+        const isSelected = String(conversation.id)
+            === String(selectedIdRef.current);
+        const isIncoming = String(message.senderId) !== String(currentUserId);
+        const normalizedConversation = {
+            ...conversation,
+            unreadCount: isSelected
+                ? 0
+                : Number(conversation.unreadCount || 0),
+        };
+
+        realtimeVersionRef.current += 1;
+        liveConversationUpdatesRef.current.set(String(conversation.id), {
+            conversation: normalizedConversation,
+            version: realtimeVersionRef.current,
+        });
+        setConversations((current) => upsertConversationSummary(
+            current,
+            normalizedConversation,
+            adminIdRef.current,
+            selectedIdRef.current,
+        ));
+
+        if (isSelected) {
+            setMessages((current) => mergeMessages(current, [message]));
+            if (isIncoming) {
+                setIncomingMessageNotice({
+                    id: message.id,
+                    senderName: conversation.name || 'Người dùng',
+                    content: message.content || 'Bạn có tin nhắn mới.',
+                });
+            }
+        }
+    }), [currentUserId, subscribeToChatEvents]);
+
+    useEffect(() => {
+        if (!incomingMessageNotice) return undefined;
+        const timeoutId = window.setTimeout(
+            () => setIncomingMessageNotice(null),
+            4000,
+        );
+        return () => window.clearTimeout(timeoutId);
+    }, [incomingMessageNotice]);
 
     useEffect(() => {
         let active = true;
+        const requestVersion = realtimeVersionRef.current;
+        setLoading(true);
+        setError('');
         Promise.all([
             getMyProfile(),
             getMyConversations(),
@@ -82,8 +162,10 @@ function Chats() {
             .then(async ([profileData, conversationData, adminContact]) => {
                 if (!active) return;
                 setProfile(profileData);
-                let currentConversations = pinAdminConversation(
-                    conversationData,
+                adminIdRef.current = adminContact?.id || null;
+                let currentConversations = mergeConversationLists(
+                    pinAdminConversation(conversationData, adminContact?.id),
+                    liveConversationsAfter(requestVersion),
                     adminContact?.id,
                 );
                 setConversations(currentConversations);
@@ -94,8 +176,13 @@ function Chats() {
                 );
                 if (requestedUserId && !requestedConversation) {
                     await createConversation(requestedUserId);
-                    currentConversations = pinAdminConversation(
-                        await getMyConversations(),
+                    const refreshVersion = realtimeVersionRef.current;
+                    currentConversations = mergeConversationLists(
+                        pinAdminConversation(
+                            await getMyConversations(),
+                            adminContact?.id,
+                        ),
+                        liveConversationsAfter(refreshVersion),
                         adminContact?.id,
                     );
                     if (!active) return;
@@ -109,7 +196,57 @@ function Chats() {
             .catch((requestError) => active && setError(requestError.message))
             .finally(() => active && setLoading(false));
         return () => { active = false; };
-    }, [location.search, location.state]);
+    }, [liveConversationsAfter, location.search, location.state]);
+
+    useEffect(() => {
+        if (loading) return undefined;
+
+        let mounted = true;
+
+        const unsubscribe = subscribeToChatReconnects(() => {
+            const requestId = reconnectRequestRef.current + 1;
+            reconnectRequestRef.current = requestId;
+            const requestVersion = realtimeVersionRef.current;
+            const conversationId = selectedIdRef.current;
+
+            Promise.all([
+                getMyConversations(),
+                conversationId
+                    ? getConversationMessages(conversationId)
+                    : Promise.resolve(null),
+            ]).then(([conversationData, messageData]) => {
+                if (!mounted || requestId !== reconnectRequestRef.current) return;
+
+                const refreshedConversations = mergeConversationLists(
+                    pinAdminConversation(conversationData, adminIdRef.current),
+                    liveConversationsAfter(requestVersion),
+                    adminIdRef.current,
+                ).map((conversation) => (
+                    String(conversation.id) === String(selectedIdRef.current)
+                        ? { ...conversation, unreadCount: 0 }
+                        : conversation
+                ));
+                setConversations(refreshedConversations);
+
+                if (
+                    messageData
+                    && String(conversationId) === String(selectedIdRef.current)
+                ) {
+                    setMessages((current) => mergeMessages(
+                        [...messageData].reverse(),
+                        current,
+                    ));
+                }
+            }).catch(() => {
+                // Existing UI state stays usable while the socket retries.
+            });
+        });
+
+        return () => {
+            mounted = false;
+            unsubscribe();
+        };
+    }, [liveConversationsAfter, loading, subscribeToChatReconnects]);
 
     const filteredConversations = useMemo(() => {
         const keyword = query.trim().toLocaleLowerCase('vi');
@@ -130,6 +267,31 @@ function Chats() {
     );
 
     useEffect(() => {
+        setActiveConversationId(selectedId);
+        if (selectedId) {
+            const liveUpdate = liveConversationUpdatesRef.current.get(
+                String(selectedId),
+            );
+            if (liveUpdate) {
+                liveConversationUpdatesRef.current.set(String(selectedId), {
+                    ...liveUpdate,
+                    conversation: {
+                        ...liveUpdate.conversation,
+                        unreadCount: 0,
+                    },
+                });
+            }
+            setConversations((current) => current.map((conversation) => (
+                String(conversation.id) === String(selectedId)
+                    ? { ...conversation, unreadCount: 0 }
+                    : conversation
+            )));
+        }
+
+        return () => setActiveConversationId(null);
+    }, [selectedId, setActiveConversationId]);
+
+    useEffect(() => {
         if (!selectedId) {
             setMessages([]);
             previousMessageCountRef.current = 0;
@@ -137,48 +299,29 @@ function Chats() {
         }
 
         let active = true;
-        let subscription = null;
+        setMessages([]);
         setMessagesLoading(true);
         setMessageError('');
-
-        getStompClient().then(client => {
-            if (!active) return;
-            subscription = client.subscribe(`/topic/conversations/${selectedId}`, (msg) => {
-                const newMessage = JSON.parse(msg.body);
-                setMessages((current) => {
-                    if (current.some(m => m.id === newMessage.id)) return current;
-                    return [...current, newMessage];
-                });
-                setConversations((current) => current.map((conversation) => (
-                    String(conversation.id) === String(selectedId)
-                        ? {
-                            ...conversation,
-                            latestMessage: newMessage.content,
-                            latestMessageSentAt: newMessage.sentAt,
-                        }
-                        : conversation
-                )));
-            });
-        }).catch(err => console.error("Lỗi STOMP:", err));
 
         getConversationMessages(selectedId)
             .then((data) => {
                 if (!active) return;
                 pendingInitialScrollRef.current = true;
                 previousMessageCountRef.current = 0;
-                setMessages([...data].reverse());
+                setMessages((current) => mergeMessages(
+                    [...data].reverse(),
+                    current,
+                ));
                 setConversations((current) => current.map((conversation) => (
                     String(conversation.id) === String(selectedId)
                         ? { ...conversation, unreadCount: 0 }
                         : conversation
                 )));
-                window.dispatchEvent(new Event(CHAT_UNREAD_CHANGED_EVENT));
             })
             .catch((requestError) => active && setMessageError(requestError.message))
             .finally(() => active && setMessagesLoading(false));
         return () => {
             active = false;
-            if (subscription) subscription.unsubscribe();
         };
     }, [selectedId]);
 
@@ -198,8 +341,6 @@ function Chats() {
     }, [messages.length, messagesLoading, selectedId]);
 
     const username = profile?.fullName || user?.name || user?.username || 'Người dùng';
-    const currentUserId = profile?.id || user?.id || user?.userId || user?.sub;
-
     const submitMessage = async (event) => {
         event.preventDefault();
         const content = draft.trim();
@@ -294,7 +435,18 @@ function Chats() {
     };
 
     return (
-        <div className="profile-shell chats-shell">
+        <div className="profile-shell chats-shell overflow-hidden">
+            {incomingMessageNotice && (
+                <button
+                    type="button"
+                    className="conversation-incoming-notice"
+                    onClick={() => setIncomingMessageNotice(null)}
+                    aria-live="polite"
+                >
+                    <strong>Tin nhắn mới từ {incomingMessageNotice.senderName}</strong>
+                    <span>{incomingMessageNotice.content}</span>
+                </button>
+            )}
             <aside className="profile-sidebar">
                 <NavLink className="profile-sidebar-user" to="/profile">
                     <div className="profile-avatar">
@@ -311,8 +463,8 @@ function Chats() {
                 <AccountNavigation user={user} />
             </aside>
 
-            <main className="chats-main">
-                <section className="conversation-panel">
+            <main className="chats-main overflow-hidden">
+                <section className="conversation-panel d-flex flex-column overflow-hidden h-100">
                     <header className="conversation-heading">
                         <h1>Trò chuyện</h1>
                         <button type="button" aria-label="Tùy chọn">•••</button>
@@ -344,7 +496,7 @@ function Chats() {
                         </button>
                     </div>
 
-                    <div className="conversation-list">
+                    <div className="conversation-list flex-grow-1 overflow-y-auto">
                         {loading && <p className="conversation-state">Đang tải cuộc trò chuyện...</p>}
                         {!loading && error && <p className="conversation-state is-error">{error}</p>}
                         {!loading && !error && filteredConversations.length === 0 && (
@@ -388,7 +540,7 @@ function Chats() {
                 </section>
 
                 {selectedConversation ? (
-                    <section className="conversation-thread">
+                    <section className="conversation-thread d-flex flex-column overflow-hidden h-100">
                         <header className="conversation-thread-header">
                             <span className="conversation-avatar">
                                 {selectedConversation.avatarUrl
@@ -398,7 +550,7 @@ function Chats() {
                             <strong>{selectedConversation.name || 'Người dùng'}</strong>
                         </header>
 
-                        <div className="conversation-messages" ref={messagesContainerRef}>
+                        <div className="conversation-messages flex-grow-1 overflow-y-auto" ref={messagesContainerRef}>
                             {messagesLoading && (
                                 <p className="conversation-message-state">
                                     Đang tải tin nhắn...
@@ -495,7 +647,7 @@ function Chats() {
                         {messageError && (
                             <p className="conversation-compose-error">{messageError}</p>
                         )}
-                        <form className="conversation-compose" onSubmit={submitMessage}>
+                        <form className="conversation-compose flex-shrink-0" onSubmit={submitMessage}>
                             <input value={draft}
                                 onChange={(event) => setDraft(event.target.value)}
                                 placeholder="Nhập tin nhắn..."

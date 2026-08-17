@@ -128,6 +128,23 @@ public class ConversationServiceImpl implements ConversationService {
                                conversationId, beforeId, limit);
        return messages.map(conversationConverter::toMessageResponse);
    }
+
+   @Override
+   @Transactional
+   public void markConversationAsRead(Long conversationId) {
+       Long userId = currentUserContext.getCurrentUserId();
+       ConversationEntity conversation = conversationRepository.findById(conversationId)
+               .orElseThrow(() -> new DataNotFoundException(
+                       "Không tìm thấy cuộc trò chuyện"));
+
+       if (!isParticipant(conversation, userId)) {
+           throw new ForbiddenException(
+                   "Bạn không có quyền đánh dấu đã đọc cuộc trò chuyện này");
+       }
+
+       messageRepository.markReceivedMessagesAsRead(conversationId, userId);
+   }
+
    @Override
    @Transactional
    public String blockConversation(Long conversationId){

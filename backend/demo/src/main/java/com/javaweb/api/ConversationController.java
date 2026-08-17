@@ -43,6 +43,13 @@ public class ConversationController {
                 conversationService.getConversation(conversationId, beforeId));
     }
 
+    @PatchMapping("/{conversationId}/read")
+    public ResponseEntity<Void> markConversationAsRead(
+            @PathVariable Long conversationId) {
+        conversationService.markConversationAsRead(conversationId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{conversationId}/block")
     public ResponseEntity<String> blockConversation(
             @PathVariable Long conversationId) {

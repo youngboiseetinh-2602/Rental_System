@@ -47,6 +47,14 @@ export async function getConversationMessages(conversationId) {
     return Array.isArray(body?.content) ? body.content : [];
 }
 
+export async function markConversationAsRead(conversationId) {
+    const response = await apiFetch(
+        `/api/conversations/${conversationId}/read`,
+        { method: 'PATCH' },
+    );
+    return readResponse(response, 'Không thể đánh dấu cuộc trò chuyện đã đọc.');
+}
+
 import { getStompClient } from './socketClient';
 
 export async function sendConversationMessage(conversationId, content) {

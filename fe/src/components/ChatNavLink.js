@@ -1,36 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import AccountMenuIcon from './AccountMenuIcon';
-import { getMyConversations } from '../services/conversationService';
-
-export const CHAT_UNREAD_CHANGED_EVENT = 'chat-unread-changed';
+import useChatRealtime from '../hooks/useChatRealtime';
 
 function ChatNavLink() {
-    const [unreadCount, setUnreadCount] = useState(0);
-
-    const loadUnreadCount = useCallback(() => {
-        getMyConversations()
-            .then((conversations) => setUnreadCount(
-                conversations.reduce(
-                    (total, conversation) => (
-                        total + Number(conversation.unreadCount || 0)
-                    ),
-                    0,
-                ),
-            ))
-            .catch(() => {
-                // Trang trò chuyện sẽ hiển thị lỗi API chi tiết khi được mở.
-            });
-    }, []);
-
-    useEffect(() => {
-        loadUnreadCount();
-        window.addEventListener(CHAT_UNREAD_CHANGED_EVENT, loadUnreadCount);
-        return () => window.removeEventListener(
-            CHAT_UNREAD_CHANGED_EVENT,
-            loadUnreadCount,
-        );
-    }, [loadUnreadCount]);
+    const { unreadCount } = useChatRealtime();
 
     return (
         <NavLink to="/chats">

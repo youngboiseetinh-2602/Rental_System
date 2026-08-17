@@ -14,9 +14,7 @@ Spring Boot backend scaffold for Rental Room System, organized with the same lay
 - Spring Authorization Server
 - Spring OAuth2 Resource Server
 - Lombok
-- MapStruct
 - ModelMapper
-- Flyway
 - Swagger/OpenAPI
 - DevTools
 - Spring Boot Test
@@ -40,7 +38,6 @@ DB_PASSWORD=your_database_password
 JPA_DDL_AUTO=update
 JPA_SHOW_SQL=true
 JPA_FORMAT_SQL=true
-FLYWAY_ENABLED=false
 OAUTH2_CLIENT_INTERNAL_ID=replace_with_a_stable_uuid
 OAUTH2_CLIENT_ID=rental-client
 OAUTH2_REDIRECT_URI=http://localhost:3000/callback

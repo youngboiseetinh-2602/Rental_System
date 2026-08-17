@@ -16,6 +16,8 @@ public interface ConversationService {
             Long conversationId,
             Long beforeId);
 
+    void markConversationAsRead(Long conversationId);
+
     String blockConversation(Long conversationId);
 
     String unblockConversation(Long conversationId);

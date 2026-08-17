@@ -31,15 +31,17 @@ import AdminRentalTypes from './pages/AdminRentalTypes';
 import AdminProperties from './pages/AdminProperties';
 import AdminContactFooter from './components/AdminContactFooter';
 import { AuthProvider } from './contexts/AuthProvider';
+import { ChatRealtimeProvider } from './contexts/ChatRealtimeProvider';
 import './styles/global.css';
 
 function App() {
     return (
         <Router>
             <AuthProvider>
-                <Header />
-                <main>
-                    <Routes>
+                <ChatRealtimeProvider>
+                    <Header />
+                    <main>
+                        <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/phong-tro" element={<PhongTro />} />
                         <Route path="/phong-tro/:rentalPropertyId/reviews" element={<ReviewDetail />} />
@@ -164,9 +166,10 @@ function App() {
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                         <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
                         <Route path="/admin/rental-types" element={<AdminRoute><AdminRentalTypes /></AdminRoute>} />
-                    </Routes>
-                </main>
-                <AdminContactFooter />
+                        </Routes>
+                    </main>
+                    <AdminContactFooter />
+                </ChatRealtimeProvider>
             </AuthProvider>
         </Router>
     );
