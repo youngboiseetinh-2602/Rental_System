@@ -21,14 +21,25 @@ async function readResponse(response, fallbackMessage) {
     return body;
 }
 
-export async function getMyConversations(page = 0) {
-    const response = await apiFetch(`/api/conversations?page=${page}`);
+export async function getConversationPage(cursor = null, size = 20) {
+    const query = new URLSearchParams({ size: String(size) });
+    if (cursor) query.set('cursor', cursor);
+    const response = await apiFetch(`/api/conversations?${query}`);
     if (response.status === 404) {
-        return [];
+        return { content: [], nextCursor: null, hasNext: false };
     }
 
     const body = await readResponse(response, 'Không thể tải danh sách trò chuyện.');
-    return Array.isArray(body?.content) ? body.content : [];
+    return {
+        content: Array.isArray(body?.content) ? body.content : [],
+        nextCursor: body?.nextCursor || null,
+        hasNext: Boolean(body?.hasNext),
+    };
+}
+
+export async function getMyConversations() {
+    const page = await getConversationPage();
+    return page.content;
 }
 
 export async function createConversation(otherUserId) {
@@ -38,13 +49,24 @@ export async function createConversation(otherUserId) {
     return readResponse(response, 'Không thể bắt đầu cuộc trò chuyện.');
 }
 
-export async function getConversationMessages(conversationId) {
-    const response = await apiFetch(`/api/conversations/${conversationId}`);
+export async function getConversationMessagePage(conversationId, beforeId = null) {
+    const query = beforeId ? `?beforeId=${encodeURIComponent(beforeId)}` : '';
+    const response = await apiFetch(`/api/conversations/${conversationId}${query}`);
     const body = await readResponse(
         response,
         'Không thể tải nội dung cuộc trò chuyện.',
     );
-    return Array.isArray(body?.content) ? body.content : [];
+    return {
+        content: Array.isArray(body?.content) ? body.content : [],
+        hasNext: body?.hasNext !== undefined
+            ? Boolean(body.hasNext)
+            : body?.last === false,
+    };
+}
+
+export async function getConversationMessages(conversationId) {
+    const page = await getConversationMessagePage(conversationId);
+    return page.content;
 }
 
 export async function markConversationAsRead(conversationId) {
@@ -55,19 +77,22 @@ export async function markConversationAsRead(conversationId) {
     return readResponse(response, 'Không thể đánh dấu cuộc trò chuyện đã đọc.');
 }
 
+export async function blockConversation(conversationId) {
+    const response = await apiFetch(`/api/conversations/${conversationId}/block`, {
+        method: 'PATCH',
+    });
+    return readResponse(response, 'Không thể chặn cuộc trò chuyện.');
+}
+
+export async function unblockConversation(conversationId) {
+    const response = await apiFetch(`/api/conversations/${conversationId}/unblock`, {
+        method: 'PATCH',
+    });
+    return readResponse(response, 'Không thể bỏ chặn cuộc trò chuyện.');
+}
+
 import { getStompClient } from './socketClient';
 
-export async function sendConversationMessage(conversationId, content) {
-    const response = await apiFetch(
-        `/api/conversations/${conversationId}/messages`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        },
-    );
-    return readResponse(response, 'Không thể gửi tin nhắn.');
-}
 export async function sendConversationMessageViaSocket(
     conversationId,
     content

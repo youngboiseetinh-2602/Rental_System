@@ -9,12 +9,16 @@ import React, {
 import { NavLink, useLocation } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import {
+    blockConversation,
     deleteConversationMessage,
     createConversation,
     editConversationMessage,
+    getConversationPage,
+    getConversationMessagePage,
     getConversationMessages,
     getMyConversations,
     sendConversationMessageViaSocket,
+    unblockConversation,
 } from '../services/conversationService';
 import { getMyProfile } from '../services/userService';
 import { getAdminContact } from '../services/contactService';
@@ -68,6 +72,9 @@ function Chats() {
     const location = useLocation();
     const [profile, setProfile] = useState(null);
     const [conversations, setConversations] = useState([]);
+    const [conversationCursor, setConversationCursor] = useState(null);
+    const [hasMoreConversations, setHasMoreConversations] = useState(false);
+    const [loadingMoreConversations, setLoadingMoreConversations] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
     const [query, setQuery] = useState('');
     const [conversationFilter, setConversationFilter] = useState('ALL');
@@ -75,16 +82,20 @@ function Chats() {
     const [error, setError] = useState('');
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
+    const [hasOlderMessages, setHasOlderMessages] = useState(false);
     const [messageError, setMessageError] = useState('');
     const [draft, setDraft] = useState('');
     const [sending, setSending] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editingContent, setEditingContent] = useState('');
     const [messageActionId, setMessageActionId] = useState(null);
+    const [conversationActionLoading, setConversationActionLoading] = useState(false);
     const [incomingMessageNotice, setIncomingMessageNotice] = useState(null);
     const messagesContainerRef = useRef(null);
     const previousMessageCountRef = useRef(0);
     const pendingInitialScrollRef = useRef(false);
+    const preserveOlderScrollRef = useRef(null);
+    const olderMessagesLoadingRef = useRef(false);
     const selectedIdRef = useRef(null);
     const adminIdRef = useRef(null);
     const liveConversationUpdatesRef = useRef(new Map());
@@ -156,15 +167,17 @@ function Chats() {
         setError('');
         Promise.all([
             getMyProfile(),
-            getMyConversations(),
+            getConversationPage(),
             getAdminContact().catch(() => null),
         ])
-            .then(async ([profileData, conversationData, adminContact]) => {
+            .then(async ([profileData, conversationPage, adminContact]) => {
                 if (!active) return;
                 setProfile(profileData);
+                setConversationCursor(conversationPage.nextCursor);
+                setHasMoreConversations(conversationPage.hasNext);
                 adminIdRef.current = adminContact?.id || null;
                 let currentConversations = mergeConversationLists(
-                    pinAdminConversation(conversationData, adminContact?.id),
+                    pinAdminConversation(conversationPage.content, adminContact?.id),
                     liveConversationsAfter(requestVersion),
                     adminContact?.id,
                 );
@@ -177,15 +190,18 @@ function Chats() {
                 if (requestedUserId && !requestedConversation) {
                     await createConversation(requestedUserId);
                     const refreshVersion = realtimeVersionRef.current;
+                    const refreshedPage = await getConversationPage();
                     currentConversations = mergeConversationLists(
                         pinAdminConversation(
-                            await getMyConversations(),
+                            refreshedPage.content,
                             adminContact?.id,
                         ),
                         liveConversationsAfter(refreshVersion),
                         adminContact?.id,
                     );
                     if (!active) return;
+                    setConversationCursor(refreshedPage.nextCursor);
+                    setHasMoreConversations(refreshedPage.hasNext);
                     setConversations(currentConversations);
                     requestedConversation = currentConversations.find(
                         (conversation) => String(conversation.otherUserId) === String(requestedUserId),
@@ -197,6 +213,27 @@ function Chats() {
             .finally(() => active && setLoading(false));
         return () => { active = false; };
     }, [liveConversationsAfter, location.search, location.state]);
+
+    const loadMoreConversations = async () => {
+        if (!conversationCursor || loadingMoreConversations) return;
+        setLoadingMoreConversations(true);
+        try {
+            const nextPage = await getConversationPage(conversationCursor);
+            setConversations((current) => {
+                const knownIds = new Set(current.map(({ id }) => String(id)));
+                return [
+                    ...current,
+                    ...nextPage.content.filter(({ id }) => !knownIds.has(String(id))),
+                ];
+            });
+            setConversationCursor(nextPage.nextCursor);
+            setHasMoreConversations(nextPage.hasNext);
+        } catch (requestError) {
+            setError(requestError.message);
+        } finally {
+            setLoadingMoreConversations(false);
+        }
+    };
 
     useEffect(() => {
         if (loading) return undefined;
@@ -210,15 +247,15 @@ function Chats() {
             const conversationId = selectedIdRef.current;
 
             Promise.all([
-                getMyConversations(),
+                getConversationPage(),
                 conversationId
                     ? getConversationMessages(conversationId)
                     : Promise.resolve(null),
-            ]).then(([conversationData, messageData]) => {
+            ]).then(([conversationPage, messageData]) => {
                 if (!mounted || requestId !== reconnectRequestRef.current) return;
 
                 const refreshedConversations = mergeConversationLists(
-                    pinAdminConversation(conversationData, adminIdRef.current),
+                    pinAdminConversation(conversationPage.content, adminIdRef.current),
                     liveConversationsAfter(requestVersion),
                     adminIdRef.current,
                 ).map((conversation) => (
@@ -226,6 +263,8 @@ function Chats() {
                         ? { ...conversation, unreadCount: 0 }
                         : conversation
                 ));
+                setConversationCursor(conversationPage.nextCursor);
+                setHasMoreConversations(conversationPage.hasNext);
                 setConversations(refreshedConversations);
 
                 if (
@@ -294,22 +333,26 @@ function Chats() {
     useEffect(() => {
         if (!selectedId) {
             setMessages([]);
+            setHasOlderMessages(false);
+            olderMessagesLoadingRef.current = false;
             previousMessageCountRef.current = 0;
             return undefined;
         }
 
         let active = true;
         setMessages([]);
+        setHasOlderMessages(false);
         setMessagesLoading(true);
         setMessageError('');
 
-        getConversationMessages(selectedId)
-            .then((data) => {
+        getConversationMessagePage(selectedId)
+            .then((page) => {
                 if (!active) return;
                 pendingInitialScrollRef.current = true;
                 previousMessageCountRef.current = 0;
+                setHasOlderMessages(page.hasNext);
                 setMessages((current) => mergeMessages(
-                    [...data].reverse(),
+                    [...page.content].reverse(),
                     current,
                 ));
                 setConversations((current) => current.map((conversation) => (
@@ -324,6 +367,48 @@ function Chats() {
             active = false;
         };
     }, [selectedId]);
+
+    const loadOlderMessages = async () => {
+        const oldestMessageId = messages[0]?.id;
+        if (
+            !selectedId
+            || !oldestMessageId
+            || !hasOlderMessages
+            || olderMessagesLoadingRef.current
+        ) return;
+        const conversationId = selectedId;
+        preserveOlderScrollRef.current = messagesContainerRef.current?.scrollHeight ?? null;
+        olderMessagesLoadingRef.current = true;
+        setMessageError('');
+        try {
+            const page = await getConversationMessagePage(conversationId, oldestMessageId);
+            if (String(conversationId) !== String(selectedIdRef.current)) return;
+            setHasOlderMessages(page.hasNext);
+            setMessages((current) => mergeMessages(
+                [...page.content].reverse(),
+                current,
+            ));
+        } catch (requestError) {
+            preserveOlderScrollRef.current = null;
+            setMessageError(requestError.message);
+        } finally {
+            olderMessagesLoadingRef.current = false;
+        }
+    };
+
+    const handleMessagesScroll = (event) => {
+        if (event.currentTarget.scrollTop <= 40) {
+            loadOlderMessages();
+        }
+    };
+
+    useLayoutEffect(() => {
+        if (preserveOlderScrollRef.current === null || !messagesContainerRef.current) return;
+        const container = messagesContainerRef.current;
+        container.scrollTop += container.scrollHeight - preserveOlderScrollRef.current;
+        preserveOlderScrollRef.current = null;
+        previousMessageCountRef.current = messages.length;
+    }, [messages.length]);
 
     useEffect(() => {
         if (messagesLoading || !messagesContainerRef.current) return;
@@ -341,10 +426,43 @@ function Chats() {
     }, [messages.length, messagesLoading, selectedId]);
 
     const username = profile?.fullName || user?.name || user?.username || 'Người dùng';
+    const conversationBlocked = selectedConversation?.status === 'BLOCKED';
+    const toggleConversationBlock = async () => {
+        if (!selectedConversation || conversationActionLoading) return;
+        const shouldUnblock = conversationBlocked
+            && selectedConversation.blockedByCurrentUser;
+        if (conversationBlocked && !shouldUnblock) return;
+        const actionLabel = shouldUnblock ? 'bỏ chặn' : 'chặn';
+        if (!window.confirm(`Bạn có chắc muốn ${actionLabel} cuộc trò chuyện này?`)) return;
+
+        setConversationActionLoading(true);
+        setMessageError('');
+        try {
+            if (shouldUnblock) {
+                await unblockConversation(selectedConversation.id);
+            } else {
+                await blockConversation(selectedConversation.id);
+            }
+            setConversations((current) => current.map((conversation) => (
+                String(conversation.id) === String(selectedConversation.id)
+                    ? {
+                        ...conversation,
+                        status: shouldUnblock ? 'ACTIVE' : 'BLOCKED',
+                        blockedByCurrentUser: !shouldUnblock,
+                    }
+                    : conversation
+            )));
+        } catch (requestError) {
+            setMessageError(requestError.message);
+        } finally {
+            setConversationActionLoading(false);
+        }
+    };
+
     const submitMessage = async (event) => {
         event.preventDefault();
         const content = draft.trim();
-        if (!content || !selectedId || sending) return;
+        if (!content || !selectedId || sending || conversationBlocked) return;
 
         setSending(true);
         setMessageError('');
@@ -536,6 +654,16 @@ function Chats() {
                                 )}
                             </button>
                         ))}
+                        {!query && conversationFilter === 'ALL' && hasMoreConversations && (
+                            <button
+                                type="button"
+                                className="conversation-load-more"
+                                disabled={loadingMoreConversations}
+                                onClick={loadMoreConversations}
+                            >
+                                {loadingMoreConversations ? 'Đang tải...' : 'Tải thêm'}
+                            </button>
+                        )}
                     </div>
                 </section>
 
@@ -548,9 +676,27 @@ function Chats() {
                                     : initialsOf(selectedConversation.name)}
                             </span>
                             <strong>{selectedConversation.name || 'Người dùng'}</strong>
+                            {conversationBlocked && !selectedConversation.blockedByCurrentUser ? (
+                                <span className="conversation-blocked-label">Bạn đã bị chặn</span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="conversation-block-action"
+                                    disabled={conversationActionLoading}
+                                    onClick={toggleConversationBlock}
+                                >
+                                    {conversationActionLoading
+                                        ? 'Đang xử lý...'
+                                        : conversationBlocked ? 'Bỏ chặn' : 'Chặn'}
+                                </button>
+                            )}
                         </header>
 
-                        <div className="conversation-messages flex-grow-1 overflow-y-auto" ref={messagesContainerRef}>
+                        <div
+                            className="conversation-messages flex-grow-1 overflow-y-auto"
+                            ref={messagesContainerRef}
+                            onScroll={handleMessagesScroll}
+                        >
                             {messagesLoading && (
                                 <p className="conversation-message-state">
                                     Đang tải tin nhắn...
@@ -650,12 +796,14 @@ function Chats() {
                         <form className="conversation-compose flex-shrink-0" onSubmit={submitMessage}>
                             <input value={draft}
                                 onChange={(event) => setDraft(event.target.value)}
-                                placeholder="Nhập tin nhắn..."
+                                placeholder={conversationBlocked
+                                    ? 'Cuộc trò chuyện đã bị chặn'
+                                    : 'Nhập tin nhắn...'}
                                 maxLength={2000}
-                                disabled={sending}
+                                disabled={sending || conversationBlocked}
                                 aria-label="Nội dung tin nhắn" />
                             <button type="submit"
-                                disabled={!draft.trim() || sending}>
+                                disabled={!draft.trim() || sending || conversationBlocked}>
                                 {sending ? 'Đang gửi...' : 'Gửi'}
                             </button>
                         </form>

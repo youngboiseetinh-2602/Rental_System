@@ -35,11 +35,6 @@ public class GlobalExceptionHandler {
                 .body("Không tìm thấy dữ liệu phù hợp với yêu cầu.");
     }
 
-    @ExceptionHandler(GoneException.class)
-    public ResponseEntity<String> handleGoneException(GoneException ex) {
-        return ResponseEntity.status(HttpStatus.GONE).body(ex.getMessage());
-    }
-
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<SecurityErrorResponse> handleForbiddenException(
             ForbiddenException ex,
@@ -121,11 +116,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleAuthenticationCredentialsNotFoundException(
             AuthenticationCredentialsNotFoundException ex
     ) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<String> handleInvalidTokenException(InvalidTokenException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 

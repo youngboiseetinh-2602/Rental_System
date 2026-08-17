@@ -1,10 +1,10 @@
 package com.javaweb.api;
 
 import com.javaweb.model.response.ConversationResponse;
+import com.javaweb.model.response.CursorPageResponse;
 import com.javaweb.model.response.MessageResponse;
 import com.javaweb.service.ConversationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +23,10 @@ public class ConversationController {
     private final ConversationService conversationService;
 
     @GetMapping
-    public ResponseEntity<Page<ConversationResponse>> getMyConversations(
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok(conversationService.myConversations(page));
+    public ResponseEntity<CursorPageResponse<ConversationResponse>> getMyConversations(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(conversationService.myConversations(cursor, size));
     }
 
     @PostMapping("/{otherUserId}")

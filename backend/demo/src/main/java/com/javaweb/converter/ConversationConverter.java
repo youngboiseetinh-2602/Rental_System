@@ -34,6 +34,9 @@ public class ConversationConverter {
         response.setOtherUserId(otherUser.getId());
         response.setName(otherUser.getFullName());
         response.setAvatarUrl(otherUser.getAvatarUrl());
+        response.setBlockedByCurrentUser(
+                conversation.getBlockedBy() != null
+                        && conversation.getBlockedBy().getId().equals(currentUserId));
 
         if (latestMessage != null) {
             response.setLatestMessage(latestMessage.getContent());

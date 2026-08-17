@@ -27,5 +27,7 @@ public class ConversationResponse {
 
     private ConversationStatus status;
 
+    private Boolean blockedByCurrentUser;
+
     private Long unreadCount;
 }

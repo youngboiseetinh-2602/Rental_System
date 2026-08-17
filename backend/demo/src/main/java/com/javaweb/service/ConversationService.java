@@ -1,14 +1,14 @@
 package com.javaweb.service;
 
 import com.javaweb.model.response.ConversationResponse;
+import com.javaweb.model.response.CursorPageResponse;
 import com.javaweb.model.response.MessageResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 
 public interface ConversationService {
 
 
-    Page<ConversationResponse> myConversations(int page);
+    CursorPageResponse<ConversationResponse> myConversations(String cursor, int size);
 
     Slice<MessageResponse> createConversation(Long otherUserId);
 

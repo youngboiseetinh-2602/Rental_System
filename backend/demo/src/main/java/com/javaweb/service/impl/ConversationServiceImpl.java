@@ -10,6 +10,7 @@ import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.ConversationStatus;
 import com.javaweb.enums.MessageStatus;
 import com.javaweb.model.response.ConversationResponse;
+import com.javaweb.model.response.CursorPageResponse;
 import com.javaweb.model.response.MessageResponse;
 import com.javaweb.repository.ConversationRepository;
 import com.javaweb.repository.MessageRepository;
@@ -20,9 +21,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -37,33 +42,67 @@ public class ConversationServiceImpl implements ConversationService {
 
    @Override
    @Transactional
-   public Page<ConversationResponse> myConversations(int page){
+   public CursorPageResponse<ConversationResponse> myConversations(String cursor, int size){
        long userId = currentUserContext.getCurrentUserId();
-       Page<ConversationEntity> conversations =
-               conversationRepository.findAllByParticipantId(
-                       userId, PageRequest.of(page, 20));
-
-       if(conversations.isEmpty()){
-           throw new DataNotFoundException("Không tìm thấy cuộc trò chuyện nào");
-       }
-
-       return conversations.map(conversation -> {
+       int requestedSize = Math.max(1, Math.min(size, 50));
+       PageRequest limit = PageRequest.of(0, requestedSize + 1);
+       ConversationCursor decodedCursor = decodeCursor(cursor);
+       List<ConversationEntity> conversations = decodedCursor == null
+               ? conversationRepository.findFirstByParticipantId(userId, limit)
+               : conversationRepository.findAfterCursorByParticipantId(
+                       userId, decodedCursor.activityAt(), decodedCursor.id(), limit);
+       boolean hasNext = conversations.size() > requestedSize;
+       List<ConversationEntity> page = hasNext
+               ? conversations.subList(0, requestedSize)
+               : conversations;
+       List<ConversationResponse> content = new ArrayList<>(page.size());
+       LocalDateTime lastActivityAt = null;
+       for (ConversationEntity conversation : page) {
+           MessageEntity latestMessage = messageRepository
+                   .findFirstByConversation_IdAndHiddenFalseOrderByIdDesc(
+                           conversation.getId()).orElse(null);
            ConversationResponse response = conversationConverter
                    .toConversationResponse(
                            conversation,
                            userId,
-                           messageRepository
-                                   .findFirstByConversation_IdAndHiddenFalseOrderByIdDesc(
-                                           conversation.getId())
-                                   .orElse(null));
+                           latestMessage);
            response.setUnreadCount(messageRepository
                    .countByConversation_IdAndSender_IdNotAndStatusAndHiddenFalse(
                            conversation.getId(),
                            userId,
                            MessageStatus.SENT));
-           return response;
-       });
+           content.add(response);
+           lastActivityAt = latestMessage == null
+                   ? conversation.getCreatedAt()
+                   : latestMessage.getSentAt();
+       }
+       String nextCursor = hasNext && !page.isEmpty()
+               ? encodeCursor(lastActivityAt, page.get(page.size() - 1).getId())
+               : null;
+       return new CursorPageResponse<>(content, nextCursor, hasNext);
    }
+
+   private String encodeCursor(LocalDateTime activityAt, Long id) {
+       String raw = activityAt + "|" + id;
+       return Base64.getUrlEncoder().withoutPadding()
+               .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+   }
+
+   private ConversationCursor decodeCursor(String cursor) {
+       if (cursor == null || cursor.isBlank()) return null;
+       try {
+           String raw = new String(
+                   Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
+           int separator = raw.lastIndexOf('|');
+           return new ConversationCursor(
+                   LocalDateTime.parse(raw.substring(0, separator)),
+                   Long.parseLong(raw.substring(separator + 1)));
+       } catch (RuntimeException exception) {
+           throw new IllegalArgumentException("Cursor cuộc trò chuyện không hợp lệ");
+       }
+   }
+
+   private record ConversationCursor(LocalDateTime activityAt, Long id) {}
 
    @Override
    @Transactional

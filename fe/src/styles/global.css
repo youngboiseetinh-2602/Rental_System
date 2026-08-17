@@ -6698,6 +6698,33 @@ a {
     white-space: nowrap;
 }
 
+.conversation-block-action,
+.conversation-blocked-label {
+    margin-left: auto;
+    flex: 0 0 auto;
+    padding: 7px 11px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.conversation-block-action {
+    border: 1px solid #e2b9b5;
+    color: #a52a20;
+    background: #fff7f6;
+    cursor: pointer;
+}
+
+.conversation-block-action:disabled {
+    cursor: wait;
+    opacity: .6;
+}
+
+.conversation-blocked-label {
+    color: #8b3a32;
+    background: #fbe9e7;
+}
+
 .conversation-messages {
     min-height: 0;
     flex: 1;
