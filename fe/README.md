@@ -1,16 +1,18 @@
 # RentalRoomSystem FE
 
-React + Bootstrap frontend starter for RentalRoomSystem.
+React 19 + Vite + Bootstrap frontend for RentalRoomSystem.
 
 ## Available Scripts
 
 - `npm install`
 - `npm start`
 - `npm run build`
+- `npm test`
 
 ## Folder Structure
 
-- `public/` – static HTML and assets.
+- `public/` – static assets.
+- `index.html` – Vite HTML entry point.
 - `src/` – React application source code.
 - `src/components/` – reusable UI components.
 - `src/pages/` – route pages.

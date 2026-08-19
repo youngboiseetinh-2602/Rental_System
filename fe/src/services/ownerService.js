@@ -1,4 +1,5 @@
 import { apiFetch } from './apiClient';
+import { uploadImageToImageKit } from './imageUploadService';
 
 async function readJson(response, fallback) {
     if (response.status === 404) {
@@ -171,26 +172,10 @@ export const deleteOwnerRoom = (roomId) =>
     );
 
 export async function uploadPropertyImage(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiFetch('/api/system/property-image', {
-        method: 'POST',
-        body: formData,
+    return uploadImageToImageKit(file, {
+        folder: '/rental-room/properties',
+        prefix: 'property',
     });
-    const text = await response.text();
-    let body;
-    try {
-        body = text ? JSON.parse(text) : null;
-    } catch (error) {
-        body = null;
-    }
-    if (!response.ok) {
-        throw new Error(body?.message || text || 'Không thể tải ảnh nhà trọ.');
-    }
-    if (!body?.url) {
-        throw new Error('Dịch vụ tải ảnh không trả về đường dẫn hợp lệ.');
-    }
-    return body.url;
 }
 
 export async function getOwnerPropertyDetail(propertyId) {

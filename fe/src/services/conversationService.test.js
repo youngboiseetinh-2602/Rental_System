@@ -1,4 +1,4 @@
-jest.mock('./apiClient', () => ({
+vi.mock('./apiClient', () => ({
     apiFetch: jest.fn(),
 }));
 

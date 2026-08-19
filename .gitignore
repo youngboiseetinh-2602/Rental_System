@@ -2,6 +2,7 @@ target/
 *.log
 fe/node_modules/
 fe/build/
+fe/dist/
 
 .env
 .idea/
@@ -20,3 +21,6 @@ fe.zip
 *.tar
 *.tar.gz
 *.tgz
+
+# Local database dumps may contain user data and password hashes
+docker_database_backup.sql

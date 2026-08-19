@@ -1,4 +1,4 @@
-jest.mock('./authService', () => {
+vi.mock('./authService', () => {
     class AuthenticationExpiredError extends Error {}
 
     return {

@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../constants/config';
 import { apiFetch } from './apiClient';
+import { uploadImageToImageKit } from './imageUploadService';
 
 async function readApiResponse(response, fallbackMessage) {
     const text = await response.text();
@@ -42,17 +43,10 @@ export async function changeMyPassword(payload) {
 }
 
 export async function uploadAvatarImage(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiFetch('/api/system/avatar', {
-        method: 'POST',
-        body: formData,
+    return uploadImageToImageKit(file, {
+        folder: '/rental-room/avatars',
+        prefix: 'avatar',
     });
-    const result = await readApiResponse(response, 'Tải ảnh đại diện thất bại.');
-    if (!result?.url) {
-        throw new Error('Dịch vụ tải ảnh không trả về đường dẫn hợp lệ.');
-    }
-    return result.url;
 }
 
 export async function registerUser(payload) {

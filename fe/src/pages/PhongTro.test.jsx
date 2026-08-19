@@ -1,11 +1,18 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Simulate } from 'react-dom/test-utils';
 import PhongTro from './PhongTro';
 import { searchRentalProperties } from '../services/rentalService';
 
-jest.mock('../services/rentalService', () => {
-    const actual = jest.requireActual('../services/rentalService');
+function changeValue(element, value) {
+    const prototype = element instanceof HTMLSelectElement
+        ? HTMLSelectElement.prototype
+        : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value').set.call(element, value);
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+vi.mock('../services/rentalService', async () => {
+    const actual = await vi.importActual('../services/rentalService');
     return {
         ...actual,
         searchRentalProperties: jest.fn(),
@@ -61,20 +68,10 @@ describe('trang Phòng trọ', () => {
         const city = container.querySelector('[name="city"]');
         const description = container.querySelector('[name="searchText"]');
         act(() => {
-            Simulate.change(city, {
-                target: {
-                    name: 'city',
-                    value: 'Hà Nội',
-                },
-            });
+            changeValue(city, 'Hà Nội');
         });
         act(() => {
-            Simulate.change(description, {
-                target: {
-                    name: 'searchText',
-                    value: 'nội thất',
-                },
-            });
+            changeValue(description, 'nội thất');
         });
 
         expect(searchRentalProperties).toHaveBeenCalledTimes(1);
@@ -101,12 +98,7 @@ describe('trang Phòng trọ', () => {
 
         const ward = container.querySelector('[name="ward"]');
         act(() => {
-            Simulate.change(ward, {
-                target: {
-                    name: 'ward',
-                    value: 'Dịch Vọng',
-                },
-            });
+            changeValue(ward, 'Dịch Vọng');
         });
 
         const clearButton = [...container.querySelectorAll('button')]

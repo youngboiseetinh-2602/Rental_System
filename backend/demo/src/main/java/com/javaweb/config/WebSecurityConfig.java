@@ -153,11 +153,6 @@ public class WebSecurityConfig {
                                 "/api/system/imagekit/auth"
                         ).access(require(AuthorizationRules.USER_WRITE))
                         .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/system/avatar",
-                                "/api/system/property-image"
-                        ).access(require(AuthorizationRules.USER_WRITE))
-                        .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/users/me/rental-properties/**",
                                 "/api/users/me/reviews/**"

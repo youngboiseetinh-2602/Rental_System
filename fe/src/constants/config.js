@@ -3,16 +3,16 @@ function withoutTrailingSlash(value) {
 }
 
 export const AUTHORIZATION_SERVER_URL = withoutTrailingSlash(
-    process.env.REACT_APP_AUTHORIZATION_SERVER_URL || 'http://localhost:8080',
+    import.meta.env.VITE_AUTHORIZATION_SERVER_URL || 'http://localhost:8080',
 );
 export const RESOURCE_SERVER_URL = withoutTrailingSlash(
-    process.env.REACT_APP_RESOURCE_SERVER_URL || 'http://localhost:8080',
+    import.meta.env.VITE_RESOURCE_SERVER_URL || 'http://localhost:8080',
 );
 
 export const OAUTH_CLIENT_ID =
-    process.env.REACT_APP_OAUTH_CLIENT_ID || 'rental-spa';
+    import.meta.env.VITE_OAUTH_CLIENT_ID || 'rental-spa';
 export const OAUTH_REDIRECT_URI =
-    process.env.REACT_APP_OAUTH_REDIRECT_URI || 'http://localhost:3000/callback';
+    import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:3000/callback';
 
 export const OAUTH_AUTHORIZATION_ENDPOINT =
     `${AUTHORIZATION_SERVER_URL}/oauth2/authorize`;
