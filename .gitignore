@@ -1,16 +1,17 @@
 target/
+.m2/
 *.log
-fe/node_modules/
-fe/build/
-fe/dist/
+frontend/node_modules/
+frontend/build/
+frontend/dist/
 
 .env
 .idea/
 .vscode/
 *.iml
 
-.mvn/wrapper/apache-maven-*/
-.mvn/wrapper/*.zip
+**/.mvn/wrapper/apache-maven-*/
+**/.mvn/wrapper/*.zip
 
 ### OS files
 Thumbs.db

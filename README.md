@@ -1,6 +1,13 @@
-# Rental Room System Backend
+# Rental Room System
 
-Spring Boot backend scaffold for Rental Room System, organized with the same layered structure as `intelij/demo`.
+Rental Room System gồm Spring Boot backend và React frontend.
+
+## Project structure
+
+- `backend/` – Spring Boot API.
+- `frontend/` – React + Vite application.
+- `docker-compose.delivery.yml` – database and application services.
+- `rental_room_system.sql` – initial database schema/data.
 
 ## Stack
 
@@ -45,16 +52,26 @@ CORS_ALLOWED_ORIGIN=http://localhost:3000
 AUTHORIZATION_SERVER_ISSUER=http://localhost:8080
 ```
 
-Run the app:
+Run the backend:
 
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
 
 On Windows:
 
 ```bat
+cd backend
 .\mvnw.cmd spring-boot:run
+```
+
+Run the frontend in another terminal:
+
+```bash
+cd frontend
+npm install
+npm start
 ```
 
 Health endpoint:
