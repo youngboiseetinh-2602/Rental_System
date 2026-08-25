@@ -15,7 +15,9 @@ services:
       retries: 15
 
   backend:
-    image: rental-room-backend:1.0
+    build:
+      context: ./backend
+    image: rental-system-backend:1.0
     restart: unless-stopped
     depends_on:
       database:
@@ -39,7 +41,9 @@ services:
       - "8080:8080"
 
   frontend:
-    image: rental-room-frontend:1.0
+    build:
+      context: ./frontend
+    image: rental-system-frontend:1.0
     restart: unless-stopped
     depends_on:
       - backend
