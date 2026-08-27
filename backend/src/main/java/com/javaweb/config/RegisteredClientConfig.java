@@ -2,6 +2,7 @@ package com.javaweb.config;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,18 +28,23 @@ public class RegisteredClientConfig {
     @Bean
     public RegisteredClientRepository registeredClientRepository(
             @Value("${authorization-server.client.id}") String clientId,
-            @Value("${authorization-server.client.redirect-uri}") String redirectUri
+            @Value("${authorization-server.client.redirect-uris}")
+            List<String> redirectUris
     ) {
         String registeredClientId = UUID.nameUUIDFromBytes(
                 clientId.getBytes(StandardCharsets.UTF_8)
         ).toString();
 
-        RegisteredClient rentalSpa = RegisteredClient.withId(registeredClientId)
+        RegisteredClient.Builder rentalSpaBuilder =
+                RegisteredClient.withId(registeredClientId)
                 .clientId(clientId)
                 .clientName("Rental Room SPA")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri(redirectUri)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
+
+        redirectUris.forEach(rentalSpaBuilder::redirectUri);
+
+        RegisteredClient rentalSpa = rentalSpaBuilder
                 .scope("room.read")
                 .scope("room.write")
                 .scope("user.read")

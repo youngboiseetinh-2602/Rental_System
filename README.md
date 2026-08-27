@@ -46,8 +46,8 @@ JPA_DDL_AUTO=update
 JPA_SHOW_SQL=true
 JPA_FORMAT_SQL=true
 OAUTH2_CLIENT_INTERNAL_ID=replace_with_a_stable_uuid
-OAUTH2_CLIENT_ID=rental-client
-OAUTH2_REDIRECT_URI=http://localhost:3000/callback
+RENTAL_SPA_CLIENT_ID=rental-spa
+RENTAL_SPA_REDIRECT_URIS=https://rental-system-frontend-ihl5.onrender.com/callback,http://localhost:3000/callback
 CORS_ALLOWED_ORIGINS=https://rental-system-frontend-ihl5.onrender.com,http://localhost:3000
 AUTHORIZATION_SERVER_ISSUER=http://localhost:8080
 ```
