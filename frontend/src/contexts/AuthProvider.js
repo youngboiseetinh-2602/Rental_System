@@ -9,7 +9,7 @@ import {
     redirectToLogin,
     restoreAuthenticatedUser,
 } from '../services/authService';
-import { isAuthenticationRoute, postLoginRoute } from '../utils/authRouting';
+import { postLoginRoute } from '../utils/authRouting';
 import { getMyProfile } from '../services/userService';
 
 async function enrichAuthenticatedUser(tokenUser) {
@@ -49,19 +49,7 @@ export function AuthProvider({ children }) {
             setUser(null);
 
             if (requestError instanceof AuthenticationExpiredError) {
-                if (isAuthenticationRoute(window.location.pathname)) {
-                    return null;
-                }
-
-                const returnTo =
-                    `${window.location.pathname}${window.location.search}${window.location.hash}`;
-                try {
-                    await redirectToLogin(returnTo);
-                    return null;
-                } catch (redirectError) {
-                    setError(redirectError);
-                    throw redirectError;
-                }
+                return null;
             }
 
             setError(requestError);
