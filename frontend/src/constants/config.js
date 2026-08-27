@@ -2,17 +2,21 @@ function withoutTrailingSlash(value) {
     return value.replace(/\/+$/, '');
 }
 
+const BACKEND_BASE_URL = withoutTrailingSlash(
+    import.meta.env.VITE_API_BASE_URL,
+);
+
 export const AUTHORIZATION_SERVER_URL = withoutTrailingSlash(
-    import.meta.env.VITE_AUTHORIZATION_SERVER_URL || 'http://localhost:8080',
+    import.meta.env.VITE_AUTHORIZATION_SERVER_URL || BACKEND_BASE_URL,
 );
 export const RESOURCE_SERVER_URL = withoutTrailingSlash(
-    import.meta.env.VITE_RESOURCE_SERVER_URL || 'http://localhost:8080',
+    import.meta.env.VITE_RESOURCE_SERVER_URL || BACKEND_BASE_URL,
 );
 
 export const OAUTH_CLIENT_ID =
     import.meta.env.VITE_OAUTH_CLIENT_ID || 'rental-spa';
 export const OAUTH_REDIRECT_URI =
-    import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:3000/callback';
+    import.meta.env.VITE_OAUTH_REDIRECT_URI || `${window.location.origin}/callback`;
 
 export const OAUTH_AUTHORIZATION_ENDPOINT =
     `${AUTHORIZATION_SERVER_URL}/oauth2/authorize`;
