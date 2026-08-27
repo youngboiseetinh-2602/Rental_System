@@ -1,5 +1,6 @@
 package com.javaweb.config;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -17,13 +18,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtChannelInterceptor jwtChannelInterceptor;
 
-    @Value("${security.cors.allowed-origin}")
-    private String allowedOrigin;
+    @Value("${security.cors.allowed-origins}")
+    private List<String> allowedOrigins;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigin);
+                .setAllowedOrigins(allowedOrigins.toArray(String[]::new));
     }
 
     @Override

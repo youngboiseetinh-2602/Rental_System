@@ -252,16 +252,19 @@ public class WebSecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${security.cors.allowed-origin}") String allowedOrigin
+            @Value("${security.cors.allowed-origins}") List<String> allowedOrigins
     ) {
-        Assert.hasText(allowedOrigin, "FRONTEND_URL must not be blank");
+        Assert.notEmpty(allowedOrigins, "CORS_ALLOWED_ORIGINS must not be empty");
         Assert.isTrue(
-                !allowedOrigin.contains("*"),
-                "FRONTEND_URL must be one exact origin, not a wildcard"
+                allowedOrigins.stream().allMatch(origin ->
+                        origin != null
+                                && !origin.isBlank()
+                                && !origin.contains("*")),
+                "CORS_ALLOWED_ORIGINS must contain exact origins, not wildcards"
         );
 
         CorsConfiguration api = corsConfiguration(
-                allowedOrigin,
+                allowedOrigins,
                 List.of(
                         HttpMethod.GET.name(),
                         HttpMethod.POST.name(),
@@ -278,19 +281,19 @@ public class WebSecurityConfig {
                 false
         );
         CorsConfiguration tokenEndpoint = corsConfiguration(
-                allowedOrigin,
+                allowedOrigins,
                 List.of(HttpMethod.POST.name()),
                 List.of(HttpHeaders.ACCEPT, HttpHeaders.CONTENT_TYPE),
                 false
         );
         CorsConfiguration browserReadableMetadata = corsConfiguration(
-                allowedOrigin,
+                allowedOrigins,
                 List.of(HttpMethod.GET.name()),
                 List.of(HttpHeaders.ACCEPT),
                 false
         );
         CorsConfiguration frontendAuthentication = corsConfiguration(
-                allowedOrigin,
+                allowedOrigins,
                 List.of(
                         HttpMethod.POST.name(),
                         HttpMethod.OPTIONS.name()
@@ -313,13 +316,13 @@ public class WebSecurityConfig {
     }
 
     private CorsConfiguration corsConfiguration(
-            String allowedOrigin,
+            List<String> allowedOrigins,
             List<String> methods,
             List<String> headers,
             boolean allowCredentials
     ) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(methods);
         configuration.setAllowedHeaders(headers);
         configuration.setAllowCredentials(allowCredentials);
