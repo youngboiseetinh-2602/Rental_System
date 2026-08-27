@@ -49,7 +49,15 @@ export function AuthProvider({ children }) {
             setUser(null);
 
             if (requestError instanceof AuthenticationExpiredError) {
-                return null;
+                const returnTo =
+                    `${window.location.pathname}${window.location.search}${window.location.hash}`;
+                try {
+                    await redirectToLogin(returnTo);
+                    return null;
+                } catch (redirectError) {
+                    setError(redirectError);
+                    throw redirectError;
+                }
             }
 
             setError(requestError);

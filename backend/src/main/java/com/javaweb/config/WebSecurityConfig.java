@@ -32,7 +32,6 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.util.Assert;
@@ -52,7 +51,6 @@ public class WebSecurityConfig {
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             RequestCache requestCache,
-            SecurityContextRepository securityContextRepository,
             @Value("${app.frontend.login-url}") String frontendLoginUrl
     ) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServer =
@@ -68,13 +66,6 @@ public class WebSecurityConfig {
                 .with(authorizationServer, Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().authenticated()
-                )
-                .securityContext(context -> context
-                        .securityContextRepository(securityContextRepository)
-                        .requireExplicitSave(false)
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .requestCache(cache -> cache.requestCache(requestCache))
                 .exceptionHandling(exceptions -> exceptions
@@ -198,7 +189,6 @@ public class WebSecurityConfig {
             FrontendAuthenticationSuccessHandler authenticationSuccessHandler,
             FrontendAuthenticationFailureHandler authenticationFailureHandler,
             RequestCache requestCache,
-            SecurityContextRepository securityContextRepository,
             @Value("${app.frontend.login-url}") String frontendLoginUrl
     ) throws Exception {
         http
@@ -219,10 +209,6 @@ public class WebSecurityConfig {
                 .authenticationProvider(daoAuthenticationProvider)
                 .csrf(AbstractHttpConfigurer::disable)
                 .requestCache(cache -> cache.requestCache(requestCache))
-                .securityContext(context -> context
-                        .securityContextRepository(securityContextRepository)
-                        .requireExplicitSave(false)
-                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )

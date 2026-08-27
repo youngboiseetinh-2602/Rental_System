@@ -1,9 +1,5 @@
 const AUTH_ROUTES = new Set(['/login', '/register', '/callback']);
 
-export function isAuthenticationRoute(pathname) {
-    return AUTH_ROUTES.has(pathname);
-}
-
 export function userHasRole(user, expectedRole) {
     const roles = Array.isArray(user?.roles)
         ? user.roles
@@ -35,7 +31,7 @@ export function postLoginRoute(user, returnTo) {
     }
 
     const pathname = returnTo.split(/[?#]/, 1)[0];
-    if (returnTo === '/' || isAuthenticationRoute(pathname)) {
+    if (returnTo === '/' || AUTH_ROUTES.has(pathname)) {
         return fallback;
     }
 
