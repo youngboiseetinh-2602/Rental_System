@@ -33,7 +33,7 @@ services:
       AUTHORIZATION_SERVER_ISSUER: http://localhost:8080
       RENTAL_SPA_CLIENT_ID: rental-spa
       RENTAL_SPA_REDIRECT_URIS: http://localhost:3000/callback
-      FRONTEND_LOGIN_URL: http://localhost:3000/login
+      FRONTEND_URL: http://localhost:3000
       IMAGEKIT_URL_ENDPOINT: ${IMAGEKIT_URL_ENDPOINT}
       IMAGEKIT_PUBLIC_KEY: ${IMAGEKIT_PUBLIC_KEY}
       IMAGEKIT_PRIVATE_KEY: ${IMAGEKIT_PRIVATE_KEY}
