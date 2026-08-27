@@ -1,5 +1,6 @@
 import {
     defaultAuthenticatedRoute,
+    isAuthenticationRoute,
     postLoginRoute,
     userHasRole,
 } from './authRouting';
@@ -7,6 +8,13 @@ import {
 describe('điều hướng theo role sau đăng nhập', () => {
     const customer = { roles: ['CUSTOMER'] };
     const owner = { roles: ['ROLE_OWNER'] };
+
+    it('recognizes authentication routes that must not auto-redirect', () => {
+        expect(isAuthenticationRoute('/login')).toBe(true);
+        expect(isAuthenticationRoute('/register')).toBe(true);
+        expect(isAuthenticationRoute('/callback')).toBe(true);
+        expect(isAuthenticationRoute('/dashboard')).toBe(false);
+    });
 
     it('đưa CUSTOMER vào dashboard', () => {
         expect(userHasRole(customer, 'CUSTOMER')).toBe(true);
