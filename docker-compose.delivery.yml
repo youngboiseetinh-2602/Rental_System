@@ -43,6 +43,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_BUILD_MODE: development
     image: rental-system-frontend:1.0
     restart: unless-stopped
     depends_on:
