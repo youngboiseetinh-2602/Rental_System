@@ -15,5 +15,5 @@ WORKDIR /app
 COPY --from=build /build/target/rental-resource-server-1.0.0-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Giới hạn heap JVM để giảm nguy cơ vượt RAM của Render
+ENTRYPOINT ["java", "-Xms64m", "-Xmx256m", "-jar", "app.jar"]
