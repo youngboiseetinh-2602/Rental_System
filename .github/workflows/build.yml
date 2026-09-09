@@ -1,0 +1,54 @@
+name: Build and deploy backend
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build and test
+        run: mvn --batch-mode --no-transfer-progress verify
+
+  deploy:
+    name: Trigger Render deployment
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: render-backend-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Deploy tested commit to Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::Add the RENDER_DEPLOY_HOOK_URL repository secret in GitHub Settings."
+            exit 1
+          fi
+          curl --fail --silent --show-error --output /dev/null \
+            --connect-timeout 10 --max-time 60 \
+            --get --data-urlencode "ref=$GITHUB_SHA" \
+            "$RENDER_DEPLOY_HOOK_URL"
+          echo "Render accepted the deploy request. Check deployment status in the Render dashboard."
