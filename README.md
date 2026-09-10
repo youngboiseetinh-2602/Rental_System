@@ -1,88 +1,43 @@
-# Rental Room System
+﻿# Rental Room System
 
-Rental Room System gồm Spring Boot backend và React frontend.
+## Mô tả hệ thống
 
-## Project structure
+Rental Room System là ứng dụng web hỗ trợ tìm kiếm và quản lý phòng trọ, kết nối người thuê với chủ trọ. Hệ thống hỗ trợ quy trình từ xem thông tin phòng, gửi yêu cầu thuê đến xử lý yêu cầu và quản lý hợp đồng, đồng thời cung cấp chức năng đánh giá, thông báo và nhắn tin thời gian thực.
 
-- `backend/` – Spring Boot API.
-- `frontend/` – React + Vite application.
-- `docker-compose.delivery.yml` – database and application services.
-- `rental_room_system.sql` – initial database schema/data.
+Hệ thống phục vụ các nhóm người dùng:
 
-## Stack
+| Nhóm người dùng | Chức năng chính |
+| --- | --- |
+| Khách truy cập | Xem danh sách, chi tiết cơ sở cho thuê và đánh giá; đăng ký tài khoản. |
+| Người thuê | Gửi, theo dõi và hủy yêu cầu thuê; quản lý đánh giá, thông tin cá nhân và mật khẩu; nhận thông báo. |
+| Chủ trọ | Quản lý cơ sở cho thuê, hình ảnh, loại phòng, phòng và tiện nghi; xử lý yêu cầu thuê; xem hợp đồng, danh sách người thuê và gửi thông báo. |
+| Quản trị viên | Quản lý người dùng, trạng thái tài khoản và danh mục loại hình cho thuê; chấm dứt hợp đồng. |
 
-- Java 21
-- Spring Boot 3.5.x
-- Spring Web
-- Spring Validation
-- Spring Data JPA
-- MySQL Driver
-- Spring Security
-- Spring Authorization Server
-- Spring OAuth2 Resource Server
-- Lombok
-- ModelMapper
-- Swagger/OpenAPI
-- DevTools
-- Spring Boot Test
-- Spring Security Test
+Người dùng đã đăng nhập có thể trao đổi qua chat thời gian thực, đánh dấu hội thoại đã đọc và chặn hoặc bỏ chặn hội thoại. Hình ảnh được tích hợp với ImageKit.
 
-## Run locally
+Ứng dụng gồm frontend React giao tiếp với backend Spring Boot qua REST API và WebSocket. Backend xử lý nghiệp vụ, phân quyền, xác thực OAuth2 và lưu trữ dữ liệu bằng MySQL.
 
-Create a local MySQL database:
+## Tech stack
 
-```sql
-CREATE DATABASE IF NOT EXISTS rental_room_system;
-```
+| Thành phần | Công nghệ |
+| --- | --- |
+| Frontend | React 19, Vite 7, React Router 6, Bootstrap 5 |
+| Backend | Java 21, Spring Boot 3.5.0, Spring Web, Spring Validation |
+| Truy cập dữ liệu | Spring Data JPA, Hibernate, MySQL |
+| Xác thực và phân quyền | Spring Security, OAuth2 Authorization Server, OAuth2 Resource Server, JWT, Authorization Code với PKCE |
+| Nhắn tin thời gian thực | Spring WebSocket, STOMP, `@stomp/stompjs` |
+| Lưu trữ hình ảnh | ImageKit |
+| Thư viện hỗ trợ backend | Lombok, ModelMapper |
+| Kiểm thử | Spring Boot Test, Spring Security Test, Vitest, jsdom |
+| Build và đóng gói | Maven Wrapper, npm, Docker, Docker Compose, Nginx |
+| Triển khai và CI/CD | Vercel cho frontend, Render cho backend, GitHub Actions kiểm thử/build backend và gọi Render deploy hook |
 
-Create `.env` in the project root:
+## URL deploy
 
-```properties
-SERVER_PORT=8080
-DB_URL=jdbc:mysql://localhost:3306/rental_room_system?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-DB_USERNAME=root
-DB_PASSWORD=your_database_password
-JPA_DDL_AUTO=update
-JPA_SHOW_SQL=true
-JPA_FORMAT_SQL=true
-OAUTH2_CLIENT_INTERNAL_ID=replace_with_a_stable_uuid
-RENTAL_SPA_CLIENT_ID=rental-spa
-RENTAL_SPA_REDIRECT_URIS=https://rental-system-frontend-ihl5.onrender.com/callback,http://localhost:3000/callback
-CORS_ALLOWED_ORIGINS=https://rental-system-frontend-ihl5.onrender.com,http://localhost:3000
-AUTHORIZATION_SERVER_ISSUER=http://localhost:8080
-FRONTEND_URL=http://localhost:3000
-```
+| Thành phần | URL |
+| --- | --- |
+| Website — Frontend | [rental-system-bice.vercel.app](https://rental-system-bice.vercel.app) |
+| Backend | [rental-system-1-72fo.onrender.com](https://rental-system-1-72fo.onrender.com) |
+| Kiểm tra trạng thái backend | [/api/public/health](https://rental-system-1-72fo.onrender.com/api/public/health) |
 
-Run the backend:
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-On Windows:
-
-```bat
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-
-Run the frontend in another terminal:
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-Health endpoint:
-
-```text
-GET http://localhost:8080/api/public/health
-```
-
-Swagger UI:
-
-```text
-http://localhost:8080/swagger-ui.html
-```
+Các URL trên được lấy từ cấu hình production trong dự án: [frontend/.env.production](frontend/.env.production) và [application-production.properties](backend/src/main/resources/application-production.properties).
