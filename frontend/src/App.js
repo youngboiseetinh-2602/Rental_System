@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import News from './pages/News';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PhongTro from './pages/PhongTro';
@@ -43,6 +44,7 @@ function App() {
                     <main>
                         <Routes>
                         <Route path="/" element={<Home />} />
+                        <Route path="/tin-tuc" element={<News />} />
                         <Route path="/phong-tro" element={<PhongTro />} />
                         <Route path="/phong-tro/:rentalPropertyId/reviews" element={<ReviewDetail />} />
                         <Route path="/phong-tro/:rentalPropertyId" element={<RentalDetail />} />
