@@ -152,8 +152,8 @@ function PhongTro() {
         ));
 
     return (
-        <div className="page-container rental-search-page" style={{ width: '100%', maxWidth: '1900px', padding: '0 30px', margin: '36px auto 60px' }}>
-            <div className="mb-4">
+        <div className="page-container rental-search-page">
+            <div className="mb-4 rental-search-bar">
                 <div className="card shadow-sm" style={{ borderRadius: '22px' }}>
                     <div className="card-body py-3 px-4">
                         <div className="input-group" style={{ minHeight: '54px' }}>
@@ -292,7 +292,7 @@ function PhongTro() {
 
                 <div className="col-lg-8 col-xl-9" ref={resultsTopRef}>
                     <div className="d-flex flex-column gap-3">
-                        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-3">
+                        <div className="rental-results-heading">
                             <div>
                                 <h1 className="rental-results-title">
                                     Tìm thấy {loading ? '...' : total} phòng trọ
@@ -301,7 +301,7 @@ function PhongTro() {
                                     Danh sách phòng trọ phù hợp tìm kiếm
                                 </p>
                             </div>
-                            <div className="d-flex align-items-center gap-2">
+                            <div className="rental-sort-controls">
                                 <label className="rental-sort-label mb-0 text-muted">Sắp xếp:</label>
                                 <select className="form-select rental-sort-select">
                                     <option value="newest">Mới nhất</option>

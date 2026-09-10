@@ -117,7 +117,8 @@ function Header() {
                 <button
                     className="menu-toggle"
                     type="button"
-                    aria-label="Mở menu"
+                    aria-label={open ? 'Đóng menu' : 'Mở menu'}
+                    aria-controls="main-navigation"
                     aria-expanded={open}
                     onClick={() => setOpen((current) => !current)}
                 >
@@ -126,7 +127,7 @@ function Header() {
                     <span />
                 </button>
 
-                <nav className={open ? 'main-nav is-open' : 'main-nav'}>
+                <nav id="main-navigation" className={open ? 'main-nav is-open' : 'main-nav'}>
                     {navigation.map((item) => (
                         <NavLink
                             key={item.to}
