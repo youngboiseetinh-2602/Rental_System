@@ -1,11 +1,9 @@
+import AccountNavigation from '../components/AccountNavigation';
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import { getMyRentalRequests } from '../services/rentalService';
-import AccountMenuIcon from '../components/AccountMenuIcon';
-import ChatNavLink from '../components/ChatNavLink';
-import NotificationNavLink from '../components/NotificationNavLink';
 
 function formatRentalDate(value) {
     if (!value) return 'Chưa cập nhật';
@@ -61,13 +59,7 @@ function Dashboard() {
                     </div>
                 </NavLink>
 
-                <nav aria-label="Menu tài khoản">
-                    <NavLink to="/dashboard" className="active"><AccountMenuIcon name="home" /> Trang chủ</NavLink>
-                    <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
-                    <NavLink to="/yeu-cau-thue-tro"><AccountMenuIcon name="requests" /> Yêu cầu thuê trọ</NavLink>
-                    <ChatNavLink />
-                    <NotificationNavLink />
-                </nav>
+                <AccountNavigation user={user} />
             </aside>
 
             <main className="dashboard-main">

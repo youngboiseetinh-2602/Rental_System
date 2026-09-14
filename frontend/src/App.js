@@ -34,6 +34,7 @@ import AdminContactFooter from './components/AdminContactFooter';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ChatRealtimeProvider } from './contexts/ChatRealtimeProvider';
 import './styles/global.css';
+import './styles/accountLayout.css';
 
 function App() {
     return (

@@ -1,9 +1,6 @@
+import AccountNavigation from '../components/AccountNavigation';
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import AccountMenuIcon from '../components/AccountMenuIcon';
-import ChatNavLink from '../components/ChatNavLink';
-import NotificationNavLink from '../components/NotificationNavLink';
-import OwnerRentalRequestNavLink from '../components/OwnerRentalRequestNavLink';
 import useAuth from '../hooks/useAuth';
 import {
     addOwnerFacilities,
@@ -156,18 +153,7 @@ function OwnerPropertyEdit() {
                         ? <img src={profile.avatarUrl} alt="" /> : initials}</span>
                     <span><strong>{displayName}</strong><small>Chủ trọ</small></span>
                 </NavLink>
-                <nav>
-                    <NavLink to="/owner/dashboard"><AccountMenuIcon name="home" />Tổng quan</NavLink>
-                    <NavLink to="/profile"><AccountMenuIcon name="profile" />Thông tin cá nhân</NavLink>
-                    <NavLink to="/owner/properties" className="active">
-                        <AccountMenuIcon name="properties" />Danh sách phòng trọ
-                    </NavLink>
-                    <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" />Tạo phòng trọ</NavLink>
-                    <OwnerRentalRequestNavLink icon={<AccountMenuIcon name="requests" />} />
-                    <NavLink to="/owner/contracts"><AccountMenuIcon name="contract" />Hợp đồng thuê</NavLink>
-                    <ChatNavLink />
-                    <NotificationNavLink />
-                </nav>
+                <AccountNavigation user={user} />
             </aside>
 
             <main className="owner-main">

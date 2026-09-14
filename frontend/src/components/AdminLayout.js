@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import AccountMenuIcon from './AccountMenuIcon';
+import AccountNavigation from './AccountNavigation';
 
 function AdminLayout({ title, description, actions, children }) {
     const { user } = useAuth();
@@ -14,13 +14,7 @@ function AdminLayout({ title, description, actions, children }) {
                     <span className="owner-avatar">{initials || 'A'}</span>
                     <span><strong>{name}</strong><small>Quản trị viên</small></span>
                 </NavLink>
-                <nav>
-                    <NavLink to="/admin" end><AccountMenuIcon name="home" />Tổng quan</NavLink>
-                    <NavLink to="/profile"><AccountMenuIcon name="profile" />Thông tin cá nhân</NavLink>
-                    <NavLink to="/admin/users"><AccountMenuIcon name="requests" />Danh sách người dùng</NavLink>
-                    <NavLink to="/admin/properties"><AccountMenuIcon name="properties" />Danh sách phòng trọ</NavLink>
-                    <NavLink to="/admin/rental-types"><AccountMenuIcon name="properties" />Loại hình cho thuê</NavLink>
-                </nav>
+                <AccountNavigation user={user} />
             </aside>
             <section className="owner-main admin-workspace">
                 <header className="owner-heading admin-page-header"><div><p>TRANG QUẢN LÝ ADMIN</p><h1>{title}</h1><span>{description}</span></div>{actions && <div>{actions}</div>}</header>

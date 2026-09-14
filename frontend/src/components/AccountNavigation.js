@@ -29,7 +29,7 @@ function AccountNavigation({ user }) {
             <nav aria-label="Menu chủ trọ">
                 <NavLink to="/owner/dashboard" end><AccountMenuIcon name="home" /> Tổng quan</NavLink>
                 <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
-                <NavLink to="/owner/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>
+                <NavLink to="/owner/properties" end><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>
                 <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>
                 <OwnerRentalRequestNavLink icon={<AccountMenuIcon name="requests" />} />
                 <NavLink to="/owner/contracts"><AccountMenuIcon name="contract" /> Hợp đồng thuê</NavLink>

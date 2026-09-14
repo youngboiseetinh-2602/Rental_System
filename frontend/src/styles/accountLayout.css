@@ -1,0 +1,184 @@
+/* Shared account frame across admin, owner, profile, notifications and chat. */
+.owner-dashboard,
+.profile-shell,
+.owner-dashboard.admin-shell,
+.profile-shell.profile-account-frame {
+    font-family: 'Manrope', Arial, sans-serif;
+    display: grid;
+    grid-template-columns: var(--account-sidebar-width) minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px;
+    background: #f4f7f6;
+}
+
+.owner-dashboard > .owner-sidebar,
+.profile-shell > .profile-sidebar {
+    min-width: 0;
+    min-height: calc(100vh - 136px);
+    padding: 26px 20px;
+    border: 1px solid var(--account-card-border);
+    border-radius: var(--account-card-radius);
+    background: #fff;
+    color: var(--ink);
+    box-shadow: var(--account-card-shadow);
+}
+
+.owner-sidebar > .owner-profile,
+.profile-shell .profile-sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 10px 22px;
+    border-top: 0;
+    border-bottom: 1px solid var(--account-card-border);
+}
+
+.owner-sidebar .owner-avatar,
+.profile-shell .profile-sidebar-user .profile-avatar {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 54px;
+}
+
+.owner-sidebar .owner-profile > span:last-child,
+.profile-sidebar-user > div:last-child {
+    min-width: 0;
+    flex: 1;
+}
+
+.owner-sidebar .owner-profile strong,
+.profile-sidebar .profile-sidebar-user strong {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.owner-dashboard .owner-sidebar nav,
+.profile-shell .profile-sidebar nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+    overflow: visible;
+}
+
+.owner-dashboard .owner-sidebar nav a,
+.profile-shell .profile-sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    min-height: 48px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    border-radius: 8px;
+}
+
+.owner-sidebar nav a > b,
+.profile-sidebar nav a > b {
+    flex-shrink: 0;
+}
+
+.owner-sidebar nav a:focus-visible,
+.profile-sidebar nav a:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
+
+.owner-dashboard > .owner-main,
+.profile-shell > .profile-main,
+.profile-shell > .dashboard-main,
+.profile-shell > .customer-request-main {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    padding: 8px 8px 40px;
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell strong,
+.admin-shell i,
+.admin-modal h2 {
+    font-family: 'Manrope', Arial, sans-serif;
+}
+
+.owner-heading h1,
+.profile-title h1,
+.customer-request-heading h1 {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--ink);
+}
+
+.profile-shell.chats-shell > .profile-sidebar {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.profile-shell.chats-shell > .chats-main {
+    padding: 0;
+}
+
+@media (max-width: 1050px) {
+    .owner-dashboard,
+    .profile-shell,
+    .owner-dashboard.admin-shell,
+    .profile-shell.profile-account-frame {
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 16px;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 800px) {
+    .owner-dashboard,
+    .profile-shell,
+    .owner-dashboard.admin-shell,
+    .profile-shell.profile-account-frame {
+        display: block;
+        padding: 10px;
+    }
+
+    .owner-dashboard > .owner-sidebar,
+    .profile-shell > .profile-sidebar {
+        min-height: 0;
+        margin-bottom: 16px;
+        padding: 18px 16px;
+    }
+
+    .owner-dashboard .owner-sidebar nav,
+    .profile-shell .profile-sidebar nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-shell.chats-shell {
+        height: auto;
+    }
+
+    .profile-shell.chats-shell > .chats-main {
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .owner-dashboard .owner-sidebar nav,
+    .profile-shell .profile-sidebar nav {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .owner-heading h1,
+    .profile-title h1,
+    .customer-request-heading h1 {
+        font-size: 26px;
+    }
+}
