@@ -70,11 +70,12 @@ public class OwnerController {
     }
 
     // Gui thong bao tu owner dang dang nhap den mot nguoi thue.
-    @PostMapping("/owners/me/notifications")
+    @PostMapping("/owners/me/notifications/{receiverId}")
     public ResponseEntity<NotificationResponse> createNotification(
+            @PathVariable @jakarta.validation.constraints.Positive Long receiverId,
             @Valid @RequestBody NotificationRequest request) {
         return ResponseEntity.ok(
-                notificationService.createNotification(request));
+                notificationService.createOwnerNotification(receiverId, request));
     }
 
     // Lay danh sach nha tro thuoc owner dang dang nhap.

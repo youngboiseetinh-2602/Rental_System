@@ -33,11 +33,11 @@ export async function getOwnerContracts() {
     );
 }
 
-export async function sendOwnerNotification(payload) {
-    const response = await apiFetch('/api/owners/me/notifications', {
+export async function sendOwnerNotification({ receiverId, title, content }) {
+    const response = await apiFetch(`/api/owners/me/notifications/${receiverId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ title, content }),
     });
     const text = await response.text();
     let body;

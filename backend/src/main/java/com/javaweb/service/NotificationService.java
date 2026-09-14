@@ -6,11 +6,13 @@ import java.util.List;
 
 public interface NotificationService {
 
-    NotificationResponse createNotification(Long senderId, NotificationRequest request);
+    int sendNotificationToAll(NotificationRequest request);
 
-    NotificationResponse createNotification(NotificationRequest request);
+    NotificationResponse createNotification(Long receiverId, NotificationRequest request);
 
-    NotificationResponse createSystemNotification(NotificationRequest request);
+    NotificationResponse createOwnerNotification(Long receiverId, NotificationRequest request);
+
+    NotificationResponse createSystemNotification(Long receiverId, NotificationRequest request);
 
     List<NotificationResponse> getNotifications();
 

@@ -366,19 +366,17 @@ public class ContractServiceImpl implements ContractService {
             ContractEntity contract, String title, String content) {
         Long receiverId = contract.getTenant().getId();
         NotificationRequest request = new NotificationRequest();
-        request.setReceiverId(receiverId);
         request.setTitle(title);
         request.setContent(content);
-        notificationService.createNotification(getOwnerId(contract), request);
+        notificationService.createNotification(receiverId, request);
     }
 
     private void sendSystemNotification(
             ContractEntity contract, String title, String content) {
         NotificationRequest request = new NotificationRequest();
-        request.setReceiverId(contract.getTenant().getId());
         request.setTitle(title);
         request.setContent(content);
-        notificationService.createSystemNotification(request);
+        notificationService.createSystemNotification(contract.getTenant().getId(), request);
     }
 
     private Long getOwnerId(ContractEntity contract) {

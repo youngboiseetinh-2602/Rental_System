@@ -6,6 +6,8 @@ import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.service.AdminService;
 import com.javaweb.service.ContractService;
+import com.javaweb.service.NotificationService;
+import com.javaweb.model.request.NotificationRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,14 @@ public class AdminController {
 
     private final AdminService adminService;
     private final ContractService contractService;
+    private final NotificationService notificationService;
+
+    @PostMapping("/notifications/broadcast")
+    public ResponseEntity<Map<String, Integer>> sendNotificationToAll(
+            @Valid @RequestBody NotificationRequest request) {
+        return ResponseEntity.ok(Map.of(
+                "sentCount", notificationService.sendNotificationToAll(request)));
+    }
 
     // Tim kiem va lay danh sach tai khoan theo cac dieu kien quan tri.
     @GetMapping("/users")

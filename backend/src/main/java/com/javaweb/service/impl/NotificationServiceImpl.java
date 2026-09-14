@@ -35,20 +35,33 @@ public class NotificationServiceImpl implements NotificationService {
     private final CurrentUserContext currentUserContext;
 
     @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional
+    public int sendNotificationToAll(NotificationRequest request) {
+        List<UserEntity> receivers = userRepository.findAll();
+        for (UserEntity receiver : receivers) {
+            createNotification(receiver.getId(), request);
+        }
+        return receivers.size();
+    }
+
+    @Override
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
-    public NotificationResponse createNotification(Long senderId, NotificationRequest request) {
+    public NotificationResponse createNotification(Long receiverId, NotificationRequest request) {
+        Long senderId = currentUserContext.getCurrentUserId();
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người gửi: " + senderId));
 
-        return saveNotification(sender, request);
+        return saveNotification(sender, receiverId, request);
     }
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional
-    public NotificationResponse createNotification(NotificationRequest request) {
+    public NotificationResponse createOwnerNotification(Long receiverId, NotificationRequest request) {
+        validateReceiverId(receiverId);
         Long senderId = currentUserContext.getCurrentUserId();
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new DataNotFoundException(
@@ -56,7 +69,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         boolean isOwnerTenant = contractRepository
                 .existsByTenant_IdAndRoom_RoomType_RentalProperty_Owner_IdAndStatusIn(
-                        request.getReceiverId(),
+                        receiverId,
                         senderId,
                         List.of(
                                 ContractStatus.APPROVED,
@@ -67,18 +80,24 @@ public class NotificationServiceImpl implements NotificationService {
                     "Bạn chỉ có thể gửi thông báo cho người thuê của mình");
         }
 
-        return saveNotification(sender, request);
+        return saveNotification(sender, receiverId, request);
     }
 
     @Override
     @Transactional
-    public NotificationResponse createSystemNotification(NotificationRequest request) {
-        return saveNotification(null, request);
+    public NotificationResponse createSystemNotification(Long receiverId, NotificationRequest request) {
+        return saveNotification(null, receiverId, request);
+    }
+
+    private void validateReceiverId(Long receiverId) {
+        if (receiverId == null || receiverId <= 0) {
+            throw new IllegalArgumentException("Receiver id must be positive");
+        }
     }
 
     private NotificationResponse saveNotification(
-            UserEntity sender, NotificationRequest request) {
-        Long receiverId = request.getReceiverId();
+            UserEntity sender, Long receiverId, NotificationRequest request) {
+        validateReceiverId(receiverId);
         UserEntity receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người nhận: " + receiverId));
