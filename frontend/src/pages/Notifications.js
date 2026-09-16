@@ -11,6 +11,7 @@ import {
     NOTIFICATION_UNREAD_CHANGED_EVENT,
 } from '../components/NotificationNavLink';
 import AccountNavigation from '../components/AccountNavigation';
+import AdminLayout from '../components/AdminLayout';
 
 function formatDate(value) {
     if (!value) return '';
@@ -41,6 +42,7 @@ function Notifications() {
     const sendingRef = useRef(false);
     const [sendError, setSendError] = useState('');
     const [success, setSuccess] = useState('');
+    const [search, setSearch] = useState('');
     const isOwner = userHasRole(user, 'OWNER');
     const isAdmin = userHasRole(user, 'ADMIN');
 
@@ -98,10 +100,11 @@ function Notifications() {
     const initials = displayName.trim().split(/\s+/).slice(-2)
         .map((part) => part[0]).join('').toUpperCase();
     const unreadCount = notifications.filter((item) => item.status === 'UNREAD').length;
-    const visibleNotifications = useMemo(() => filter === 'ALL'
-        ? notifications
-        : notifications.filter((item) => item.status === filter),
-    [filter, notifications]);
+    const visibleNotifications = useMemo(() => notifications.filter((item) =>
+        (filter === 'ALL' || item.status === filter)
+        && (!isAdmin || `${item.title} ${item.content}`.toLocaleLowerCase('vi')
+            .includes(search.trim().toLocaleLowerCase('vi')))),
+    [filter, notifications, search, isAdmin]);
 
     const viewNotification = async (notification) => {
         setSelectedNotification(notification);
@@ -125,39 +128,18 @@ function Notifications() {
         }
     };
 
-    return (
-        <div className="profile-shell notification-shell">
-            <aside className="profile-sidebar">
-                <div className="profile-sidebar-user">
-                    <div className="profile-avatar">{profile?.avatarUrl
-                        ? <img src={profile.avatarUrl} alt="" /> : <span>{initials}</span>}</div>
-                    <div><strong>{displayName}</strong>
-                        <span>{isAdmin ? 'Quản trị viên' : isOwner ? 'Chủ trọ' : 'Khách hàng'}</span></div>
-                </div>
-                <AccountNavigation user={user} />
-            </aside>
-
-            <main className="customer-request-main notification-main">
-                <header className="customer-request-heading">
-                    <div><p>TÀI KHOẢN CỦA BẠN</p><h1>Thông báo</h1>
-                        <span>Theo dõi những cập nhật mới nhất từ RentalRoom</span></div>
-                    {isAdmin && <button type="button" className="btn btn-success"
-                        aria-expanded={composing} aria-controls="broadcast-form"
-                        disabled={sending} onClick={() => setComposing(!composing)}>
-                        {composing ? 'Đóng form' : '+ Tạo thông báo toàn cục'}
-                    </button>}
-                </header>
-
+    const pageContent = (<>
                 {error && <div className="profile-alert is-error" role="alert">{error}</div>}
                 {success && <div className="profile-alert" role="status">{success}</div>}
 
                 {isAdmin && composing && (
                     <form id="broadcast-form" className="customer-request-card p-4 mb-4"
                         onSubmit={sendBroadcast} aria-busy={sending}>
-                        <h2 className="h5">Tạo thông báo toàn cục</h2>
+                        <h2 className="h5">Tạo thông báo</h2>
                         <p className="text-secondary">Gửi đến tất cả tài khoản trong hệ thống, bao gồm cả bạn.</p>
                         {sendError && <div className="profile-alert is-error" role="alert">{sendError}</div>}
-                        <fieldset disabled={sending}>
+                        <fieldset disabled={sending} className="notification-compose-grid">
+                            <div>
                             <label className="form-label" htmlFor="broadcast-title">Tiêu đề</label>
                             <input id="broadcast-title" className="form-control mb-3" required
                                 maxLength={150} value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -168,12 +150,22 @@ function Notifications() {
                             <button type="submit" className="btn btn-success">
                                 {sending ? 'Đang gửi…' : 'Gửi cho tất cả'}
                             </button>
+                            <button type="button" className="btn btn-outline-secondary ms-2"
+                                onClick={() => setComposing(false)}>Đóng</button>
+                            </div>
+                            <aside className="notification-compose-preview">
+                                <span className="badge text-bg-success mb-3">Tất cả người dùng</span>
+                                <h3 className="h6">Xem trước thông báo</h3>
+                                <strong>{title.trim() || 'Tiêu đề thông báo'}</strong>
+                                <p>{content.trim() || 'Nội dung bạn nhập sẽ hiển thị tại đây.'}</p>
+                                <small>Từ {displayName}</small>
+                            </aside>
                         </fieldset>
                     </form>
                 )}
 
                 <section className="customer-request-stats notification-stats">
-                    <article><span>Tổng thông báo</span><strong>{notifications.length}</strong></article>
+                    <article><span>{isAdmin ? 'Thông báo nhận được' : 'Tổng thông báo'}</span><strong>{notifications.length}</strong></article>
                     <article><span>Chưa đọc</span><strong>{unreadCount}</strong></article>
                     <article><span>Đã đọc</span>
                         <strong>{notifications.length - unreadCount}</strong></article>
@@ -181,12 +173,17 @@ function Notifications() {
 
                 <section className="customer-request-card">
                     <div className="customer-request-toolbar">
-                        <h2>Danh sách thông báo</h2>
-                        <select value={filter} onChange={(event) => setFilter(event.target.value)}>
+                        <div><h2>{isAdmin ? 'Hộp thư của bạn' : 'Danh sách thông báo'}</h2>{isAdmin && <small>Trạng thái đọc chỉ áp dụng cho tài khoản của bạn.</small>}</div>
+                        <div className="notification-inbox-filters">
+                        {isAdmin && <input type="search" className="form-control" value={search}
+                            aria-label="Tìm thông báo" placeholder="Tìm theo tiêu đề, nội dung"
+                            onChange={(event) => setSearch(event.target.value)} />}
+                        <select aria-label="Lọc trạng thái thông báo" value={filter} onChange={(event) => setFilter(event.target.value)}>
                             <option value="ALL">Tất cả thông báo</option>
                             <option value="UNREAD">Chưa đọc</option>
                             <option value="READ">Đã đọc</option>
                         </select>
+                        </div>
                     </div>
 
                     {loading ? <div className="customer-request-empty">Đang tải thông báo...</div>
@@ -194,9 +191,9 @@ function Notifications() {
                             ? <div className="customer-request-empty">
                                 <span>♢</span>
                                 <h3>{notifications.length
-                                    ? 'Không có thông báo ở trạng thái này'
+                                    ? 'Không có thông báo phù hợp'
                                     : 'Bạn chưa có thông báo nào'}</h3>
-                                <p>Các cập nhật về yêu cầu thuê trọ sẽ xuất hiện tại đây.</p>
+                                <p>{isAdmin ? 'Thông báo gửi đến bạn, bao gồm bản sao thông báo bạn gửi cho tất cả, sẽ xuất hiện tại đây.' : 'Các cập nhật về yêu cầu thuê trọ sẽ xuất hiện tại đây.'}</p>
                             </div>
                             : <div className="notification-list">
                                 {visibleNotifications.map((notification) => (
@@ -249,6 +246,34 @@ function Notifications() {
                         </section>
                     </div>
                 )}
+</>
+    );
+    if (isAdmin) {
+        return <AdminLayout title="Thông báo" description="Soạn thông báo gửi đến mọi người và theo dõi hộp thư của bạn."
+            actions={<button type="button" className="btn btn-success" disabled={sending}
+                aria-expanded={composing} aria-controls="broadcast-form"
+                onClick={() => setComposing(!composing)}>Tạo thông báo</button>}>
+            <div className="admin-notification-dashboard">{pageContent}</div>
+        </AdminLayout>;
+    }
+    return (
+        <div className="profile-shell notification-shell">
+            <aside className="profile-sidebar">
+                <div className="profile-sidebar-user">
+                    <div className="profile-avatar">{profile?.avatarUrl
+                        ? <img src={profile.avatarUrl} alt="" /> : <span>{initials}</span>}</div>
+                    <div><strong>{displayName}</strong>
+                        <span>{isAdmin ? 'Quản trị viên' : isOwner ? 'Chủ trọ' : 'Khách hàng'}</span></div>
+                </div>
+                <AccountNavigation user={user} />
+            </aside>
+
+            <main className="customer-request-main notification-main">
+                <header className="customer-request-heading">
+                    <div><p>TÀI KHOẢN CỦA BẠN</p><h1>Thông báo</h1>
+                    <span>Theo dõi những cập nhật mới nhất từ RentalRoom</span></div>
+                </header>
+                {pageContent}
             </main>
         </div>
     );

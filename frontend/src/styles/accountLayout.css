@@ -1,4 +1,57 @@
 /* Shared account frame across admin, owner, profile, notifications and chat. */
+.notification-compose-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.notification-compose-preview {
+    padding: 24px;
+    border: 1px solid var(--account-card-border);
+    border-radius: 12px;
+    background: #f4f7f6;
+    overflow-wrap: anywhere;
+}
+
+.notification-compose-preview p {
+    margin: 16px 0;
+    white-space: pre-wrap;
+}
+
+.notification-inbox-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+}
+
+.notification-inbox-filters input {
+    width: 260px;
+    max-width: 100%;
+}
+
+.admin-notification-dashboard .customer-request-toolbar {
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-notification-dashboard .customer-request-toolbar small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+}
+
+.admin-notification-dashboard .customer-request-empty {
+    min-height: 240px;
+    padding: 40px 24px;
+}
+
+@media (max-width: 1050px) {
+    .notification-compose-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 .owner-dashboard,
 .profile-shell,
 .owner-dashboard.admin-shell,
