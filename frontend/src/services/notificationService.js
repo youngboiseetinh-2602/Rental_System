@@ -2,7 +2,15 @@ import { apiFetch } from './apiClient';
 
 export async function getSentNotifications() {
     const response = await apiFetch('/api/admin/notifications/sent');
-    if (!response.ok) throw new Error('Không thể tải lịch sử thông báo đã gửi.');
+    if (!response.ok) {
+        const messages = {
+            401: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+            403: 'Tài khoản không có quyền xem lịch sử thông báo admin.',
+            404: 'API lịch sử thông báo chưa khả dụng. Vui lòng kiểm tra bản deploy backend.',
+        };
+        throw new Error(messages[response.status]
+            || `Không thể tải lịch sử thông báo đã gửi (HTTP ${response.status}).`);
+    }
     return response.json();
 }
 

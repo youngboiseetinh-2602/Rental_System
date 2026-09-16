@@ -33,6 +33,8 @@ function Notifications() {
     const [notifications, setNotifications] = useState([]);
     const [filter, setFilter] = useState('ALL');
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+    const [reloadKey, setReloadKey] = useState(0);
     const [readingId, setReadingId] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [error, setError] = useState('');
@@ -49,6 +51,8 @@ function Notifications() {
 
     useEffect(() => {
         let active = true;
+        setLoading(true);
+        setLoadError('');
         Promise.all([getMyProfile(), isAdmin ? getSentNotifications() : getMyNotifications()])
             .then(([profileData, notificationData]) => {
                 if (!active) return;
@@ -56,10 +60,10 @@ function Notifications() {
                 setNotifications((Array.isArray(notificationData) ? notificationData : [])
                     .sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0)));
             })
-            .catch((requestError) => active && setError(requestError.message))
+            .catch((requestError) => active && setLoadError(requestError.message))
             .finally(() => active && setLoading(false));
         return () => { active = false; };
-    }, [isAdmin]);
+    }, [isAdmin, reloadKey]);
 
     const sendBroadcast = async (event) => {
         event.preventDefault();
@@ -85,6 +89,7 @@ function Notifications() {
                     .sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0)));
                 setFilter('ALL');
                 setError('');
+                setLoadError('');
             } catch {
                 setError('Thông báo đã gửi, nhưng chưa tải lại được danh sách. Vui lòng tải lại trang.');
             }
@@ -174,7 +179,7 @@ function Notifications() {
 
                 <section className="customer-request-card">
                     <div className="customer-request-toolbar">
-                        <div><h2>{isAdmin ? 'Lịch sử thông báo đã gửi' : 'Danh sách thông báo'}</h2>{isAdmin && <small>{notifications.length} thông báo đã gửi</small>}</div>
+                        <div><h2>{isAdmin ? 'Lịch sử thông báo đã gửi' : 'Danh sách thông báo'}</h2>{isAdmin && !loading && !loadError && <small>{notifications.length} thông báo đã gửi</small>}</div>
                         <div className="notification-inbox-filters">
                         {isAdmin && <input type="search" className="form-control" value={search}
                             aria-label="Tìm thông báo" placeholder="Tìm theo tiêu đề, nội dung"
@@ -188,6 +193,11 @@ function Notifications() {
                     </div>
 
                     {loading ? <div className="customer-request-empty">Đang tải thông báo...</div>
+                        : loadError ? <div className="customer-request-empty" role="alert">
+                            <h3>Chưa tải được thông báo</h3><p>{loadError}</p>
+                            <button type="button" className="btn btn-outline-success"
+                                onClick={() => setReloadKey(key => key + 1)}>Thử lại</button>
+                        </div>
                         : visibleNotifications.length === 0
                             ? <div className="customer-request-empty">
                                 <span>♢</span>
