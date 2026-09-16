@@ -37,6 +37,11 @@ public class AdminController {
     private final ContractService contractService;
     private final NotificationService notificationService;
 
+    @GetMapping("/notifications/sent")
+    public ResponseEntity<List<com.javaweb.model.response.NotificationResponse>> getSentNotifications() {
+        return ResponseEntity.ok(notificationService.getSentNotifications());
+    }
+
     @PostMapping("/notifications/broadcast")
     public ResponseEntity<String> sendNotificationToAll(
             @Valid @RequestBody NotificationRequest request) {

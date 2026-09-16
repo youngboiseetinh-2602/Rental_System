@@ -108,9 +108,23 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setTitle(request.getTitle());
         notification.setContent(request.getContent());
         notification.setStatus(NotificationStatus.UNREAD);
+        if (sender != null && sender.getId().equals(receiverId)) {
+            notification.setStatus(NotificationStatus.READ);
+            notification.setReadAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        }
         notificationRepository.save(notification);
 
         return notificationConverter.toResponse(notification);
+    }
+
+    @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getSentNotifications() {
+        Long senderId = currentUserContext.getCurrentUserId();
+        return notificationRepository
+                .findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(senderId, senderId)
+                .stream().map(notificationConverter::toResponse).toList();
     }
 
     @Override

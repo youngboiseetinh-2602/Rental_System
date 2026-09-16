@@ -1,5 +1,11 @@
 import { apiFetch } from './apiClient';
 
+export async function getSentNotifications() {
+    const response = await apiFetch('/api/admin/notifications/sent');
+    if (!response.ok) throw new Error('Không thể tải lịch sử thông báo đã gửi.');
+    return response.json();
+}
+
 export async function broadcastNotification({ title, content }) {
     return responseMessage(await apiFetch('/api/admin/notifications/broadcast', {
         method: 'POST',

@@ -3,6 +3,7 @@ import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import {
     getMyNotifications,
+    getSentNotifications,
     markNotificationAsRead,
     broadcastNotification,
 } from '../services/notificationService';
@@ -48,7 +49,7 @@ function Notifications() {
 
     useEffect(() => {
         let active = true;
-        Promise.all([getMyProfile(), getMyNotifications()])
+        Promise.all([getMyProfile(), isAdmin ? getSentNotifications() : getMyNotifications()])
             .then(([profileData, notificationData]) => {
                 if (!active) return;
                 setProfile(profileData);
@@ -58,7 +59,7 @@ function Notifications() {
             .catch((requestError) => active && setError(requestError.message))
             .finally(() => active && setLoading(false));
         return () => { active = false; };
-    }, []);
+    }, [isAdmin]);
 
     const sendBroadcast = async (event) => {
         event.preventDefault();
@@ -79,7 +80,7 @@ function Notifications() {
             setComposing(false);
             window.dispatchEvent(new Event(NOTIFICATION_UNREAD_CHANGED_EVENT));
             try {
-                const data = await getMyNotifications();
+                const data = await getSentNotifications();
                 setNotifications((Array.isArray(data) ? data : [])
                     .sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0)));
                 setFilter('ALL');
@@ -108,7 +109,7 @@ function Notifications() {
 
     const viewNotification = async (notification) => {
         setSelectedNotification(notification);
-        if (notification.status === 'READ') return;
+        if (isAdmin || notification.status === 'READ') return;
         setReadingId(notification.id);
         setError('');
         try {
@@ -164,25 +165,25 @@ function Notifications() {
                     </form>
                 )}
 
-                <section className="customer-request-stats notification-stats">
+                {!isAdmin && <section className="customer-request-stats notification-stats">
                     <article><span>{isAdmin ? 'Thông báo nhận được' : 'Tổng thông báo'}</span><strong>{notifications.length}</strong></article>
                     <article><span>Chưa đọc</span><strong>{unreadCount}</strong></article>
                     <article><span>Đã đọc</span>
                         <strong>{notifications.length - unreadCount}</strong></article>
-                </section>
+                </section>}
 
                 <section className="customer-request-card">
                     <div className="customer-request-toolbar">
-                        <div><h2>{isAdmin ? 'Hộp thư của bạn' : 'Danh sách thông báo'}</h2>{isAdmin && <small>Trạng thái đọc chỉ áp dụng cho tài khoản của bạn.</small>}</div>
+                        <div><h2>{isAdmin ? 'Lịch sử thông báo đã gửi' : 'Danh sách thông báo'}</h2>{isAdmin && <small>{notifications.length} thông báo đã gửi</small>}</div>
                         <div className="notification-inbox-filters">
                         {isAdmin && <input type="search" className="form-control" value={search}
                             aria-label="Tìm thông báo" placeholder="Tìm theo tiêu đề, nội dung"
                             onChange={(event) => setSearch(event.target.value)} />}
-                        <select aria-label="Lọc trạng thái thông báo" value={filter} onChange={(event) => setFilter(event.target.value)}>
+                        {!isAdmin && <select aria-label="Lọc trạng thái thông báo" value={filter} onChange={(event) => setFilter(event.target.value)}>
                             <option value="ALL">Tất cả thông báo</option>
                             <option value="UNREAD">Chưa đọc</option>
                             <option value="READ">Đã đọc</option>
-                        </select>
+                        </select>}
                         </div>
                     </div>
 
@@ -192,17 +193,18 @@ function Notifications() {
                                 <span>♢</span>
                                 <h3>{notifications.length
                                     ? 'Không có thông báo phù hợp'
-                                    : 'Bạn chưa có thông báo nào'}</h3>
-                                <p>{isAdmin ? 'Thông báo gửi đến bạn, bao gồm bản sao thông báo bạn gửi cho tất cả, sẽ xuất hiện tại đây.' : 'Các cập nhật về yêu cầu thuê trọ sẽ xuất hiện tại đây.'}</p>
+                                    : isAdmin ? 'Bạn chưa gửi thông báo nào' : 'Bạn chưa có thông báo nào'}</h3>
+                                <p>{isAdmin ? 'Chọn “Tạo thông báo” để soạn và gửi thông báo đến mọi người.' : 'Các cập nhật về yêu cầu thuê trọ sẽ xuất hiện tại đây.'}</p>
                             </div>
                             : <div className="notification-list">
                                 {visibleNotifications.map((notification) => (
                                     <article key={notification.id}
-                                        className={notification.status === 'UNREAD' ? 'is-unread' : ''}>
+                                        className={!isAdmin && notification.status === 'UNREAD' ? 'is-unread' : ''}>
                                         <span className="notification-icon">♢</span>
                                         <div className="notification-content">
                                             <div><h3>{notification.title}</h3>
-                                                {notification.status === 'UNREAD'
+                                                {isAdmin && <i>Đã gửi</i>}
+                                                {!isAdmin && notification.status === 'UNREAD'
                                                     && <i>Chưa đọc</i>}</div>
                                             <p>{notification.content}</p>
                                             <small>{notification.senderName
@@ -249,7 +251,7 @@ function Notifications() {
 </>
     );
     if (isAdmin) {
-        return <AdminLayout title="Thông báo" description="Soạn thông báo gửi đến mọi người và theo dõi hộp thư của bạn."
+        return <AdminLayout title="Thông báo" description="Tạo thông báo và xem lại lịch sử thông báo bạn đã gửi."
             actions={<button type="button" className="btn btn-success" disabled={sending}
                 aria-expanded={composing} aria-controls="broadcast-form"
                 onClick={() => setComposing(!composing)}>Tạo thông báo</button>}>

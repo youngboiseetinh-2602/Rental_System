@@ -83,8 +83,13 @@ class NotificationServiceImplTest {
             assertSame(sender, notification.getSender());
             assertEquals("Maintenance", notification.getTitle());
             assertEquals("Maintenance tomorrow", notification.getContent());
-            assertEquals(NotificationStatus.UNREAD, notification.getStatus());
-            assertNull(notification.getReadAt());
+            if (notification.getReceiver().getId().equals(sender.getId())) {
+                assertEquals(NotificationStatus.READ, notification.getStatus());
+                assertNotNull(notification.getReadAt());
+            } else {
+                assertEquals(NotificationStatus.UNREAD, notification.getStatus());
+                assertNull(notification.getReadAt());
+            }
         }
     }
 
@@ -145,5 +150,23 @@ class NotificationServiceImplTest {
         assertThrows(IllegalArgumentException.class,
                 () -> service.createSystemNotification(0L, request()));
         verifyNoInteractions(userRepository, notificationRepository);
+    }
+
+    @Test
+    void sentHistoryUsesOnlyCurrentAdminsOwnCopies() {
+        when(currentUserContext.getCurrentUserId()).thenReturn(10L);
+        when(notificationRepository.findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L))
+                .thenReturn(List.of());
+        assertTrue(securedService("ADMIN").getSentNotifications().isEmpty());
+        verify(notificationRepository).findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L);
+    }
+
+    @Test
+    void nonAdminsCannotReadSentHistory() {
+        for (String role : List.of("OWNER", "CUSTOMER")) {
+            NotificationService secured = securedService(role);
+            assertThrows(AccessDeniedException.class, secured::getSentNotifications);
+        }
+        verifyNoInteractions(notificationRepository, currentUserContext);
     }
 }
