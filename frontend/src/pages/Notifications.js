@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import {
     getMyNotifications,
     markNotificationAsRead,
+    broadcastNotification,
 } from '../services/notificationService';
 import { userHasRole } from '../utils/authRouting';
 import {
@@ -33,6 +34,13 @@ function Notifications() {
     const [readingId, setReadingId] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [error, setError] = useState('');
+    const [composing, setComposing] = useState(false);
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [sending, setSending] = useState(false);
+    const sendingRef = useRef(false);
+    const [sendError, setSendError] = useState('');
+    const [success, setSuccess] = useState('');
     const isOwner = userHasRole(user, 'OWNER');
     const isAdmin = userHasRole(user, 'ADMIN');
 
@@ -49,6 +57,41 @@ function Notifications() {
             .finally(() => active && setLoading(false));
         return () => { active = false; };
     }, []);
+
+    const sendBroadcast = async (event) => {
+        event.preventDefault();
+        if (!isAdmin || sendingRef.current) return;
+        if (!title.trim() || !content.trim()) {
+            setSendError('Vui lòng nhập tiêu đề và nội dung.');
+            return;
+        }
+        sendingRef.current = true;
+        setSending(true);
+        setSendError('');
+        setSuccess('');
+        try {
+            await broadcastNotification({ title: title.trim(), content: content.trim() });
+            setSuccess('Gửi thông báo thành công');
+            setTitle('');
+            setContent('');
+            setComposing(false);
+            window.dispatchEvent(new Event(NOTIFICATION_UNREAD_CHANGED_EVENT));
+            try {
+                const data = await getMyNotifications();
+                setNotifications((Array.isArray(data) ? data : [])
+                    .sort((a, b) => new Date(b.sentAt || 0) - new Date(a.sentAt || 0)));
+                setFilter('ALL');
+                setError('');
+            } catch {
+                setError('Thông báo đã gửi, nhưng chưa tải lại được danh sách. Vui lòng tải lại trang.');
+            }
+        } catch (requestError) {
+            setSendError(requestError.message);
+        } finally {
+            sendingRef.current = false;
+            setSending(false);
+        }
+    };
 
     const displayName = profile?.fullName || user?.username
         || (isAdmin ? 'Quản trị viên' : isOwner ? 'Chủ trọ' : 'Khách hàng');
@@ -98,9 +141,36 @@ function Notifications() {
                 <header className="customer-request-heading">
                     <div><p>TÀI KHOẢN CỦA BẠN</p><h1>Thông báo</h1>
                         <span>Theo dõi những cập nhật mới nhất từ RentalRoom</span></div>
+                    {isAdmin && <button type="button" className="btn btn-success"
+                        aria-expanded={composing} aria-controls="broadcast-form"
+                        disabled={sending} onClick={() => setComposing(!composing)}>
+                        {composing ? 'Đóng form' : '+ Tạo thông báo toàn cục'}
+                    </button>}
                 </header>
 
                 {error && <div className="profile-alert is-error" role="alert">{error}</div>}
+                {success && <div className="profile-alert" role="status">{success}</div>}
+
+                {isAdmin && composing && (
+                    <form id="broadcast-form" className="customer-request-card p-4 mb-4"
+                        onSubmit={sendBroadcast} aria-busy={sending}>
+                        <h2 className="h5">Tạo thông báo toàn cục</h2>
+                        <p className="text-secondary">Gửi đến tất cả tài khoản trong hệ thống, bao gồm cả bạn.</p>
+                        {sendError && <div className="profile-alert is-error" role="alert">{sendError}</div>}
+                        <fieldset disabled={sending}>
+                            <label className="form-label" htmlFor="broadcast-title">Tiêu đề</label>
+                            <input id="broadcast-title" className="form-control mb-3" required
+                                maxLength={150} value={title} onChange={(event) => setTitle(event.target.value)} />
+                            <label className="form-label" htmlFor="broadcast-content">Nội dung</label>
+                            <textarea id="broadcast-content" className="form-control mb-3" required
+                                rows={5} maxLength={2000} value={content}
+                                onChange={(event) => setContent(event.target.value)} />
+                            <button type="submit" className="btn btn-success">
+                                {sending ? 'Đang gửi…' : 'Gửi cho tất cả'}
+                            </button>
+                        </fieldset>
+                    </form>
+                )}
 
                 <section className="customer-request-stats notification-stats">
                     <article><span>Tổng thông báo</span><strong>{notifications.length}</strong></article>

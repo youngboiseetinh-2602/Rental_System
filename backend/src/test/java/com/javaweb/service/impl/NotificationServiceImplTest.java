@@ -70,7 +70,8 @@ class NotificationServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
         when(userRepository.findById(2L)).thenReturn(Optional.of(recipient));
 
-        assertEquals(2, securedService("ADMIN").sendNotificationToAll(request()));
+        assertEquals("Gửi thông báo thành công",
+                securedService("ADMIN").sendNotificationToAll(request()));
 
         ArgumentCaptor<NotificationEntity> saved = ArgumentCaptor.forClass(NotificationEntity.class);
         verify(notificationRepository, times(2)).save(saved.capture());

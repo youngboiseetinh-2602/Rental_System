@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface NotificationService {
 
-    int sendNotificationToAll(NotificationRequest request);
+    String sendNotificationToAll(NotificationRequest request);
 
     NotificationResponse createNotification(Long receiverId, NotificationRequest request);
 

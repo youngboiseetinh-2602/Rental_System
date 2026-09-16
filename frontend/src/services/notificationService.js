@@ -1,5 +1,13 @@
 import { apiFetch } from './apiClient';
 
+export async function broadcastNotification({ title, content }) {
+    return responseMessage(await apiFetch('/api/admin/notifications/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content }),
+    }), 'Không thể gửi thông báo toàn cục.');
+}
+
 async function responseMessage(response, fallback) {
     const text = await response.text();
     if (!response.ok) {

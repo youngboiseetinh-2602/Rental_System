@@ -37,12 +37,12 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
-    public int sendNotificationToAll(NotificationRequest request) {
+    public String sendNotificationToAll(NotificationRequest request) {
         List<UserEntity> receivers = userRepository.findAll();
         for (UserEntity receiver : receivers) {
             createNotification(receiver.getId(), request);
         }
-        return receivers.size();
+        return "Gửi thông báo thành công";
     }
 
     @Override

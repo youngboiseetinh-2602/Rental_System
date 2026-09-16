@@ -38,10 +38,9 @@ public class AdminController {
     private final NotificationService notificationService;
 
     @PostMapping("/notifications/broadcast")
-    public ResponseEntity<Map<String, Integer>> sendNotificationToAll(
+    public ResponseEntity<String> sendNotificationToAll(
             @Valid @RequestBody NotificationRequest request) {
-        return ResponseEntity.ok(Map.of(
-                "sentCount", notificationService.sendNotificationToAll(request)));
+        return ResponseEntity.ok(notificationService.sendNotificationToAll(request));
     }
 
     // Tim kiem va lay danh sach tai khoan theo cac dieu kien quan tri.
