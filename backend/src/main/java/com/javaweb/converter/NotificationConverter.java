@@ -19,6 +19,9 @@ public class NotificationConverter {
             response.setSenderId(notification.getSender().getId());
             response.setSenderName(notification.getSender().getFullName());
         }
+        response.setReceiverId(notification.getReceiver().getId());
+        response.setReceiverName(notification.getReceiver().getFullName());
+        response.setAudience(notification.getAudience());
         return response;
     }
 }

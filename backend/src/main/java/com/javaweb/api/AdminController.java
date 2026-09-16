@@ -1,6 +1,8 @@
 package com.javaweb.api;
 
 import com.javaweb.enums.UserStatus;
+import com.javaweb.enums.NotificationAudience;
+import org.springframework.validation.annotation.Validated;
 import com.javaweb.model.response.UserResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
@@ -44,8 +47,19 @@ public class AdminController {
 
     @PostMapping("/notifications/broadcast")
     public ResponseEntity<String> sendNotificationToAll(
+            @RequestParam(defaultValue = "ALL") NotificationAudience audience,
             @Valid @RequestBody NotificationRequest request) {
-        return ResponseEntity.ok(notificationService.sendNotificationToAll(request));
+        return ResponseEntity.ok(audience == NotificationAudience.ALL
+                ? notificationService.sendNotificationToAll(request)
+                : notificationService.sendNotificationToAudience(audience, request));
+    }
+
+    @PostMapping("/notifications/users/{receiverId}")
+    public ResponseEntity<String> sendNotificationToUser(
+            @PathVariable @jakarta.validation.constraints.Positive Long receiverId,
+            @Valid @RequestBody NotificationRequest request) {
+        notificationService.createNotification(receiverId, request);
+        return ResponseEntity.ok("Gửi thông báo thành công");
     }
 
     // Tim kiem va lay danh sach tai khoan theo cac dieu kien quan tri.

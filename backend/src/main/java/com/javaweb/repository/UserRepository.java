@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface UserRepository extends JpaRepository<UserEntity, Long>,
         JpaSpecificationExecutor<UserEntity> {
 
+    java.util.List<UserEntity> findAllByRole(UserRole role);
+
     boolean existsByUsername(String username);
 
     Optional<UserEntity> findByUsername(String username);

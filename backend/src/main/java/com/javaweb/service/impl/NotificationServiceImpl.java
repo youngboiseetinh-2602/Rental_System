@@ -7,6 +7,9 @@ import com.javaweb.entity.NotificationEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.NotificationStatus;
 import com.javaweb.enums.ContractStatus;
+import com.javaweb.enums.NotificationAudience;
+import com.javaweb.enums.UserRole;
+import java.util.UUID;
 import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.repository.NotificationRepository;
@@ -38,9 +41,23 @@ public class NotificationServiceImpl implements NotificationService {
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
     public String sendNotificationToAll(NotificationRequest request) {
-        List<UserEntity> receivers = userRepository.findAll();
+        return sendNotificationToAudience(NotificationAudience.ALL, request);
+    }
+
+    @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional
+    public String sendNotificationToAudience(NotificationAudience audience, NotificationRequest request) {
+        if (audience == null) throw new IllegalArgumentException("Audience is required");
+        List<UserEntity> receivers = audience == NotificationAudience.ALL
+                ? userRepository.findAll() : userRepository.findAllByRole(UserRole.valueOf(audience.name()));
+        if (receivers.isEmpty()) throw new DataNotFoundException("Không có người nhận trong nhóm đã chọn");
+        Long senderId = currentUserContext.getCurrentUserId();
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new DataNotFoundException("Không tìm thấy người gửi"));
+        String dispatchId = UUID.randomUUID().toString();
         for (UserEntity receiver : receivers) {
-            createNotification(receiver.getId(), request);
+            saveNotification(sender, receiver.getId(), request, dispatchId, audience.name());
         }
         return "Gửi thông báo thành công";
     }
@@ -97,6 +114,11 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationResponse saveNotification(
             UserEntity sender, Long receiverId, NotificationRequest request) {
+        return saveNotification(sender, receiverId, request, UUID.randomUUID().toString(), "INDIVIDUAL");
+    }
+
+    private NotificationResponse saveNotification(UserEntity sender, Long receiverId,
+            NotificationRequest request, String dispatchId, String audience) {
         validateReceiverId(receiverId);
         UserEntity receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new DataNotFoundException(
@@ -107,6 +129,8 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setReceiver(receiver);
         notification.setTitle(request.getTitle());
         notification.setContent(request.getContent());
+        notification.setDispatchId(dispatchId);
+        notification.setAudience(audience);
         notification.setStatus(NotificationStatus.UNREAD);
         if (sender != null && sender.getId().equals(receiverId)) {
             notification.setStatus(NotificationStatus.READ);
@@ -123,7 +147,7 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationResponse> getSentNotifications() {
         Long senderId = currentUserContext.getCurrentUserId();
         return notificationRepository
-                .findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(senderId, senderId)
+                .findSentHistory(senderId)
                 .stream().map(notificationConverter::toResponse).toList();
     }
 

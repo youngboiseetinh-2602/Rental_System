@@ -28,4 +28,8 @@ public class NotificationResponse {
     private LocalDateTime sentAt;
 
     private LocalDateTime readAt;
+
+    private String audience;
+    private Long receiverId;
+    private String receiverName;
 }
