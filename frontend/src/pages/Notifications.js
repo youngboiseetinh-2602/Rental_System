@@ -27,13 +27,6 @@ function formatDate(value) {
     });
 }
 
-const audienceLabels = { ALL: 'Tất cả người dùng', CUSTOMER: 'Khách thuê', OWNER: 'Chủ trọ' };
-function recipientLabel(notification) {
-    return notification.audience === 'INDIVIDUAL'
-        ? notification.receiverName || `Người dùng #${notification.receiverId}`
-        : audienceLabels[notification.audience] || 'Tất cả người dùng';
-}
-
 function Notifications() {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -53,7 +46,6 @@ function Notifications() {
     const [sendError, setSendError] = useState('');
     const [success, setSuccess] = useState('');
     const [search, setSearch] = useState('');
-    const [audience, setAudience] = useState('ALL');
     const isOwner = userHasRole(user, 'OWNER');
     const isAdmin = userHasRole(user, 'ADMIN');
 
@@ -85,7 +77,7 @@ function Notifications() {
         setSendError('');
         setSuccess('');
         try {
-            await broadcastNotification({ title: title.trim(), content: content.trim(), audience });
+            await broadcastNotification({ title: title.trim(), content: content.trim() });
             setSuccess('Gửi thông báo thành công');
             setTitle('');
             setContent('');
@@ -150,16 +142,10 @@ function Notifications() {
                     <form id="broadcast-form" className="customer-request-card p-4 mb-4"
                         onSubmit={sendBroadcast} aria-busy={sending}>
                         <h2 className="h5">Tạo thông báo</h2>
-                        <p className="text-secondary">Chọn nhóm người nhận và nhập nội dung thông báo.</p>
+                        <p className="text-secondary">Gửi đến tất cả tài khoản trong hệ thống, bao gồm cả bạn.</p>
                         {sendError && <div className="profile-alert is-error" role="alert">{sendError}</div>}
                         <fieldset disabled={sending} className="notification-compose-grid">
                             <div>
-                            <label className="form-label" htmlFor="broadcast-audience">Người nhận</label>
-                            <select id="broadcast-audience" className="form-select mb-3" value={audience}
-                                onChange={event => setAudience(event.target.value)}>
-                                {Object.entries(audienceLabels).map(([value, label]) =>
-                                    <option key={value} value={value}>{label}</option>)}
-                            </select>
                             <label className="form-label" htmlFor="broadcast-title">Tiêu đề</label>
                             <input id="broadcast-title" className="form-control mb-3" required
                                 maxLength={150} value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -168,13 +154,13 @@ function Notifications() {
                                 rows={5} maxLength={2000} value={content}
                                 onChange={(event) => setContent(event.target.value)} />
                             <button type="submit" className="btn btn-success">
-                                {sending ? 'Đang gửi…' : 'Gửi thông báo'}
+                                {sending ? 'Đang gửi…' : 'Gửi cho tất cả'}
                             </button>
                             <button type="button" className="btn btn-outline-secondary ms-2"
                                 onClick={() => setComposing(false)}>Đóng</button>
                             </div>
                             <aside className="notification-compose-preview">
-                                <span className="badge text-bg-success mb-3">{audienceLabels[audience]}</span>
+                                <span className="badge text-bg-success mb-3">Tất cả người dùng</span>
                                 <h3 className="h6">Xem trước thông báo</h3>
                                 <strong>{title.trim() || 'Tiêu đề thông báo'}</strong>
                                 <p>{content.trim() || 'Nội dung bạn nhập sẽ hiển thị tại đây.'}</p>
@@ -231,7 +217,6 @@ function Notifications() {
                                                 {!isAdmin && notification.status === 'UNREAD'
                                                     && <i>Chưa đọc</i>}</div>
                                             <p>{notification.content}</p>
-                                            {isAdmin && <small>Gửi đến: {recipientLabel(notification)} · </small>}
                                             <small>{notification.senderName
                                                 ? `Từ ${notification.senderName} · ` : ''}
                                                 {formatDate(notification.sentAt)}</small>
@@ -265,7 +250,6 @@ function Notifications() {
                                     onClick={() => setSelectedNotification(null)}>×</button>
                             </div>
                             <p>{selectedNotification.content}</p>
-                            {isAdmin && <p>Gửi đến: {recipientLabel(selectedNotification)}</p>}
                             <footer>
                                 <span>{selectedNotification.senderName
                                     ? `Từ ${selectedNotification.senderName}` : 'Từ hệ thống'}</span>

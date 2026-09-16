@@ -8,8 +8,6 @@ public interface NotificationService {
 
     String sendNotificationToAll(NotificationRequest request);
 
-    String sendNotificationToAudience(com.javaweb.enums.NotificationAudience audience, NotificationRequest request);
-
     NotificationResponse createNotification(Long receiverId, NotificationRequest request);
 
     NotificationResponse createOwnerNotification(Long receiverId, NotificationRequest request);

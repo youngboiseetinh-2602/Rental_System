@@ -77,9 +77,6 @@ class NotificationServiceImplTest {
         verify(notificationRepository, times(2)).save(saved.capture());
         List<NotificationEntity> notifications = saved.getAllValues();
         assertNotSame(notifications.get(0), notifications.get(1));
-        assertNotNull(notifications.get(0).getDispatchId());
-        assertEquals(notifications.get(0).getDispatchId(), notifications.get(1).getDispatchId());
-        assertEquals("ALL", notifications.get(0).getAudience());
         assertEquals(List.of(1L, 2L), notifications.stream()
                 .map(notification -> notification.getReceiver().getId()).toList());
         for (NotificationEntity notification : notifications) {
@@ -158,10 +155,10 @@ class NotificationServiceImplTest {
     @Test
     void sentHistoryUsesOnlyCurrentAdminsOwnCopies() {
         when(currentUserContext.getCurrentUserId()).thenReturn(10L);
-        when(notificationRepository.findSentHistory(10L))
+        when(notificationRepository.findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L))
                 .thenReturn(List.of());
         assertTrue(securedService("ADMIN").getSentNotifications().isEmpty());
-        verify(notificationRepository).findSentHistory(10L);
+        verify(notificationRepository).findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L);
     }
 
     @Test
@@ -171,50 +168,5 @@ class NotificationServiceImplTest {
             assertThrows(AccessDeniedException.class, secured::getSentNotifications);
         }
         verifyNoInteractions(notificationRepository, currentUserContext);
-    }
-
-    @Test
-    void roleBroadcastTargetsOnlySelectedRoleAndKeepsDistinctDispatches() {
-        UserEntity sender = new UserEntity();
-        sender.setId(1L);
-        UserEntity receiver = new UserEntity();
-        receiver.setId(2L);
-        when(currentUserContext.getCurrentUserId()).thenReturn(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
-        for (com.javaweb.enums.UserRole role : List.of(
-                com.javaweb.enums.UserRole.CUSTOMER, com.javaweb.enums.UserRole.OWNER)) {
-            when(userRepository.findAllByRole(role)).thenReturn(List.of(receiver));
-            securedService("ADMIN").sendNotificationToAudience(
-                    com.javaweb.enums.NotificationAudience.valueOf(role.name()), request());
-            verify(userRepository).findAllByRole(role);
-        }
-        verify(userRepository, never()).findAll();
-        ArgumentCaptor<NotificationEntity> saved = ArgumentCaptor.forClass(NotificationEntity.class);
-        verify(notificationRepository, times(2)).save(saved.capture());
-        List<NotificationEntity> notifications = saved.getAllValues();
-        assertEquals("CUSTOMER", notifications.get(0).getAudience());
-        assertEquals("OWNER", notifications.get(1).getAudience());
-        assertNotEquals(notifications.get(0).getDispatchId(), notifications.get(1).getDispatchId());
-        notifications.forEach(notification -> assertSame(receiver, notification.getReceiver()));
-    }
-
-    @Test
-    void emptyGroupDoesNotReportSuccessfulSend() {
-        when(userRepository.findAllByRole(com.javaweb.enums.UserRole.CUSTOMER)).thenReturn(List.of());
-        NotificationService secured = securedService("ADMIN");
-        assertThrows(com.javaweb.customException.DataNotFoundException.class, () ->
-                secured.sendNotificationToAudience(com.javaweb.enums.NotificationAudience.CUSTOMER, request()));
-        verifyNoInteractions(notificationRepository);
-    }
-
-    @Test
-    void nonAdminsCannotSendToGroups() {
-        for (String role : List.of("OWNER", "CUSTOMER")) {
-            NotificationService secured = securedService(role);
-            assertThrows(AccessDeniedException.class, () -> secured.sendNotificationToAudience(
-                    com.javaweb.enums.NotificationAudience.OWNER, request()));
-        }
-        verifyNoInteractions(userRepository, notificationRepository);
     }
 }

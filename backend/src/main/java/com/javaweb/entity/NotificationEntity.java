@@ -27,7 +27,6 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(
         name = "notification",
         indexes = {
-                @Index(name = "idx_notification_dispatch", columnList = "dispatchId,senderId,id"),
                 @Index(
                         name = "idx_notification_receiver_status_sent_at",
                         columnList = "receiverId,status,sentAt"
@@ -73,10 +72,4 @@ public class NotificationEntity {
     private NotificationStatus status = NotificationStatus.UNREAD;
 
     private LocalDateTime readAt;
-
-    @Column(length = 36)
-    private String dispatchId;
-
-    @Column(length = 20)
-    private String audience;
 }

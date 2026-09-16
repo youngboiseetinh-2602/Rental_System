@@ -34,7 +34,7 @@ describe('notification dashboard', () => {
         root.render(<MemoryRouter><Notifications /></MemoryRouter>);
     });
 
-    it.each(['ALL', 'CUSTOMER', 'OWNER'])('sends the previewed content to %s', async audience => {
+    it('shows admin layout and sends the previewed content', async () => {
         await renderPage();
         expect(container.querySelector('.admin-shell')).not.toBeNull();
         expect(container.textContent).toContain('Lịch sử thông báo đã gửi');
@@ -43,11 +43,6 @@ describe('notification dashboard', () => {
         const create = Array.from(container.querySelectorAll('button'))
             .find(button => button.textContent === 'Tạo thông báo');
         await act(async () => create.click());
-        await act(async () => {
-            const select = container.querySelector('#broadcast-audience');
-            Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, audience);
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-        });
         for (const [id, value, prototype] of [
             ['broadcast-title', 'Bảo trì', HTMLInputElement.prototype],
             ['broadcast-content', 'Bảo trì tối nay', HTMLTextAreaElement.prototype],
@@ -62,7 +57,7 @@ describe('notification dashboard', () => {
         await act(async () => container.querySelector('form').dispatchEvent(
             new Event('submit', { bubbles: true, cancelable: true }),
         ));
-        expect(broadcastNotification).toHaveBeenCalledWith({ title: 'Bảo trì', content: 'Bảo trì tối nay', audience });
+        expect(broadcastNotification).toHaveBeenCalledWith({ title: 'Bảo trì', content: 'Bảo trì tối nay' });
         expect(container.textContent).toContain('Gửi thông báo thành công');
     });
 

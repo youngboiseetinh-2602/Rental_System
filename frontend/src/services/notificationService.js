@@ -14,20 +14,12 @@ export async function getSentNotifications() {
     return response.json();
 }
 
-export async function broadcastNotification({ title, content, audience = 'ALL' }) {
-    return responseMessage(await apiFetch(`/api/admin/notifications/broadcast?audience=${encodeURIComponent(audience)}`, {
+export async function broadcastNotification({ title, content }) {
+    return responseMessage(await apiFetch('/api/admin/notifications/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content }),
     }), 'Không thể gửi thông báo toàn cục.');
-}
-
-export async function sendAdminNotification(receiverId, { title, content }) {
-    return responseMessage(await apiFetch(`/api/admin/notifications/users/${receiverId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content }),
-    }), 'Không thể gửi thông báo.');
 }
 
 async function responseMessage(response, fallback) {
