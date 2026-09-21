@@ -38,10 +38,10 @@ public class NotificationServiceImpl implements NotificationService {
     @PreAuthorize(AuthorizationRules.ADMIN)
     @Transactional
     public String sendNotificationToAll(NotificationRequest request) {
-        List<UserEntity> receivers = userRepository.findAll();
-        for (UserEntity receiver : receivers) {
-            createNotification(receiver.getId(), request);
-        }
+        Long senderId = currentUserContext.getCurrentUserId();
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new DataNotFoundException("Sender not found: " + senderId));
+        saveNotification(sender, null, request);
         return "Gửi thông báo thành công";
     }
 
@@ -49,6 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
     @Transactional
     public NotificationResponse createNotification(Long receiverId, NotificationRequest request) {
+        validateReceiverId(receiverId);
         Long senderId = currentUserContext.getCurrentUserId();
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new DataNotFoundException(
@@ -86,6 +87,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public NotificationResponse createSystemNotification(Long receiverId, NotificationRequest request) {
+        validateReceiverId(receiverId);
         return saveNotification(null, receiverId, request);
     }
 
@@ -97,8 +99,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationResponse saveNotification(
             UserEntity sender, Long receiverId, NotificationRequest request) {
-        validateReceiverId(receiverId);
-        UserEntity receiver = userRepository.findById(receiverId)
+        if (receiverId != null) {
+            validateReceiverId(receiverId);
+        }
+        UserEntity receiver = receiverId == null ? null : userRepository.findById(receiverId)
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người nhận: " + receiverId));
 
@@ -123,7 +127,7 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationResponse> getSentNotifications() {
         Long senderId = currentUserContext.getCurrentUserId();
         return notificationRepository
-                .findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(senderId, senderId)
+                .findAllBySender_IdAndReceiverIsNullOrderBySentAtDescIdDesc(senderId)
                 .stream().map(notificationConverter::toResponse).toList();
     }
 
@@ -136,7 +140,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người dùng: " + userId));
         List<NotificationEntity> notificationEntities =
-                notificationRepository.findAllByReceiver_Id(userId);
+                notificationRepository.findAllByReceiverIsNullOrReceiver_IdOrderBySentAtDescIdDesc(userId);
 
         if (notificationEntities.isEmpty()) {
             throw new DataNotFoundException("No notifications found " );
@@ -158,7 +162,7 @@ public class NotificationServiceImpl implements NotificationService {
         Long userId = currentUserContext.getCurrentUserId();
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new DataNotFoundException("Không tìm thấy thông báo"));
-        if (!notification.getReceiver().getId().equals(userId)) {
+        if (notification.getReceiver() != null && !notification.getReceiver().getId().equals(userId)) {
             throw new ForbiddenException("Bạn không có quyền đọc thông báo này");
         }
         if (notification.getStatus() == NotificationStatus.UNREAD) {

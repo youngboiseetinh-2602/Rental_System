@@ -28,10 +28,6 @@ import org.hibernate.annotations.CreationTimestamp;
         name = "notification",
         indexes = {
                 @Index(
-                        name = "idx_notification_receiver_status_sent_at",
-                        columnList = "receiverId,status,sentAt"
-                ),
-                @Index(
                         name = "idx_notification_sender_sent_at",
                         columnList = "senderId,sentAt"
                 ),
@@ -52,8 +48,8 @@ public class NotificationEntity {
     @JoinColumn(name = "senderId")
     private UserEntity sender;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "receiverId", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiverId")
     private UserEntity receiver;
 
     @Column(nullable = false, length = 150)
@@ -72,4 +68,5 @@ public class NotificationEntity {
     private NotificationStatus status = NotificationStatus.UNREAD;
 
     private LocalDateTime readAt;
+
 }

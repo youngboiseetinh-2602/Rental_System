@@ -60,39 +60,35 @@ class NotificationServiceImplTest {
     }
 
     @Test
-    void adminCreatesSeparateUnreadNotificationsForEveryUserIncludingSender() {
+    void adminCreatesOneBroadcastWithNullReceiver() {
         UserEntity sender = new UserEntity();
         sender.setId(1L);
-        UserEntity recipient = new UserEntity();
-        recipient.setId(2L);
         when(currentUserContext.getCurrentUserId()).thenReturn(1L);
-        when(userRepository.findAll()).thenReturn(List.of(sender, recipient));
         when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(recipient));
-
-        assertEquals("Gửi thông báo thành công",
-                securedService("ADMIN").sendNotificationToAll(request()));
-
+        securedService("ADMIN").sendNotificationToAll(request());
         ArgumentCaptor<NotificationEntity> saved = ArgumentCaptor.forClass(NotificationEntity.class);
-        verify(notificationRepository, times(2)).save(saved.capture());
-        List<NotificationEntity> notifications = saved.getAllValues();
-        assertNotSame(notifications.get(0), notifications.get(1));
-        assertEquals(List.of(1L, 2L), notifications.stream()
-                .map(notification -> notification.getReceiver().getId()).toList());
-        for (NotificationEntity notification : notifications) {
-            assertSame(sender, notification.getSender());
-            assertEquals("Maintenance", notification.getTitle());
-            assertEquals("Maintenance tomorrow", notification.getContent());
-            if (notification.getReceiver().getId().equals(sender.getId())) {
-                assertEquals(NotificationStatus.READ, notification.getStatus());
-                assertNotNull(notification.getReadAt());
-            } else {
-                assertEquals(NotificationStatus.UNREAD, notification.getStatus());
-                assertNull(notification.getReadAt());
-            }
-        }
+        verify(notificationRepository).save(saved.capture());
+        assertNull(saved.getValue().getReceiver());
+        assertSame(sender, saved.getValue().getSender());
+        assertEquals("Maintenance", saved.getValue().getTitle());
+        assertEquals(NotificationStatus.UNREAD, saved.getValue().getStatus());
+        verify(userRepository, never()).findAll();
     }
 
+    @Test
+    void broadcastCanBeReadWithoutReceiverAndUsesSharedStatus() {
+        NotificationEntity broadcast = new NotificationEntity();
+        when(currentUserContext.getCurrentUserId()).thenReturn(20L);
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(broadcast));
+        service.readNotification(1L);
+        assertNotNull(broadcast.getReadAt());
+        assertEquals(NotificationStatus.READ, broadcast.getStatus());
+        java.time.LocalDateTime readAt = broadcast.getReadAt();
+        when(currentUserContext.getCurrentUserId()).thenReturn(30L);
+        service.readNotification(1L);
+        assertEquals(readAt, broadcast.getReadAt());
+        verify(notificationRepository).save(broadcast);
+    }
     @Test
     void ownerAndCustomerCannotBroadcast() {
         for (String role : List.of("OWNER", "CUSTOMER")) {
@@ -153,12 +149,12 @@ class NotificationServiceImplTest {
     }
 
     @Test
-    void sentHistoryUsesOnlyCurrentAdminsOwnCopies() {
+    void sentHistoryUsesCurrentAdminsBroadcasts() {
         when(currentUserContext.getCurrentUserId()).thenReturn(10L);
-        when(notificationRepository.findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L))
+        when(notificationRepository.findAllBySender_IdAndReceiverIsNullOrderBySentAtDescIdDesc(10L))
                 .thenReturn(List.of());
         assertTrue(securedService("ADMIN").getSentNotifications().isEmpty());
-        verify(notificationRepository).findAllBySender_IdAndReceiver_IdOrderBySentAtDescIdDesc(10L, 10L);
+        verify(notificationRepository).findAllBySender_IdAndReceiverIsNullOrderBySentAtDescIdDesc(10L);
     }
 
     @Test
