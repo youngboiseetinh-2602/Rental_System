@@ -39,8 +39,10 @@ public class AdminController {
     private final NotificationService notificationService;
 
     @GetMapping("/contracts/dashboard")
-    public ResponseEntity<List<ContractResponse>> contractDashboard() {
-        return ResponseEntity.ok(adminService.contractDashboard());
+    public ResponseEntity<Page<ContractResponse>> contractDashboard(
+            @RequestParam Map<String, Object> params,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(adminService.contractDashboard(params, pageable));
     }
 
     @GetMapping("/notifications/sent")

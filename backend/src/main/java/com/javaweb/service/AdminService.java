@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface AdminService {
 
-    List<ContractResponse> contractDashboard();
+    Page<ContractResponse> contractDashboard(Map<String, Object> params, Pageable pageable);
 
     Page<UserResponse> getAllUsers(Pageable pageable);
 

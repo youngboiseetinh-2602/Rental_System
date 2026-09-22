@@ -22,8 +22,12 @@ export async function getAdminUsers(params = {}) {
     return readResponse(response, 'Không thể tải danh sách tài khoản.');
 }
 
-export async function getAdminDashboardContracts() {
-    const response = await apiFetch('/api/admin/contracts/dashboard');
+export async function getAdminDashboardContracts(params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== '' && value !== undefined && value !== null) query.set(key, value);
+    });
+    const response = await apiFetch(`/api/admin/contracts/dashboard?${query}`);
     return readResponse(response, 'Không thể tải thống kê hợp đồng.');
 }
 

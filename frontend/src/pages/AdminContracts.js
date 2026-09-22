@@ -4,7 +4,7 @@ import AdminContractOverview from '../components/AdminContractOverview';
 
 function AdminContracts() {
     return (
-        <AdminLayout title="Thống kê hợp đồng" description="Theo dõi các hợp đồng còn hiệu lực trong tháng hiện tại.">
+        <AdminLayout title="Thống kê hợp đồng" description="Tìm kiếm hợp đồng theo khoảng tháng và trạng thái.">
             <AdminContractOverview />
         </AdminLayout>
     );

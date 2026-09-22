@@ -9,21 +9,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.query.Param;
 
-public interface ContractRepository extends JpaRepository<ContractEntity, Long> {
-
-        @Query("""
-                        select contract from ContractEntity contract
-                        where contract.status = :status
-                          and contract.startDate <= :monthEnd
-                          and (contract.endDate is null or contract.endDate >= :monthStart)
-                        order by contract.id desc
-                        """)
-        List<ContractEntity> findEffectiveContractsInMonth(
-                        @Param("status") ContractStatus status,
-                        @Param("monthStart") LocalDate monthStart,
-                        @Param("monthEnd") LocalDate monthEnd);
+public interface ContractRepository extends JpaRepository<ContractEntity, Long>,
+                JpaSpecificationExecutor<ContractEntity> {
 
         boolean existsByTenant_IdAndRoom_IdAndStatus(
                         Long tenantId,

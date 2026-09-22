@@ -7402,18 +7402,74 @@ a {
     overflow: hidden;
 }
 
+.admin-contract-filters {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto auto;
+    align-items: end;
+    gap: 12px;
+    padding: 20px 22px 0;
+}
+
+.admin-contract-filters label span {
+    display: block;
+    margin-bottom: 7px;
+    color: #61746a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-contract-filters input {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid #dce4df;
+    border-radius: 8px;
+    background: #fbfcfb;
+    color: #34473f;
+}
+
+.admin-contract-filters p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #7c8b82;
+    font-size: 12px;
+}
+
+.admin-contract-reset {
+    padding: 10px 12px;
+    border: 1px solid #dce4df;
+    border-radius: 8px;
+    background: #fff;
+    color: #27735c;
+    cursor: pointer;
+}
+
 .admin-contract-stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     padding: 20px 22px;
 }
 
-.admin-contract-stats article {
+.admin-contract-stats button {
     padding: 16px;
     border: 1px solid #e2eae5;
     border-radius: 12px;
     background: #f7faf8;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-contract-stats button:disabled {
+    cursor: default;
+}
+
+.admin-contract-stats button.is-selected {
+    border-color: #23785e;
+    background: #eaf6ef;
+}
+
+.admin-contract-stats button:not(:disabled):hover {
+    border-color: #4b967d;
 }
 
 .admin-contract-stats span {
@@ -7430,10 +7486,21 @@ a {
 }
 
 .admin-contract-subheading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0 22px 14px;
     color: #1b382e;
     font-size: 14px;
     font-weight: 700;
+}
+
+.admin-contract-subheading button {
+    border: 0;
+    background: transparent;
+    color: #27735c;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 .admin-contract-message {
@@ -8044,6 +8111,10 @@ a {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .admin-contract-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .admin-type-grid {
         grid-template-columns: 1fr
     }
@@ -8059,12 +8130,18 @@ a {
 
 @media(max-width:520px) {
     .admin-contract-stats {
+        grid-template-columns: 1fr;
         gap: 8px;
         padding: 14px;
     }
 
-    .admin-contract-stats article {
+    .admin-contract-stats button {
         padding: 12px;
+    }
+
+    .admin-contract-filters {
+        grid-template-columns: 1fr;
+        padding: 14px 14px 0;
     }
 
     .admin-stats {
