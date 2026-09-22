@@ -4,6 +4,7 @@ import com.javaweb.enums.UserStatus;
 import com.javaweb.model.response.UserResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.service.AdminService;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.NotificationService;
@@ -36,6 +37,11 @@ public class AdminController {
     private final AdminService adminService;
     private final ContractService contractService;
     private final NotificationService notificationService;
+
+    @GetMapping("/contracts/dashboard")
+    public ResponseEntity<List<ContractResponse>> contractDashboard() {
+        return ResponseEntity.ok(adminService.contractDashboard());
+    }
 
     @GetMapping("/notifications/sent")
     public ResponseEntity<List<com.javaweb.model.response.NotificationResponse>> getSentNotifications() {

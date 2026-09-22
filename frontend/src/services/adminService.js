@@ -22,6 +22,11 @@ export async function getAdminUsers(params = {}) {
     return readResponse(response, 'Không thể tải danh sách tài khoản.');
 }
 
+export async function getAdminDashboardContracts() {
+    const response = await apiFetch('/api/admin/contracts/dashboard');
+    return readResponse(response, 'Không thể tải thống kê hợp đồng.');
+}
+
 export async function updateAdminUserStatus(id, status) {
     const response = await apiFetch(`/api/admin/users/${id}/status?status=${status}`, { method: 'PATCH' });
     return readResponse(response, 'Không thể cập nhật trạng thái.');

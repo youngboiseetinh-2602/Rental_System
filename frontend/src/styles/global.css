@@ -7397,6 +7397,55 @@ a {
     gap: 20px;
 }
 
+.admin-contract-dashboard {
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.admin-contract-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 20px 22px;
+}
+
+.admin-contract-stats article {
+    padding: 16px;
+    border: 1px solid #e2eae5;
+    border-radius: 12px;
+    background: #f7faf8;
+}
+
+.admin-contract-stats span {
+    display: block;
+    color: #61746a;
+    font-size: 12px;
+}
+
+.admin-contract-stats strong {
+    display: block;
+    margin-top: 9px;
+    color: #1b382e;
+    font-size: 27px;
+}
+
+.admin-contract-subheading {
+    padding: 0 22px 14px;
+    color: #1b382e;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-contract-message {
+    margin: 0;
+    padding: 22px;
+    color: #61746a;
+}
+
+.admin-contract-dashboard .admin-alert {
+    margin: 20px 22px;
+}
+
 .admin-card-heading {
     display: flex;
     justify-content: space-between;
@@ -7991,6 +8040,10 @@ a {
         grid-template-columns: 1fr
     }
 
+    .admin-contract-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .admin-type-grid {
         grid-template-columns: 1fr
     }
@@ -8005,6 +8058,15 @@ a {
 }
 
 @media(max-width:520px) {
+    .admin-contract-stats {
+        gap: 8px;
+        padding: 14px;
+    }
+
+    .admin-contract-stats article {
+        padding: 12px;
+    }
+
     .admin-stats {
         grid-template-columns: 1fr 1fr;
         gap: 10px
