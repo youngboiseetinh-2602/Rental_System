@@ -1,6 +1,7 @@
 package com.javaweb.service;
 
 import com.javaweb.model.response.UserResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.enums.UserStatus;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AdminService {
+
+    List<ContractResponse> contractDashboard();
 
     Page<UserResponse> getAllUsers(Pageable pageable);
 

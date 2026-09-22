@@ -3,17 +3,21 @@ package com.javaweb.service.impl;
 import com.javaweb.builder.UserSearchBuilder;
 import com.javaweb.converter.UserConverter;
 import com.javaweb.converter.UserSearchBuilderConverter;
+import com.javaweb.converter.ContractConverter;
 import com.javaweb.customException.DataNotFoundException;
 import com.javaweb.customException.ConflictException;
 import com.javaweb.entity.RentalTypeEntity;
 import com.javaweb.entity.UserEntity;
+import com.javaweb.enums.ContractStatus;
 import com.javaweb.enums.UserStatus;
 import com.javaweb.model.response.UserResponse;
+import com.javaweb.model.response.ContractResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.repository.RentalTypeRepository;
 import com.javaweb.repository.RentalPropertyRepository;
 import com.javaweb.repository.UserRepository;
+import com.javaweb.repository.ContractRepository;
 import com.javaweb.security.AuthorizationRules;
 import com.javaweb.service.AdminService;
 import com.javaweb.specification.UserSpecification;
@@ -21,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.time.ZoneId;
+import java.time.YearMonth;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,12 +39,30 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
+    private static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
     private final UserRepository userRepository;
     private final UserConverter userConverter;
     private final UserSearchBuilderConverter userSearchBuilderConverter;
     private final RentalTypeRepository rentalTypeRepository;
     private final RentalPropertyRepository rentalPropertyRepository;
     private final ModelMapper modelMapper;
+    private final ContractRepository contractRepository;
+    private final ContractConverter contractConverter;
+
+    @Override
+    @PreAuthorize(AuthorizationRules.ADMIN)
+    @Transactional(readOnly = true)
+    public List<ContractResponse> contractDashboard() {
+        YearMonth currentMonth = YearMonth.now(VIETNAM_ZONE);
+        return contractRepository.findEffectiveContractsInMonth(
+                        ContractStatus.APPROVED,
+                        currentMonth.atDay(1),
+                        currentMonth.atEndOfMonth())
+                .stream()
+                .map(contractConverter::toContractResponse)
+                .toList();
+    }
 
     @Override
     @PreAuthorize(AuthorizationRules.ADMIN)
