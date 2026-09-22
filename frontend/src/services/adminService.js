@@ -28,7 +28,11 @@ export async function getAdminDashboardContracts(params = {}) {
         if (value !== '' && value !== undefined && value !== null) query.set(key, value);
     });
     const response = await apiFetch(`/api/admin/contracts/dashboard?${query}`);
-    return readResponse(response, 'Không thể tải thống kê hợp đồng.');
+    const data = await readResponse(response, 'Không thể tải thống kê hợp đồng.');
+    if (!data || !Array.isArray(data.content) || typeof data.totalPages !== 'number') {
+        throw new Error('Backend chưa cập nhật API thống kê hợp đồng. Vui lòng thử lại sau.');
+    }
+    return data;
 }
 
 export async function updateAdminUserStatus(id, status) {

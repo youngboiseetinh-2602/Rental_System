@@ -80,7 +80,8 @@ function AdminContractOverview({ preview = false }) {
         setValidationError('');
     };
 
-    const contracts = result || { content: [], totalElements: 0, totalPages: 0 };
+    const contracts = result && Array.isArray(result.content)
+        ? result : { content: [], totalElements: 0, totalPages: 0 };
     const pageContracts = preview ? contracts.content.slice(0, 5) : contracts.content;
     const visibleContracts = status
         ? pageContracts.filter((contract) => contract.status === status) : pageContracts;
