@@ -18,6 +18,7 @@ function AccountNavigation({ user }) {
                 <NavLink to="/admin/users"><AccountMenuIcon name="requests" /> Danh sách người dùng</NavLink>
                 <NavLink to="/admin/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>
                 <NavLink to="/admin/rental-types"><AccountMenuIcon name="properties" /> Loại hình cho thuê</NavLink>
+                <NavLink to="/admin/contracts"><AccountMenuIcon name="contract" /> Thống kê hợp đồng</NavLink>
                 <ChatNavLink />
                 <NotificationNavLink />
             </nav>

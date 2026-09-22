@@ -23,7 +23,7 @@ function renderMenu(element, path) {
 }
 
 describe('account menu across pages', () => {
-    it.each(['/admin', '/admin/users', '/admin/properties', '/admin/rental-types'])(
+    it.each(['/admin', '/admin/users', '/admin/properties', '/admin/rental-types', '/admin/contracts'])(
         'keeps the full profile menu on %s', (path) => {
             const profile = renderMenu(<AccountNavigation user={{ roles: ['ADMIN'] }} />, '/profile');
             const admin = renderMenu(<AdminLayout title="Quản trị" />, path);
@@ -32,6 +32,7 @@ describe('account menu across pages', () => {
             expect(destinations(admin)).toEqual(destinations(profile));
             expect(destinations(admin)).toContain('/chats');
             expect(destinations(admin)).toContain('/notifications');
+            expect(destinations(admin)).toContain('/admin/contracts');
             expect(admin.querySelectorAll('nav a[aria-current="page"]')).toHaveLength(1);
         },
     );

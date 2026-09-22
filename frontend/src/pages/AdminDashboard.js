@@ -1,30 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
-import { getAdminDashboardContracts, getAdminUsers, getRentalTypes } from '../services/adminService';
-
-function currentVietnamMonth() {
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit',
-    }).formatToParts(new Date());
-    const year = parts.find((part) => part.type === 'year').value;
-    const month = parts.find((part) => part.type === 'month').value;
-    return { key: `${year}-${month}`, label: `${month}/${year}` };
-}
-
-function formatDate(value) {
-    if (!value) return 'Không thời hạn';
-    const [year, month, day] = value.slice(0, 10).split('-');
-    return `${day}/${month}/${year}`;
-}
+import { getAdminUsers, getRentalTypes } from '../services/adminService';
+import AdminContractOverview from '../components/AdminContractOverview';
 
 const labels = { ADMIN: 'Quản trị viên', OWNER: 'Chủ trọ', CUSTOMER: 'Khách thuê', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm ngưng', LOCKED: 'Đã khóa' };
 
 function AdminDashboard() {
     const [data, setData] = useState({ users: [], total: 0, owners: 0, customers: 0, locked: 0, types: 0 });
-    const [contracts, setContracts] = useState([]);
-    const [contractsLoading, setContractsLoading] = useState(true);
-    const [contractsError, setContractsError] = useState('');
     const [error, setError] = useState('');
     useEffect(() => {
         Promise.all([
@@ -39,27 +22,6 @@ function AdminDashboard() {
             locked: locked.totalElements || 0, types: types.length || 0,
         })).catch((e) => setError(e.message));
     }, []);
-    useEffect(() => {
-        let active = true;
-        getAdminDashboardContracts()
-            .then((result) => {
-                if (active) setContracts(Array.isArray(result) ? result : []);
-            })
-            .catch((requestError) => {
-                if (active) setContractsError(requestError.message);
-            })
-            .finally(() => {
-                if (active) setContractsLoading(false);
-            });
-        return () => { active = false; };
-    }, []);
-    const month = currentVietnamMonth();
-    const endingThisMonth = contracts.filter((contract) => contract.endDate?.slice(0, 7) === month.key);
-    const roomCount = new Set(contracts.map((contract) => contract.roomId)).size;
-    const propertyCount = new Set(contracts.map((contract) => contract.rentalPropertyId)).size;
-    const upcomingContracts = [...contracts]
-        .sort((a, b) => (a.endDate || '9999-12-31').localeCompare(b.endDate || '9999-12-31'))
-        .slice(0, 5);
     const roleTotal = Math.max(1, data.owners + data.customers);
     const ownerPercent = Math.round(data.owners * 100 / roleTotal);
     return (
@@ -85,25 +47,7 @@ function AdminDashboard() {
                     <ul><li><i className="customer" /><span>Khách thuê<small>{100 - ownerPercent}% tổng số</small></span><strong>{data.customers}</strong></li><li><i className="owner" /><span>Chủ trọ<small>{ownerPercent}% tổng số</small></span><strong>{data.owners}</strong></li><li><i className="locked" /><span>Đã khóa<small>Cần kiểm tra</small></span><strong>{data.locked}</strong></li></ul>
                 </article>
             </section>
-            <section className="admin-card admin-contract-dashboard" aria-labelledby="admin-contract-heading">
-                <div className="admin-card-heading">
-                    <div><span>HỢP ĐỒNG THÁNG {month.label}</span><h2 id="admin-contract-heading">Thống kê hợp đồng</h2></div>
-                </div>
-                {contractsError && <div className="admin-alert error">{contractsError}</div>}
-                {contractsLoading ? <p className="admin-contract-message">Đang tải thống kê hợp đồng...</p> : !contractsError && <>
-                    <div className="admin-contract-stats">
-                        <article><span>Hợp đồng trong tháng</span><strong>{contracts.length}</strong></article>
-                        <article><span>Kết thúc trong tháng</span><strong>{endingThisMonth.length}</strong></article>
-                        <article><span>Phòng có hợp đồng</span><strong>{roomCount}</strong></article>
-                        <article><span>Nhà trọ có hợp đồng</span><strong>{propertyCount}</strong></article>
-                    </div>
-                    <div className="admin-contract-subheading">5 hợp đồng kết thúc sớm nhất</div>
-                    <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Hợp đồng</th><th>Phòng</th><th>Người thuê</th><th>Bắt đầu</th><th>Kết thúc</th></tr></thead><tbody>
-                        {upcomingContracts.map((contract) => <tr key={contract.id}><td><strong>#{contract.id}</strong></td><td>{contract.roomName || `Phòng #${contract.roomId}`}</td><td>{contract.tenantName || `Người thuê #${contract.tenantId}`}</td><td>{formatDate(contract.startDate)}</td><td>{formatDate(contract.endDate)}</td></tr>)}
-                        {!upcomingContracts.length && <tr><td colSpan="5" className="admin-empty">Chưa có hợp đồng hiệu lực trong tháng này.</td></tr>}
-                    </tbody></table></div>
-                </>}
-            </section>
+            <AdminContractOverview preview />
         </AdminLayout>
     );
 }

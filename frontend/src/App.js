@@ -30,6 +30,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminRentalTypes from './pages/AdminRentalTypes';
 import AdminProperties from './pages/AdminProperties';
+import AdminContracts from './pages/AdminContracts';
 import AdminContactFooter from './components/AdminContactFooter';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ChatRealtimeProvider } from './contexts/ChatRealtimeProvider';
@@ -169,6 +170,7 @@ function App() {
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                         <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
                         <Route path="/admin/rental-types" element={<AdminRoute><AdminRentalTypes /></AdminRoute>} />
+                        <Route path="/admin/contracts" element={<AdminRoute><AdminContracts /></AdminRoute>} />
                         </Routes>
                     </main>
                     <AdminContactFooter />
