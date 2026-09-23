@@ -63,7 +63,7 @@ class AdminContractDashboardTest {
                 .toContractSearchBuilder(Map.of());
         YearMonth currentMonth = YearMonth.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         assertEquals(currentMonth, search.getFrom());
-        assertEquals(currentMonth, search.getTo());
+        assertEquals(currentMonth.plusMonths(1), search.getTo());
         ArgumentCaptor<Pageable> page = ArgumentCaptor.forClass(Pageable.class);
         verify(contractRepository).findAll(any(Specification.class), page.capture());
         assertEquals(2, page.getValue().getPageNumber());
@@ -81,7 +81,7 @@ class AdminContractDashboardTest {
 
         ContractSearchBuilder toCurrent = converter.toContractSearchBuilder(Map.of("from", "2025-06"));
         assertEquals(YearMonth.of(2025, 6), toCurrent.getFrom());
-        assertEquals(YearMonth.now(ZoneId.of("Asia/Ho_Chi_Minh")), toCurrent.getTo());
+        assertEquals(YearMonth.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusMonths(1), toCurrent.getTo());
     }
 
     @Test
@@ -89,5 +89,8 @@ class AdminContractDashboardTest {
         assertThrows(IllegalArgumentException.class, () ->
                 new ContractSearchBuilderConverter().toContractSearchBuilder(
                         Map.of("from", "2026-10", "to", "2026-09")));
+        assertThrows(IllegalArgumentException.class, () ->
+                new ContractSearchBuilderConverter().toContractSearchBuilder(
+                        Map.of("from", "2026-07", "to", "2026-07")));
     }
 }

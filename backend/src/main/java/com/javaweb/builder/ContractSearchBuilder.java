@@ -16,9 +16,9 @@ public class ContractSearchBuilder {
         YearMonth currentMonth = YearMonth.now(VIETNAM_ZONE);
         this.from = builder.from == null && builder.to == null
                 ? currentMonth : builder.from;
-        this.to = builder.to == null ? currentMonth : builder.to;
-        if (from != null && from.isAfter(to)) {
-            throw new IllegalArgumentException("Tháng bắt đầu không được sau tháng kết thúc");
+        this.to = builder.to == null ? currentMonth.plusMonths(1) : builder.to;
+        if (from != null && !from.isBefore(to)) {
+            throw new IllegalArgumentException("Tháng bắt đầu phải trước tháng kết thúc");
         }
     }
 

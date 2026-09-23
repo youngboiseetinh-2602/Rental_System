@@ -251,6 +251,7 @@ public class ContractServiceImpl implements ContractService {
         contract.setRoom(room);
         contract.setStartDate(request.getStartDate());
         contract.setEndDate(request.getEndDate());
+        contract.setRentPrice(room.getRoomType().getMonthlyPrice());
         contract.setStatus(ContractStatus.PENDING);
         return contract;
     }

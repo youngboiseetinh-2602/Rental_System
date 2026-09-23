@@ -22,8 +22,8 @@ public final class ContractSpecification {
                     ContractStatus.TERMINATED,
                     ContractStatus.EXPIRED));
             if (search.getTo() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(
-                        root.get("startDate"), search.getTo().atEndOfMonth()));
+                predicates.add(criteriaBuilder.lessThan(
+                        root.get("startDate"), search.getTo().atDay(1)));
             }
             if (search.getFrom() != null) {
                 LocalDate monthStart = search.getFrom().atDay(1);

@@ -22,9 +22,8 @@ function formatMonth(value) {
 
 function periodLabel(from, to) {
     if (!to) return 'Hợp đồng';
-    if (!from) return `TỪ ĐẦU ĐẾN THÁNG ${formatMonth(to)}`;
-    if (from === to) return `HỢP ĐỒNG THÁNG ${formatMonth(to)}`;
-    return `TỪ THÁNG ${formatMonth(from)} ĐẾN ${formatMonth(to)}`;
+    if (!from) return `ĐẾN TRƯỚC THÁNG ${formatMonth(to)}`;
+    return `TỪ THÁNG ${formatMonth(from)} ĐẾN TRƯỚC THÁNG ${formatMonth(to)}`;
 }
 
 function currentVietnamMonth() {
@@ -32,6 +31,11 @@ function currentVietnamMonth() {
         timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit',
     }).formatToParts(new Date());
     return `${parts.find((part) => part.type === 'year').value}-${parts.find((part) => part.type === 'month').value}`;
+}
+
+function nextMonth(month) {
+    const [year, number] = month.split('-').map(Number);
+    return number === 12 ? `${year + 1}-01` : `${year}-${String(number + 1).padStart(2, '0')}`;
 }
 
 function AdminContractOverview({ preview = false }) {
@@ -63,8 +67,8 @@ function AdminContractOverview({ preview = false }) {
 
     const search = (event) => {
         event.preventDefault();
-        if (draft.from && draft.to && draft.from > draft.to) {
-            setValidationError('Tháng bắt đầu không được sau tháng kết thúc.');
+        if (draft.from && draft.to && draft.from >= draft.to) {
+            setValidationError('Tháng bắt đầu phải trước tháng kết thúc.');
             return;
         }
         setValidationError('');
@@ -80,8 +84,7 @@ function AdminContractOverview({ preview = false }) {
         setValidationError('');
     };
 
-    const contracts = result && Array.isArray(result.content)
-        ? result : { content: [], totalElements: 0, totalPages: 0 };
+    const contracts = result || { content: [], totalElements: 0, totalPages: 0 };
     const pageContracts = preview ? contracts.content.slice(0, 5) : contracts.content;
     const visibleContracts = status
         ? pageContracts.filter((contract) => contract.status === status) : pageContracts;
@@ -91,7 +94,7 @@ function AdminContractOverview({ preview = false }) {
     }), {});
     const currentMonth = currentVietnamMonth();
     const periodFrom = applied.from || (applied.to ? null : currentMonth);
-    const periodTo = applied.to || currentMonth;
+    const periodTo = applied.to || nextMonth(currentMonth);
 
     return (
         <section className="admin-card admin-contract-dashboard" aria-labelledby="admin-contract-heading">
@@ -103,11 +106,11 @@ function AdminContractOverview({ preview = false }) {
             {!preview && <form className="admin-contract-filters" onSubmit={search}>
                 <label><span>Từ tháng</span><input type="month" value={draft.from}
                     onChange={(event) => setDraft({ ...draft, from: event.target.value })} /></label>
-                <label><span>Đến tháng</span><input type="month" value={draft.to}
+                <label><span>Trước tháng</span><input type="month" value={draft.to}
                     onChange={(event) => setDraft({ ...draft, to: event.target.value })} /></label>
                 <button className="admin-primary" type="submit">Tìm kiếm</button>
                 <button className="admin-contract-reset" type="button" onClick={clear}>Tháng hiện tại</button>
-                <p>Để trống cả hai ô: tháng hiện tại. Chỉ nhập một ô: tìm đến tháng hiện tại hoặc từ đầu đến tháng đã chọn.</p>
+                <p>Để trống cả hai ô: tháng hiện tại. Chỉ nhập một ô: tìm đến hết tháng hiện tại hoặc đến trước tháng đã chọn.</p>
             </form>}
 
             {validationError && <div className="admin-alert error">{validationError}</div>}

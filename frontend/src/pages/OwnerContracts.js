@@ -20,6 +20,10 @@ function formatDate(value) {
     return year && month && day ? `${day}/${month}/${year}` : value;
 }
 
+function formatRentPrice(value) {
+    return value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} đ/tháng`;
+}
+
 function OwnerContracts() {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -133,6 +137,7 @@ function OwnerContracts() {
                                         <th>Hợp đồng</th>
                                         <th>Nhà trọ / Phòng</th>
                                         <th>Người thuê</th>
+                                        <th>Giá thuê</th>
                                         <th>Bắt đầu</th>
                                         <th>Kết thúc</th>
                                         <th>Trạng thái</th>
@@ -150,6 +155,7 @@ function OwnerContracts() {
                                             </td>
                                             <td>{contract.tenantName
                                                 || `Người thuê #${contract.tenantId}`}</td>
+                                            <td>{formatRentPrice(contract.rentPrice)}</td>
                                             <td>{formatDate(contract.startDate)}</td>
                                             <td>{formatDate(contract.endDate)}</td>
                                             <td><span className={`owner-contract-status is-${String(

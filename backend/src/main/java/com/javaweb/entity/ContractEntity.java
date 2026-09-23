@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -44,6 +45,9 @@ public class ContractEntity {
     private LocalDate startDate;
 
     private LocalDate endDate;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal rentPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "ENUM('PENDING','APPROVED','CANCELLED','TERMINATED','EXPIRED')")
