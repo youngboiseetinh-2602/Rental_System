@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import { getAdminUsers, getRentalTypes } from '../services/adminService';
 import AdminContractOverview from '../components/AdminContractOverview';
+import RevenueOverview from '../components/RevenueOverview';
 
 const labels = { ADMIN: 'Quản trị viên', OWNER: 'Chủ trọ', CUSTOMER: 'Khách thuê', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm ngưng', LOCKED: 'Đã khóa' };
 
@@ -47,6 +48,8 @@ function AdminDashboard() {
                     <ul><li><i className="customer" /><span>Khách thuê<small>{100 - ownerPercent}% tổng số</small></span><strong>{data.customers}</strong></li><li><i className="owner" /><span>Chủ trọ<small>{ownerPercent}% tổng số</small></span><strong>{data.owners}</strong></li><li><i className="locked" /><span>Đã khóa<small>Cần kiểm tra</small></span><strong>{data.locked}</strong></li></ul>
                 </article>
             </section>
+            {/* /new/ */}
+            <RevenueOverview admin />
             <AdminContractOverview preview />
         </AdminLayout>
     );

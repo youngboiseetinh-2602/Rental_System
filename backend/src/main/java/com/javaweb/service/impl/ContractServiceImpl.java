@@ -20,6 +20,7 @@ import com.javaweb.security.AuthorizationRules;
 import com.javaweb.security.CurrentUserContext;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.NotificationService;
+import com.javaweb.service.RevenueService;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -31,6 +32,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,8 @@ public class ContractServiceImpl implements ContractService {
     private final NotificationService notificationService;
     private final ContractConverter contractConverter;
     private final CurrentUserContext currentUserContext;
+    // /new/
+    private final RevenueService revenueService;
 
     @Override
     @PreAuthorize(AuthorizationRules.CUSTOMER)
@@ -59,7 +63,8 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @PreAuthorize(AuthorizationRules.OWNER_OR_ADMIN)
-    @Transactional
+    // /new/
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public String processRentalRequest(
             Long contractId, ContractStatus status, String rejectionReason) {
         if (status != ContractStatus.APPROVED && status != ContractStatus.CANCELLED) {
@@ -93,13 +98,18 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    @PreAuthorize(AuthorizationRules.ADMIN)
+    @PreAuthorize(AuthorizationRules.OWNER)
     @Transactional
     public String terminateContract(Long contractId) {
-        checkAdminAccess();
+        if (!currentUserContext.hasAuthority("ROLE_OWNER")) {
+            throw new ForbiddenException("Chỉ chủ trọ mới có thể kết thúc hợp đồng");
+        }
         Long roomId = getContractRoomId(contractId);
         RoomEntity room = getRoomForUpdate(roomId);
         ContractEntity contract = getContractForUpdate(contractId);
+        if (!getOwnerId(contract).equals(currentUserContext.getCurrentUserId())) {
+            throw new ForbiddenException("Bạn không có quyền kết thúc hợp đồng này");
+        }
         if (contract.getStatus() != ContractStatus.APPROVED) {
             throw new ConflictException("Chỉ có thể kết thúc hợp đồng đã được chấp nhận");
         }
@@ -111,6 +121,7 @@ public class ContractServiceImpl implements ContractService {
 
         contractRepository.save(contract);
         roomRepository.save(room);
+        sendTerminatedNotification(contract);
         return "Kết thúc hợp đồng thành công";
     }
 
@@ -287,6 +298,8 @@ public class ContractServiceImpl implements ContractService {
 
         contractRepository.saveAll(pendingContracts);
         roomRepository.save(room);
+        // /new/
+        revenueService.addApprovedContract(contract);
         sendApprovedNotification(contract);
         return "Chấp nhận yêu cầu thuê thành công";
     }
@@ -326,6 +339,15 @@ public class ContractServiceImpl implements ContractService {
                 "Yêu cầu thuê đã được chấp nhận",
                 "Yêu cầu thuê phòng " + contract.getRoom().getName()
                         + " đã được chủ trọ chấp nhận");
+    }
+
+    private void sendTerminatedNotification(ContractEntity contract) {
+        sendNotification(
+                contract,
+                "Hợp đồng đã chấm dứt",
+                "Hợp đồng #" + contract.getId()
+                        + " của phòng " + contract.getRoom().getName()
+                        + " đã chấm dứt vào ngày " + contract.getEndDate());
     }
 
     private void sendRejectedNotification(
@@ -389,12 +411,6 @@ public class ContractServiceImpl implements ContractService {
                 currentUserContext.getCurrentUserId())
                 && !currentUserContext.hasAuthority("ROLE_ADMIN")) {
             throw new ForbiddenException("Bạn không có quyền xử lý yêu cầu thuê này");
-        }
-    }
-
-    private void checkAdminAccess() {
-        if (!currentUserContext.hasAuthority("ROLE_ADMIN")) {
-            throw new ForbiddenException("Chỉ quản trị viên mới có thể kết thúc hợp đồng");
         }
     }
 

@@ -22,6 +22,14 @@ export async function broadcastNotification({ title, content }) {
     }), 'Không thể gửi thông báo toàn cục.');
 }
 
+export async function sendPrivateNotification(receiverId, { title, content }) {
+    return responseMessage(await apiFetch(`/api/admin/notifications/${encodeURIComponent(receiverId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content }),
+    }), 'Không thể gửi thông báo cho chủ trọ.');
+}
+
 async function responseMessage(response, fallback) {
     const text = await response.text();
     if (!response.ok) {

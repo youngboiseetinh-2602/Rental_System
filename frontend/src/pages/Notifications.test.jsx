@@ -2,14 +2,14 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import Notifications from './Notifications';
-import { broadcastNotification, getMyNotifications, getSentNotifications, markNotificationAsRead } from '../services/notificationService';
+import { broadcastNotification, getMyNotifications, getSentNotifications, markNotificationAsRead, sendPrivateNotification } from '../services/notificationService';
 
 const auth = vi.hoisted(() => ({ user: { roles: ['ADMIN'], username: 'admin' } }));
 vi.mock('../hooks/useAuth', () => ({ default: () => auth }));
 vi.mock('../components/AccountNavigation', () => ({ default: () => <nav>Menu</nav> }));
 vi.mock('../services/userService', () => ({ getMyProfile: vi.fn().mockResolvedValue({ fullName: 'Admin' }) }));
 vi.mock('../services/notificationService', () => ({
-    getMyNotifications: vi.fn(), getSentNotifications: vi.fn(), broadcastNotification: vi.fn(), markNotificationAsRead: vi.fn(),
+    getMyNotifications: vi.fn(), getSentNotifications: vi.fn(), broadcastNotification: vi.fn(), markNotificationAsRead: vi.fn(), sendPrivateNotification: vi.fn(),
 }));
 
 describe('notification dashboard', () => {
@@ -22,6 +22,7 @@ describe('notification dashboard', () => {
         getSentNotifications.mockReset().mockResolvedValue([]);
         markNotificationAsRead.mockReset();
         broadcastNotification.mockReset().mockResolvedValue('Gửi thông báo thành công');
+        sendPrivateNotification.mockReset().mockResolvedValue('OK');
         container = document.createElement('div');
         document.body.appendChild(container);
         root = createRoot(container);
@@ -59,6 +60,24 @@ describe('notification dashboard', () => {
         ));
         expect(broadcastNotification).toHaveBeenCalledWith({ title: 'Bảo trì', content: 'Bảo trì tối nay' });
         expect(container.textContent).toContain('Gửi thông báo thành công');
+    });
+
+    it('reuses the compose form to send only to the selected owner', async () => {
+        await act(async () => root.render(<MemoryRouter initialEntries={['/notifications?receiverId=7&receiverName=Owner']}><Notifications /></MemoryRouter>));
+        expect(container.textContent).toContain('Gửi riêng đến Owner (#7)');
+        for (const [id, value, prototype] of [
+            ['broadcast-title', 'Thông báo riêng', HTMLInputElement.prototype],
+            ['broadcast-content', 'Vui lòng liên hệ quản trị viên.', HTMLTextAreaElement.prototype],
+        ]) {
+            await act(async () => {
+                const input = container.querySelector(`#${id}`);
+                Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, value);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+        await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+        expect(sendPrivateNotification).toHaveBeenCalledWith('7', expect.objectContaining({ title: 'Thông báo riêng' }));
+        expect(broadcastNotification).not.toHaveBeenCalled();
     });
 
     it.each(['OWNER', 'CUSTOMER'])('keeps %s on the personal inbox', async role => {

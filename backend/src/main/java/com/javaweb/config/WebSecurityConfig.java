@@ -118,6 +118,9 @@ public class WebSecurityConfig {
                         .access(require(AuthorizationRules.BOOKING_READ_OWNER))
                         .requestMatchers(HttpMethod.GET, "/api/owners/me/rental-properties")
                         .access(require(AuthorizationRules.ROOM_READ_OWNER))
+                        // /new/
+                        .requestMatchers(HttpMethod.GET, "/api/owners/me/revenue/**")
+                        .access(require(AuthorizationRules.OWNER))
                         .requestMatchers("/api/owners/**")
                         .access(require(AuthorizationRules.ROOM_WRITE_OWNER))
                         .requestMatchers(HttpMethod.GET, "/api/rental-requests/**")

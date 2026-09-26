@@ -1,4 +1,5 @@
 import AccountNavigation from '../components/AccountNavigation';
+import RevenueOverview from '../components/RevenueOverview';
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
@@ -70,6 +71,8 @@ function OwnerDashboard() {
                     </NavLink>
                 </section>
 
+                {/* /new/ */}
+                <RevenueOverview />
                 <section className="owner-dashboard-grid">
                     <article className="owner-panel owner-dashboard-properties">
                         <div className="owner-panel-title">
@@ -138,13 +141,6 @@ function OwnerDashboard() {
                         </div>
                     </NavLink>
 
-                    <article className="owner-panel">
-                        <div className="owner-panel-title"><h2>Doanh thu dự kiến</h2><span>Tháng này</span></div>
-                        <strong className="owner-revenue">0 VNĐ</strong>
-                        <div className="owner-bars">{[42, 58, 51, 72, 86].map((height, index) => (
-                            <span key={height} style={{ height: `${height}%` }}><small>Tuần {index + 1}</small></span>
-                        ))}</div>
-                    </article>
                 </section>
             </main>
         </div>

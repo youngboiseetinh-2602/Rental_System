@@ -5,10 +5,13 @@ import com.javaweb.model.response.UserResponse;
 import com.javaweb.model.request.UpdateRentalType;
 import com.javaweb.model.response.RentalTypeResponse;
 import com.javaweb.model.response.ContractResponse;
+import com.javaweb.model.response.RevenueResponse;
+import com.javaweb.model.response.OwnerRevenueStatusResponse;
+import com.javaweb.service.RevenueService;
 import com.javaweb.service.AdminService;
-import com.javaweb.service.ContractService;
 import com.javaweb.service.NotificationService;
 import com.javaweb.model.request.NotificationRequest;
+import com.javaweb.model.response.NotificationResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +38,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     private final AdminService adminService;
-    private final ContractService contractService;
     private final NotificationService notificationService;
+    // /new/
+    private final RevenueService revenueService;
+
+    // /new/
+    @GetMapping("/revenue/current")
+    public ResponseEntity<RevenueResponse> currentRevenue() {
+        return ResponseEntity.ok(revenueService.getAdminCurrentRevenue());
+    }
+
+    // /new/
+    @GetMapping("/revenue/history")
+    public ResponseEntity<List<RevenueResponse>> revenueHistory() {
+        return ResponseEntity.ok(revenueService.getAdminHistory());
+    }
+
+    // /new/
+    @GetMapping("/revenue/missing-owners")
+    public ResponseEntity<List<OwnerRevenueStatusResponse>> ownersMissingRevenue() {
+        return ResponseEntity.ok(revenueService.getOwnersMissingRevenue());
+    }
 
     @GetMapping("/contracts/dashboard")
     public ResponseEntity<Page<ContractResponse>> contractDashboard(
@@ -54,6 +76,13 @@ public class AdminController {
     public ResponseEntity<String> sendNotificationToAll(
             @Valid @RequestBody NotificationRequest request) {
         return ResponseEntity.ok(notificationService.sendNotificationToAll(request));
+    }
+
+    @PostMapping("/notifications/{receiverId}")
+    public ResponseEntity<NotificationResponse> sendPrivateNotification(
+            @PathVariable Long receiverId,
+            @Valid @RequestBody NotificationRequest request) {
+        return ResponseEntity.ok(notificationService.createNotification(receiverId, request));
     }
 
     // Tim kiem va lay danh sach tai khoan theo cac dieu kien quan tri.
@@ -98,9 +127,4 @@ public class AdminController {
         return ResponseEntity.ok(adminService.deleteRentalType(rentalTypeId));
     }
 
-    // Ket thuc hop dong dang hieu luc, giu lich su va giai phong phong dang thue.
-    @PatchMapping("/contracts/{contractId}/terminate")
-    public ResponseEntity<String> terminateContract(@PathVariable Long contractId) {
-        return ResponseEntity.ok(contractService.terminateContract(contractId));
-    }
 }

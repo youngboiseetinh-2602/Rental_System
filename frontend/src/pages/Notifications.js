@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { getMyProfile } from '../services/userService';
 import {
@@ -6,6 +7,7 @@ import {
     getSentNotifications,
     markNotificationAsRead,
     broadcastNotification,
+    sendPrivateNotification,
 } from '../services/notificationService';
 import { userHasRole } from '../utils/authRouting';
 import {
@@ -29,6 +31,9 @@ function formatDate(value) {
 
 function Notifications() {
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
+    const receiverId = searchParams.get('receiverId');
+    const receiverName = searchParams.get('receiverName') || `Chủ trọ #${receiverId}`;
     const [profile, setProfile] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [filter, setFilter] = useState('ALL');
@@ -48,6 +53,12 @@ function Notifications() {
     const [search, setSearch] = useState('');
     const isOwner = userHasRole(user, 'OWNER');
     const isAdmin = userHasRole(user, 'ADMIN');
+
+    useEffect(() => {
+        if (isAdmin && receiverId) {
+            setComposing(true);
+        }
+    }, [isAdmin, receiverId]);
 
     useEffect(() => {
         let active = true;
@@ -77,7 +88,9 @@ function Notifications() {
         setSendError('');
         setSuccess('');
         try {
-            await broadcastNotification({ title: title.trim(), content: content.trim() });
+            const payload = { title: title.trim(), content: content.trim() };
+            if (receiverId) await sendPrivateNotification(receiverId, payload);
+            else await broadcastNotification(payload);
             setSuccess('Gửi thông báo thành công');
             setTitle('');
             setContent('');
@@ -142,7 +155,7 @@ function Notifications() {
                     <form id="broadcast-form" className="customer-request-card p-4 mb-4"
                         onSubmit={sendBroadcast} aria-busy={sending}>
                         <h2 className="h5">Tạo thông báo</h2>
-                        <p className="text-secondary">Gửi đến tất cả tài khoản trong hệ thống, bao gồm cả bạn.</p>
+                        <p className="text-secondary">{receiverId ? `Gửi riêng đến ${receiverName} (#${receiverId}).` : 'Gửi đến tất cả tài khoản trong hệ thống, bao gồm cả bạn.'}</p>
                         {sendError && <div className="profile-alert is-error" role="alert">{sendError}</div>}
                         <fieldset disabled={sending} className="notification-compose-grid">
                             <div>
@@ -154,13 +167,13 @@ function Notifications() {
                                 rows={5} maxLength={2000} value={content}
                                 onChange={(event) => setContent(event.target.value)} />
                             <button type="submit" className="btn btn-success">
-                                {sending ? 'Đang gửi…' : 'Gửi cho tất cả'}
+                                {sending ? 'Đang gửi…' : receiverId ? 'Gửi cho chủ trọ' : 'Gửi cho tất cả'}
                             </button>
                             <button type="button" className="btn btn-outline-secondary ms-2"
                                 onClick={() => setComposing(false)}>Đóng</button>
                             </div>
                             <aside className="notification-compose-preview">
-                                <span className="badge text-bg-success mb-3">Tất cả người dùng</span>
+                                <span className="badge text-bg-success mb-3">{receiverId ? receiverName : 'Tất cả người dùng'}</span>
                                 <h3 className="h6">Xem trước thông báo</h3>
                                 <strong>{title.trim() || 'Tiêu đề thông báo'}</strong>
                                 <p>{content.trim() || 'Nội dung bạn nhập sẽ hiển thị tại đây.'}</p>

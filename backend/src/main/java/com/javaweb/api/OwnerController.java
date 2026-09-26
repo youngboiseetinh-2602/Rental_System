@@ -11,6 +11,8 @@ import com.javaweb.model.request.NotificationRequest;
 import com.javaweb.model.response.ContractResponse;
 import com.javaweb.model.response.NotificationResponse;
 import com.javaweb.model.response.RentalPropertyResponse;
+import com.javaweb.model.response.RevenueResponse;
+import com.javaweb.service.RevenueService;
 import com.javaweb.service.OwnerService;
 import com.javaweb.service.ContractService;
 import com.javaweb.service.RentalPropertyService;
@@ -45,6 +47,20 @@ public class OwnerController {
     private final RoomService roomService;
     private final ContractService contractService;
     private final NotificationService notificationService;
+    // /new/
+    private final RevenueService revenueService;
+
+    // /new/
+    @GetMapping("/owners/me/revenue/current")
+    public ResponseEntity<RevenueResponse> currentRevenue() {
+        return ResponseEntity.ok(revenueService.getOwnerCurrentRevenue());
+    }
+
+    // /new/
+    @GetMapping("/owners/me/revenue/history")
+    public ResponseEntity<List<RevenueResponse>> revenueHistory() {
+        return ResponseEntity.ok(revenueService.getOwnerHistory());
+    }
 
     // Chap nhan hoac tu choi yeu cau thue thuoc nha tro cua owner dang dang nhap.
     @PatchMapping("/rental-requests/{contractId}")
@@ -67,6 +83,11 @@ public class OwnerController {
     @GetMapping("/owners/me/contracts")
     public ResponseEntity<List<ContractResponse>> getOwnerContracts() {
         return ResponseEntity.ok(contractService.getOwnerContracts());
+    }
+
+    @PatchMapping("/owners/me/contracts/{contractId}/terminate")
+    public ResponseEntity<String> terminateContract(@PathVariable Long contractId) {
+        return ResponseEntity.ok(contractService.terminateContract(contractId));
     }
 
     // Gui thong bao tu owner dang dang nhap den mot nguoi thue.

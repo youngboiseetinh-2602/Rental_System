@@ -536,13 +536,6 @@
     background: #e6a23c;
 }
 
-.owner-revenue {
-    display: block;
-    margin-top: 13px;
-    font-size: 29px;
-    font-weight: 800;
-}
-
 .owner-bars {
     height: 175px;
     display: flex;

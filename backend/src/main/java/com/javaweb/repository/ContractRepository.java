@@ -3,6 +3,7 @@ package com.javaweb.repository;
 import com.javaweb.entity.ContractEntity;
 import com.javaweb.enums.ContractStatus;
 import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,19 @@ import org.springframework.data.repository.query.Param;
 
 public interface ContractRepository extends JpaRepository<ContractEntity, Long>,
                 JpaSpecificationExecutor<ContractEntity> {
+
+        // /new/
+        @Query("""
+                        select coalesce(sum(c.rentPrice), 0) from ContractEntity c
+                        where c.room.roomType.rentalProperty.owner.id = :ownerId
+                          and c.status in :statuses
+                          and c.startDate <= :monthEnd and c.endDate >= :monthStart
+                        """)
+        BigDecimal sumRevenueForMonth(
+                        @Param("ownerId") Long ownerId,
+                        @Param("monthStart") LocalDate monthStart,
+                        @Param("monthEnd") LocalDate monthEnd,
+                        @Param("statuses") List<ContractStatus> statuses);
 
         boolean existsByTenant_IdAndRoom_IdAndStatus(
                         Long tenantId,
