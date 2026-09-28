@@ -1,5 +1,5 @@
 // /new/ - File moi cho thong ke doanh thu.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getCurrentRevenue, getRevenueHistory, getOwnersMissingRevenue, remindOwnerRevenue } from '../services/revenueService';
 
 const money = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -11,6 +11,28 @@ export default function RevenueOverview({ admin = false }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
+    const [loadingSaved, setLoadingSaved] = useState(!admin);
+
+    useEffect(() => {
+        if (admin) return;
+        let active = true;
+        setLoadingSaved(true);
+        // Read saved rows only: the current endpoint initializes a missing owner month.
+        getRevenueHistory(false).then((rows) => {
+            if (!active) return;
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: 'numeric',
+            }).formatToParts(new Date());
+            const year = Number(parts.find(part => part.type === 'year').value);
+            const month = Number(parts.find(part => part.type === 'month').value);
+            setCurrent(rows.find(row => Number(row.year) === year && Number(row.month) === month) || null);
+        }).catch((e) => {
+            if (active) setError(e.message);
+        }).finally(() => {
+            if (active) setLoadingSaved(false);
+        });
+        return () => { active = false; };
+    }, [admin]);
 
     async function run(action) {
         setBusy(true);
@@ -24,12 +46,12 @@ export default function RevenueOverview({ admin = false }) {
             <div className="d-flex flex-wrap justify-content-between gap-3 align-items-center">
                 <h2>Doanh thu và lợi nhuận</h2>
                 <div className="d-flex flex-wrap gap-2">
-                    <button type="button" className="btn btn-success" disabled={busy}
+                    <button type="button" className="btn btn-success" disabled={busy || loadingSaved}
                         onClick={() => run(async () => {
                             setCurrent(await getCurrentRevenue(admin));
                             if (history !== null) setHistory(await getRevenueHistory(admin));
                         })}>Thống kê</button>
-                    <button type="button" className="btn btn-outline-secondary" disabled={busy}
+                    <button type="button" className="btn btn-outline-secondary" disabled={busy || loadingSaved}
                         onClick={() => run(async () => setHistory(await getRevenueHistory(admin)))}>Lịch sử doanh thu</button>
                     {admin && <button type="button" className="btn btn-outline-secondary" disabled={busy}
                         onClick={() => run(async () => setMissing(await getOwnersMissingRevenue()))}>Chủ trọ chưa thống kê</button>}
@@ -37,6 +59,8 @@ export default function RevenueOverview({ admin = false }) {
             </div>
             <p className="text-muted">{admin ? 'Lợi nhuận bằng 5% tổng doanh thu chủ trọ đã thống kê.' : 'Lợi nhuận bằng 95% doanh thu, sau hoa hồng 5%.'}</p>
             {busy && <p role="status">Đang xử lý…</p>}
+            {loadingSaved && <p role="status">Đang tải thống kê đã lưu…</p>}
+            {!admin && !loadingSaved && !busy && !error && !current && <p>Chưa có thống kê tháng hiện tại. Bấm “Thống kê” để tạo.</p>}
             {error && <p className="text-danger" role="alert">{error}</p>}
             {notice && <p className="text-success" role="status">{notice}</p>}
             {current && <div className="row my-3">

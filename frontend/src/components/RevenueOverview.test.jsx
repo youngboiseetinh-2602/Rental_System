@@ -14,6 +14,7 @@ describe('revenue overview', () => {
     let container;
     beforeEach(() => {
         vi.resetAllMocks();
+        getRevenueHistory.mockResolvedValue([]);
         global.IS_REACT_ACT_ENVIRONMENT = true;
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -22,9 +23,45 @@ describe('revenue overview', () => {
     afterEach(async () => {
         await act(async () => root.unmount());
         container.remove();
+        vi.useRealTimers();
     });
     const click = async (label) => act(async () => {
         [...container.querySelectorAll('button')].find(button => button.textContent === label).click();
+    });
+
+    it('automatically shows saved current-month statistics in Vietnam time without initializing', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-09-30T18:00:00Z'));
+        getRevenueHistory.mockResolvedValue([
+            { year: 2026, month: 9, revenue: 2000000, profit: 1900000 },
+            { year: 2026, month: 10, revenue: 5000000, profit: 4750000 },
+        ]);
+        await act(async () => root.render(<RevenueOverview />));
+        expect(getRevenueHistory).toHaveBeenCalledWith(false);
+        expect(getCurrentRevenue).not.toHaveBeenCalled();
+        expect(container.textContent).toContain('Tháng 10/2026');
+        expect(container.textContent).toContain('4.750.000');
+        expect(container.querySelector('table')).toBeNull();
+    });
+
+    it('does not display an older month or initialize a missing current month', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-15T00:00:00Z'));
+        getRevenueHistory.mockResolvedValue([{ year: 2026, month: 9, revenue: 5000000, profit: 4750000 }]);
+        await act(async () => root.render(<RevenueOverview />));
+        expect(container.textContent).toContain('Chưa có thống kê tháng hiện tại');
+        expect(container.textContent).not.toContain('4.750.000');
+        expect(getCurrentRevenue).not.toHaveBeenCalled();
+    });
+
+    it('allows manual statistics after saved statistics fail to load', async () => {
+        getRevenueHistory.mockRejectedValue(new Error('Lỗi tải thống kê đã lưu'));
+        getCurrentRevenue.mockResolvedValue({ year: 2026, month: 10, revenue: 0, profit: 0 });
+        await act(async () => root.render(<RevenueOverview />));
+        expect(container.querySelector('[role="alert"]').textContent).toContain('Lỗi tải');
+        await click('Thống kê');
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+        expect(container.textContent).toContain('Tháng 10/2026');
     });
 
     it('loads owner statistics on click and refreshes displayed history after initialization', async () => {
