@@ -7352,6 +7352,11 @@ a {
     display: block;
 }
 
+.admin-stats .admin-revenue-value {
+    font-size: clamp(18px, 1.7vw, 28px);
+    overflow-wrap: anywhere;
+}
+
 .admin-stats span {
     color: #738078;
     font-size: 12px;

@@ -3,13 +3,18 @@ import { NavLink } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import { getAdminUsers, getRentalTypes } from '../services/adminService';
 import AdminContractOverview from '../components/AdminContractOverview';
-import RevenueOverview from '../components/RevenueOverview';
+import { getCurrentRevenue } from '../services/revenueService';
 
 const labels = { ADMIN: 'Quản trị viên', OWNER: 'Chủ trọ', CUSTOMER: 'Khách thuê', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm ngưng', LOCKED: 'Đã khóa' };
 
 function AdminDashboard() {
     const [data, setData] = useState({ users: [], total: 0, owners: 0, customers: 0, locked: 0, types: 0 });
     const [error, setError] = useState('');
+    const [revenue, setRevenue] = useState(null);
+    const [revenueError, setRevenueError] = useState('');
+    useEffect(() => {
+        getCurrentRevenue(true).then(setRevenue).catch((e) => setRevenueError(e.message));
+    }, []);
     useEffect(() => {
         Promise.all([
             getAdminUsers({ page: 0, size: 6, sort: 'id,desc' }),
@@ -28,10 +33,11 @@ function AdminDashboard() {
     return (
         <AdminLayout title="Tổng quan hệ thống" description="Theo dõi người dùng và cấu hình nền tảng tại một nơi." actions={<span className="admin-live">● Dữ liệu trực tiếp</span>}>
             {error && <div className="admin-alert error">{error}</div>}
+            {revenueError && <div className="admin-alert error" role="alert">{revenueError}</div>}
             <section className="admin-stats">
                 <NavLink to="/admin/users"><article className="blue"><span>Tổng tài khoản</span><strong>{data.total}</strong><small>Xem tất cả người dùng →</small><i>01</i></article></NavLink>
                 <NavLink to="/admin/users?status=ACTIVE"><article className="green"><span>Đang hoạt động</span><strong>{Math.max(0, data.total - data.locked)}</strong><small>Xem tài khoản hoạt động →</small><i>02</i></article></NavLink>
-                <NavLink to="/admin/users?role=OWNER"><article className="purple"><span>Chủ trọ</span><strong>{data.owners}</strong><small>Xem danh sách chủ trọ →</small><i>03</i></article></NavLink>
+                <NavLink to="/admin/statistics"><article className="purple"><span>Doanh thu{revenue ? ` tháng ${revenue.month}/${revenue.year}` : ''}</span><strong className="admin-revenue-value">{revenue ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue.revenue) : revenueError ? '—' : 'Đang tải…'}</strong><small>Xem thống kê doanh thu →</small><i>03</i></article></NavLink>
                 <NavLink to="/admin/rental-types"><article className="orange"><span>Loại hình cho thuê</span><strong>{data.types}</strong><small>Quản lý danh mục →</small><i>04</i></article></NavLink>
             </section>
             <section className="admin-dashboard-grid">
@@ -48,8 +54,6 @@ function AdminDashboard() {
                     <ul><li><i className="customer" /><span>Khách thuê<small>{100 - ownerPercent}% tổng số</small></span><strong>{data.customers}</strong></li><li><i className="owner" /><span>Chủ trọ<small>{ownerPercent}% tổng số</small></span><strong>{data.owners}</strong></li><li><i className="locked" /><span>Đã khóa<small>Cần kiểm tra</small></span><strong>{data.locked}</strong></li></ul>
                 </article>
             </section>
-            {/* /new/ */}
-            <RevenueOverview admin />
             <AdminContractOverview preview />
         </AdminLayout>
     );

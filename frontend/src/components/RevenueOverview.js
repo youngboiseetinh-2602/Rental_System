@@ -20,7 +20,7 @@ export default function RevenueOverview({ admin = false }) {
     }
 
     return (
-        <section className={admin ? 'admin-card mb-4' : 'owner-panel mb-4'} aria-label="Thống kê doanh thu">
+        <section className={admin ? 'admin-card p-4 mb-4' : 'owner-panel mb-4'} aria-label="Thống kê doanh thu">
             <div className="d-flex flex-wrap justify-content-between gap-3 align-items-center">
                 <h2>Doanh thu và lợi nhuận</h2>
                 <div className="d-flex flex-wrap gap-2">

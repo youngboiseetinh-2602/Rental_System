@@ -27,6 +27,7 @@ import Notifications from './pages/Notifications';
 import Chats from './pages/Chats';
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/AdminDashboard';
+import RevenueStatistics from './pages/RevenueStatistics';
 import AdminUsers from './pages/AdminUsers';
 import AdminRentalTypes from './pages/AdminRentalTypes';
 import AdminProperties from './pages/AdminProperties';
@@ -167,6 +168,8 @@ function App() {
                             )}
                         />
                         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                        <Route path="/admin/statistics" element={<AdminRoute><RevenueStatistics admin /></AdminRoute>} />
+                        <Route path="/owner/statistics" element={<OwnerRoute><RevenueStatistics /></OwnerRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                         <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
                         <Route path="/admin/rental-types" element={<AdminRoute><AdminRentalTypes /></AdminRoute>} />

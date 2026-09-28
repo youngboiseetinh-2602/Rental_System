@@ -14,6 +14,7 @@ function AccountNavigation({ user }) {
         return (
             <nav aria-label="Menu quản trị viên">
                 <NavLink to="/admin" end><AccountMenuIcon name="home" /> Tổng quan</NavLink>
+                <NavLink to="/admin/statistics"><AccountMenuIcon name="contract" /> Thống kê</NavLink>
                 <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
                 <NavLink to="/admin/users"><AccountMenuIcon name="requests" /> Danh sách người dùng</NavLink>
                 <NavLink to="/admin/properties"><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>
@@ -29,6 +30,7 @@ function AccountNavigation({ user }) {
         return (
             <nav aria-label="Menu chủ trọ">
                 <NavLink to="/owner/dashboard" end><AccountMenuIcon name="home" /> Tổng quan</NavLink>
+                <NavLink to="/owner/statistics"><AccountMenuIcon name="contract" /> Thống kê</NavLink>
                 <NavLink to="/profile"><AccountMenuIcon name="profile" /> Thông tin cá nhân</NavLink>
                 <NavLink to="/owner/properties" end><AccountMenuIcon name="properties" /> Danh sách phòng trọ</NavLink>
                 <NavLink to="/owner/properties/new"><AccountMenuIcon name="add" /> Tạo phòng trọ</NavLink>
