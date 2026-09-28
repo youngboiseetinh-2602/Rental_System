@@ -37,7 +37,7 @@ function AdminDashboard() {
             <section className="admin-stats">
                 <NavLink to="/admin/users"><article className="blue"><span>Tổng tài khoản</span><strong>{data.total}</strong><small>Xem tất cả người dùng →</small><i>01</i></article></NavLink>
                 <NavLink to="/admin/users?status=ACTIVE"><article className="green"><span>Đang hoạt động</span><strong>{Math.max(0, data.total - data.locked)}</strong><small>Xem tài khoản hoạt động →</small><i>02</i></article></NavLink>
-                <NavLink to="/admin/statistics"><article className="purple"><span>Doanh thu{revenue ? ` tháng ${revenue.month}/${revenue.year}` : ''}</span><strong className="admin-revenue-value">{revenue ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue.revenue) : revenueError ? '—' : 'Đang tải…'}</strong><small>Xem thống kê doanh thu →</small><i>03</i></article></NavLink>
+                <NavLink to="/admin/statistics"><article className="purple"><span>Lợi nhuận{revenue ? ` tháng ${revenue.month}/${revenue.year}` : ''}</span><strong className="admin-revenue-value">{revenue ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenue.profit) : revenueError ? '—' : 'Đang tải…'}</strong><small>Xem thống kê lợi nhuận →</small><i>03</i></article></NavLink>
                 <NavLink to="/admin/rental-types"><article className="orange"><span>Loại hình cho thuê</span><strong>{data.types}</strong><small>Quản lý danh mục →</small><i>04</i></article></NavLink>
             </section>
             <section className="admin-dashboard-grid">
