@@ -5,6 +5,8 @@ import { getCurrentRevenue, getRevenueHistory, getOwnersMissingRevenue, remindOw
 const money = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 export default function RevenueOverview({ admin = false }) {
+    const revenueLabel = admin ? 'Tổng doanh thu chủ trọ' : 'Doanh thu tiền thuê';
+    const incomeLabel = admin ? 'Hoa hồng nền tảng' : 'Thu nhập sau hoa hồng';
     const [current, setCurrent] = useState(null);
     const [history, setHistory] = useState(null);
     const [missing, setMissing] = useState(null);
@@ -44,7 +46,7 @@ export default function RevenueOverview({ admin = false }) {
     return (
         <section className={admin ? 'admin-card p-4 mb-4' : 'owner-panel mb-4'} aria-label="Thống kê doanh thu">
             <div className="d-flex flex-wrap justify-content-between gap-3 align-items-center">
-                <h2>Doanh thu và lợi nhuận</h2>
+                <h2>{admin ? 'Doanh thu và hoa hồng' : 'Doanh thu tiền thuê theo tháng'}</h2>
                 <div className="d-flex flex-wrap gap-2">
                     <button type="button" className="btn btn-success" disabled={busy || loadingSaved}
                         onClick={() => run(async () => {
@@ -57,20 +59,58 @@ export default function RevenueOverview({ admin = false }) {
                         onClick={() => run(async () => setMissing(await getOwnersMissingRevenue()))}>Chủ trọ chưa thống kê</button>}
                 </div>
             </div>
-            <p className="text-muted">{admin ? 'Lợi nhuận bằng 5% tổng doanh thu chủ trọ đã thống kê.' : 'Lợi nhuận bằng 95% doanh thu, sau hoa hồng 5%.'}</p>
+            <p className="text-muted">{admin
+                ? 'Hoa hồng nền tảng bằng 5% tổng doanh thu chủ trọ đã thống kê trong tháng.'
+                : 'Thu nhập sau hoa hồng bằng 95% doanh thu tiền thuê, chưa trừ các chi phí vận hành khác.'}</p>
             {busy && <p role="status">Đang xử lý…</p>}
             {loadingSaved && <p role="status">Đang tải thống kê đã lưu…</p>}
             {!admin && !loadingSaved && !busy && !error && !current && <p>Chưa có thống kê tháng hiện tại. Bấm “Thống kê” để tạo.</p>}
+            {admin && !busy && !error && !current && <p>Bấm “Thống kê” để xem tổng doanh thu và hoa hồng tháng hiện tại.</p>}
             {error && <p className="text-danger" role="alert">{error}</p>}
             {notice && <p className="text-success" role="status">{notice}</p>}
-            {current && <div className="row my-3">
-                <p className="col">Tháng {current.month}/{current.year}</p>
-                <p className="col">Doanh thu: <strong>{money(current.revenue)}</strong></p>
-                <p className="col">Lợi nhuận: <strong>{money(current.profit)}</strong></p>
+            {current && <div className="my-4">
+                <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <h3 className="h5 mb-0">Tháng {current.month}/{current.year}</h3>
+                    <span className="badge bg-light text-secondary border">Số liệu đã lưu</span>
+                </div>
+                <div className="row g-3">
+                    <div className={admin ? 'col-12 col-md-6' : 'col-12 col-md-4'}>
+                        <div className="border rounded p-3 h-100">
+                            <p className="text-muted mb-2">{revenueLabel}</p>
+                            <strong className="fs-4">{money(current.revenue)}</strong>
+                        </div>
+                    </div>
+                    {!admin && <div className="col-12 col-md-4">
+                        <div className="border rounded p-3 h-100">
+                            <p className="text-muted mb-2">Hoa hồng nền tảng</p>
+                            <strong className="fs-4">{money(Number(current.revenue) - Number(current.profit))}</strong>
+                        </div>
+                    </div>}
+                    <div className={admin ? 'col-12 col-md-6' : 'col-12 col-md-4'}>
+                        <div className="border rounded p-3 h-100 bg-light">
+                            <p className="text-muted mb-2">{incomeLabel}</p>
+                            <strong className="fs-4 text-success">{money(current.profit)}</strong>
+                        </div>
+                    </div>
+                </div>
             </div>}
+            <details className="border rounded p-3 my-3">
+                <summary className="fw-semibold">Cách tính doanh thu tháng</summary>
+                <div className="mt-3">
+                    {admin ? <p>Chỉ tổng hợp các thống kê tháng đã lưu của chủ trọ. Chủ trọ chưa có thống kê tháng đó chưa được đưa vào tổng.</p> : <>
+                        <p>Mỗi hợp đồng được tính một lần giá thuê tháng đã chốt khi gửi yêu cầu, nếu thời gian thuê có giao với tháng thống kê. Hợp đồng nhiều tháng không được cộng toàn bộ giá trị vào tháng duyệt.</p>
+                        <p>Ví dụ: một hợp đồng thuê tháng 9 và một hợp đồng thuê tháng 9–10, cùng giá 2.500.000đ/tháng, đóng góp 5.000.000đ vào tháng 9 và 2.500.000đ vào tháng 10.</p>
+                        <p>Hợp đồng đã duyệt, đã hết hạn hoặc đã chấm dứt đều được tính nếu có thời gian thuê trong tháng. Khi chấm dứt, ngày kết thúc là ngày chấm dứt. Yêu cầu chờ duyệt hoặc đã hủy không được tính.</p>
+                        <p>Hiện hệ thống tính trọn giá thuê tháng, không chia theo số ngày ở. Đây là doanh thu theo hợp đồng, không phải xác nhận tiền đã thanh toán.</p>
+                    </>}
+                    <p className="text-muted mb-0">{admin
+                        ? 'Lịch sử hiển thị doanh thu và hoa hồng từ số liệu đã lưu của từng tháng.'
+                        : 'Nút “Thống kê” xem số liệu tháng hiện tại hoặc tạo thống kê nếu chưa có. Số liệu đã lưu được cộng thêm khi duyệt hợp đồng có hiệu lực trong tháng; nút này không tính lại toàn bộ lịch sử.'}</p>
+                </div>
+            </details>
             {history !== null && <div className="table-responsive">
                 <table className="table"><caption>Lịch sử doanh thu đã lưu</caption>
-                    <thead><tr><th>Tháng</th><th>Doanh thu</th><th>Lợi nhuận</th></tr></thead>
+                    <thead><tr><th scope="col">Tháng</th><th scope="col">{revenueLabel}</th><th scope="col">{incomeLabel}</th></tr></thead>
                     <tbody>{history.map((row) => <tr key={`${row.year}-${row.month}`}>
                         <td>{row.month}/{row.year}</td><td>{money(row.revenue)}</td><td>{money(row.profit)}</td>
                     </tr>)}{!history.length && <tr><td colSpan="3">Chưa có thống kê được lưu.</td></tr>}</tbody>

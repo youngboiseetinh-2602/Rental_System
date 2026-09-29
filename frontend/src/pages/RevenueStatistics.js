@@ -8,7 +8,7 @@ import useAuth from '../hooks/useAuth';
 export default function RevenueStatistics({ admin = false }) {
     const { user } = useAuth();
     if (admin) {
-        return <AdminLayout title="Thống kê" description="Theo dõi doanh thu, lợi nhuận và lịch sử doanh thu.">
+        return <AdminLayout title="Thống kê" description="Theo dõi doanh thu chủ trọ và hoa hồng nền tảng theo tháng.">
             <RevenueOverview admin />
         </AdminLayout>;
     }
