@@ -146,7 +146,6 @@ function Profile() {
         setError('');
         try {
             await updateMyProfile({
-                username: draft.username.trim(),
                 fullName: draft.fullName.trim(),
                 phoneNumber: draft.phoneNumber.trim(),
                 avatarUrl: draft.avatarUrl.trim(),
@@ -214,7 +213,6 @@ function Profile() {
         try {
             const avatarUrl = await uploadAvatarImage(file);
             await updateMyProfile({
-                username: profile.username,
                 fullName: profile.fullName,
                 phoneNumber: profile.phoneNumber,
                 avatarUrl,
@@ -304,7 +302,7 @@ function Profile() {
                         {loading ? <div className="profile-loading">Đang tải thông tin...</div> : (
                             <div className="profile-fields">
                                 {fields.map(([name, label]) => {
-                                    const editable = name !== 'citizenCode';
+                                    const editable = name !== 'citizenCode' && name !== 'username';
                                     return (
                                         <label key={name} className={!editable ? 'is-readonly' : ''}>
                                             <span>{label}</span>

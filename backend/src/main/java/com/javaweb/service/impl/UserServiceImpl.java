@@ -113,21 +113,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new DataNotFoundException(
                         "Không tìm thấy người dùng có mã: " + userId));
 
-        if (request.getUsername() != null) {
-            String username = request.getUsername().trim();
-            if (username.isEmpty()) {
-                throw new IllegalArgumentException("Username must not be blank");
-            }
-            if (!username.equals(user.getUsername())) {
-                userRepository.findByUsername(username)
-                        .filter(existingUser -> !existingUser.getId().equals(userId))
-                        .ifPresent(existingUser -> {
-                            throw new ConflictException("Tên đăng nhập đã tồn tại");
-                        });
-                user.setUsername(username);
-            }
-        }
-
         if (request.getFullName() != null) {
             String fullName = request.getFullName().trim();
             if (fullName.isEmpty()) {
