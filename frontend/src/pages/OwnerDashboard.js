@@ -46,7 +46,6 @@ function OwnerDashboard() {
             <main className="owner-main">
                 <div className="owner-heading">
                     <div><p>TRANG QUẢN LÝ CHỦ TRỌ</p><h1>Tổng quan</h1></div>
-                    <div className="owner-date">01/07/2026 - 31/07/2026　▣</div>
                 </div>
                 {error && <div className="profile-alert is-error">{error}</div>}
 

@@ -230,16 +230,6 @@
     font-weight: 800;
 }
 
-.owner-date {
-    padding: 9px 13px;
-    border: 1px solid #e0e6e3;
-    border-radius: 7px;
-    color: #57645e;
-    background: #fff;
-    font-size: 13px;
-    font-weight: 600;
-}
-
 .owner-stat-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -598,9 +588,6 @@
         flex-direction: column;
     }
 
-    .owner-date {
-        margin-bottom: 14px;
-    }
 }
 
 @media (max-width: 480px) {
